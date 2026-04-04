@@ -1,0 +1,115 @@
+using AutoMapper;
+using CatalogService.Application.DTOs.Search;
+using CatalogService.Application.DTOs.Restaurant;
+using CatalogService.Application.DTOs.MenuItem;
+using CatalogService.Application.Interfaces;
+using CatalogService.Domain.Enums;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CatalogService.API.Controllers;
+
+[ApiController]
+[Route("api/[controller]")]
+[Authorize]
+public class SearchController : ControllerBase
+{
+    private readonly ISearchService _searchService;
+    private readonly IMapper _mapper;
+
+    public SearchController(ISearchService searchService, IMapper mapper)
+    {
+        _searchService = searchService;
+        _mapper = mapper;
+    }
+
+    /// <summary>
+    /// Advanced search for restaurants with filters
+    /// </summary>
+    [HttpGet("restaurants")]
+    public async Task<ActionResult> SearchRestaurants(
+        [FromQuery] string? query,
+        [FromQuery] int? cuisineType,
+        [FromQuery] decimal? minRating,
+        [FromQuery] int? maxDeliveryTime,
+        [FromQuery] decimal? minPrice,
+        [FromQuery] decimal? maxPrice,
+        [FromQuery] string? city,
+        [FromQuery] double? latitude,
+        [FromQuery] double? longitude,
+        [FromQuery] double? radiusInKm,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        [FromQuery] string? sortBy = "rating")
+    {
+        try
+        {
+            var filterDto = new SearchRestaurantFilterDto
+            {
+                Query = query,
+                CuisineType = cuisineType.HasValue ? (CuisineType)cuisineType.Value : null,
+                MinRating = minRating,
+                MaxDeliveryTime = maxDeliveryTime,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                City = city,
+                Latitude = latitude,
+                Longitude = longitude,
+                RadiusInKm = radiusInKm,
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                SortBy = sortBy
+            };
+
+            var result = await _searchService.AdvancedSearchAsync(filterDto);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Search menu items by name across restaurants
+    /// </summary>
+    [HttpGet("items")]
+    public async Task<ActionResult> SearchMenuItems(
+        [FromQuery] string? query,
+        [FromQuery] Guid restaurantId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+            return BadRequest("Query cannot be empty");
+
+        try
+        {
+            var result = await _searchService.SearchByNameAsync(query, pageNumber, pageSize);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Get homepage data (featured restaurants, popular cuisines, nearby)
+    /// </summary>
+    [HttpGet("home")]
+    public async Task<ActionResult> GetHomepageData(
+        [FromQuery] double? latitude,
+        [FromQuery] double? longitude)
+    {
+        try
+        {
+            var result = await _searchService.GetHomepageDataAsync(latitude, longitude);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
+}

@@ -133,7 +133,32 @@ Events are defined in `FoodDelivery.Shared` and consumed across services:
 
 ---
 
-## 📁 Docs
+## � Implementation Progress
+
+### CatalogService Microservice
+
+| Phase | Component | Status | Details |
+|-------|-----------|--------|---------|
+| **Phase 1** | Domain Layer | ✅ Complete | 10 files (BaseEntity, Enums, Entities, Interfaces) |
+| **Phase 2** | Application Layer | ✅ Complete | 31 files (DTOs, Services, Exceptions, Profiles, AutoMapper) |
+| **Phase 3** | Infrastructure Layer | ✅ Complete | 7 files (DbContext, Repositories, DbContextFactory, Seeder) + Migrations applied |
+| **Phase 4** | API Layer (Controllers) | 🔄 In Progress | 4 controllers, 20 endpoints, JWT auth, error middleware |
+| **Phase 5** | Integration & Messaging | ⏳ Planned | RabbitMQ events, inter-service communication |
+
+### Phase 4: API Layer
+
+**Implementation Details:**
+- **4 Controllers:** RestaurantsController, MenuItemsController, CategoriesController, SearchController
+- **20 RESTful Endpoints:** CRUD operations + advanced search
+- **Middleware:** GlobalExceptionHandlingMiddleware for consistent error handling
+- **Authentication:** JWT Bearer tokens on all endpoints
+- **Authorization:** Admin-only for write operations
+- **CORS:** Enabled for React frontend (http://localhost:3000)
+- **API Documentation:** Swagger/OpenAPI with interactive UI
+
+---
+
+## �📁 Docs
 
 See the [`docs/`](./docs/) folder for architecture diagrams and API documentation.
 
