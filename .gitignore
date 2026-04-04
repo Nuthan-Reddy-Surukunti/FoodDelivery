@@ -53,9 +53,14 @@ coverage.opencover.xml
 .env
 .env.*
 !.env.example
-appsettings.Development.json
-appsettings.Local.json
+appsettings.json
+appsettings.*.json
+!appsettings.Development.json.example
+!appsettings.example.json
+launchSettings.json
 secrets.json
+*.key
+*.pem
 
 ## ─── OS generated ──────────────────────────────────────────────────
 .DS_Store
