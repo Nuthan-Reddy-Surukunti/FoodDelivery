@@ -79,12 +79,13 @@ public class SearchService : ISearchService
         var featuredDtos = _mapper.Map<List<RestaurantDto>>(featuredRestaurants);
 
         // Get nearby restaurants if coordinates provided
+        // TODO: Implement nearby restaurants in future with GetNearbyAsync
         var nearbyDtos = new List<RestaurantDto>();
-        if (userLatitude.HasValue && userLongitude.HasValue)
-        {
-            var (nearbyRestaurants, _) = await _repository.GetNearbyAsync(userLatitude.Value, userLongitude.Value, 5, 1, 10);
-            nearbyDtos = _mapper.Map<List<RestaurantDto>>(nearbyRestaurants);
-        }
+        // if (userLatitude.HasValue && userLongitude.HasValue)
+        // {
+        //     var (nearbyRestaurants, _) = await _repository.GetNearbyAsync(userLatitude.Value, userLongitude.Value, 5, 1, 10);
+        //     nearbyDtos = _mapper.Map<List<RestaurantDto>>(nearbyRestaurants);
+        // }
 
         // Get popular cuisines
         var popularCuisines = new List<Domain.Enums.CuisineType>
