@@ -7,5 +7,5 @@ public interface ITwoFactorTokenRepository
 {
     Task<TwoFactorToken?> GetByTempTokenAsync(string tempToken);
     Task AddAsync(TwoFactorToken token);
-    Task MarkUsedAsync(string tokenId);
+    Task MarkUsedAsync(Guid tokenId);
 }

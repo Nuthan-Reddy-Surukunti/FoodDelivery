@@ -95,7 +95,7 @@ public class AuthService : IAuthService
                 Message = "OTP sent to your email.",
                 IsTwoFactorRequired = true,
                 TempToken = tempToken,
-                UserId = user.Id
+                UserId = user.Id.ToString()
             };
         }
 
@@ -261,11 +261,14 @@ public class AuthService : IAuthService
 
     public async Task<AuthRequestDto> ToggleTwoFactorAsync(string userId, ToggleTwoFactorRequestDto request)
     {
-        var user = await _userRepository.FindByIdAsync(userId);
+        if (!Guid.TryParse(userId, out var userGuid))
+            return new AuthRequestDto { Success = false, Message = "Invalid user ID." };
+
+        var user = await _userRepository.FindByIdAsync(userGuid);
         if (user == null)
             return new AuthRequestDto { Success = false, Message = "User not found." };
 
-        await _userRepository.SetTwoFactorEnabledAsync(userId, request.Enable);
+        await _userRepository.SetTwoFactorEnabledAsync(userGuid, request.Enable);
 
         var message = request.Enable ? "Two factor authentication enabled." : "Two factor authentication disabled.";
         return new AuthRequestDto { Success = true, Message = message };
@@ -273,7 +276,11 @@ public class AuthService : IAuthService
 
     public async Task<AuthRequestDto> VerifyEmailOtpAsync(VerifyEmailOtpRequestDto dto)
     {
-        var token = await _emailVerificationTokenRepository.GetLatestByUserIdAsync(dto.UserId);
+        var user = await _userRepository.FindByEmailAsync(dto.Email);
+        if (user == null)
+            return new AuthRequestDto { Success = false, Message = "User not found." };
+
+        var token = await _emailVerificationTokenRepository.GetLatestByUserIdAsync(user.Id);
         if (token == null || token.IsUsed || token.ExpiredAt < DateTime.UtcNow)
             return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
 
@@ -281,7 +288,7 @@ public class AuthService : IAuthService
             return new AuthRequestDto { Success = false, Message = "Incorrect OTP." };
         
         await _emailVerificationTokenRepository.MarkUsedAsync(token.Id);
-        await _userRepository.SetEmailVerifiedAsync(dto.UserId);
+        await _userRepository.SetEmailVerifiedAsync(user.Id);
 
         return new AuthRequestDto { Success = true, Message = "Email verified successfully." };
     }
@@ -322,6 +329,24 @@ public class AuthService : IAuthService
             Role = user.Role.ToString()
         };
     }
+
+    public async Task<AuthRequestDto> DeleteUserAsync(DeleteUserRequestDto dto)
+    {
+        var user = await _userRepository.FindByEmailAsync(dto.Email);
+        if (user == null)
+            return new AuthRequestDto { Success = false, Message = "User not found." };
+
+        var passwordValid = await _userRepository.CheckPasswordAsync(user.Id, dto.Password);
+        if (!passwordValid)
+            return new AuthRequestDto { Success = false, Message = "Invalid password." };
+
+        var result = await _userRepository.DeleteUserAsync(user.Id);
+        if (!result)
+            return new AuthRequestDto { Success = false, Message = "Failed to delete user." };
+
+        return new AuthRequestDto { Success = true, Message = "User account deleted successfully." };
+    }
+
     private static string GenerateOtp()
     {
         var random = new Random();

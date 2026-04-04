@@ -99,5 +99,14 @@ namespace AuthService.API.Controllers
                 return BadRequest(result);
             return Ok(result);
         }
+
+        [HttpDelete("delete-account")]
+        public async Task<IActionResult> DeleteUser([FromBody] DeleteUserRequestDto dto)
+        {
+            var result = await _authService.DeleteUserAsync(dto);
+            if (!result.Success)
+                return BadRequest(result);
+            return Ok(result);
+        }
     }
 }

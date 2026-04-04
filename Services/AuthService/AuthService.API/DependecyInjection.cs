@@ -8,7 +8,7 @@ using AuthService.Domain.Interfaces;
 using AuthService.Infrastructure.Repositories;
 using AuthService.Infrastructure.Services;
 
-namespace AuthService.Infrastructure;
+namespace AuthService.API;
 
 public static class DependecyInjection
 {

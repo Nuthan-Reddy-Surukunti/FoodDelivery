@@ -5,7 +5,7 @@ namespace AuthService.Domain.Interfaces;
 
 public interface IEmailVerificationTokenRepository
 {
-    Task<EmailVerificationToken?> GetLatestByUserIdAsync(string userId);
+    Task<EmailVerificationToken?> GetLatestByUserIdAsync(Guid userId);
     Task AddAsync(EmailVerificationToken token);
-    Task MarkUsedAsync(string tokenId);
+    Task MarkUsedAsync(Guid tokenId);
 }

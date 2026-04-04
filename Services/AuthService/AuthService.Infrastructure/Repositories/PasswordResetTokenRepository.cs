@@ -25,7 +25,7 @@ public class PasswordResetTokenRepository : IPasswordResetTokenRepository
             .FirstOrDefaultAsync(t => t.Token == token);
     }
 
-    public async Task MarkUsedAsync(string tokenId)
+    public async Task MarkUsedAsync(Guid tokenId)
     {
         var token = await _context.PasswordResetTokens.FindAsync(tokenId);
         if (token == null) return;

@@ -16,9 +16,10 @@ public class EmailVerificationTokenRepository : IEmailVerificationTokenRepositor
     public async Task AddAsync(EmailVerificationToken token)
     {
         await _context.EmailVerificationTokens.AddAsync(token);
+        await _context.SaveChangesAsync();
     }
 
-    public async Task<EmailVerificationToken?> GetLatestByUserIdAsync(string userId)
+    public async Task<EmailVerificationToken?> GetLatestByUserIdAsync(Guid userId)
     {
         return await _context.EmailVerificationTokens
         .Where(i=>i.UserId==userId)
@@ -26,7 +27,7 @@ public class EmailVerificationTokenRepository : IEmailVerificationTokenRepositor
 
     }
 
-    public async Task MarkUsedAsync(string tokenId)
+    public async Task MarkUsedAsync(Guid tokenId)
     {
         var token = await _context.EmailVerificationTokens.FirstOrDefaultAsync(i=>i.Id==tokenId);
         if(token==null) return;

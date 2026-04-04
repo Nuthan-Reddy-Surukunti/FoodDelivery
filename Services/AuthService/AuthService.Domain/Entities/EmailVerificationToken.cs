@@ -4,8 +4,8 @@ namespace AuthService.Domain.Entities;
 
 public class EmailVerificationToken
 {
-    public string Id { get; set; }=string.Empty;
-    public string UserId { get; set; }=string.Empty;
+    public Guid Id { get; set; }=Guid.NewGuid();
+    public Guid UserId { get; set; }
     public string OTP { get; set; }=string.Empty;
     public DateTime ExpiredAt { get; set; }
     public bool IsUsed { get; set; }=false;

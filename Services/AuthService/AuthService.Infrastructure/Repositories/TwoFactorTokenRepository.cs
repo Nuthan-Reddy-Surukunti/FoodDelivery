@@ -24,7 +24,7 @@ public class TwoFactorTokenRepository : ITwoFactorTokenRepository
         return await _context.TwoFactorTokens.FirstOrDefaultAsync(i=>i.TempToken==tempToken);
     }
 
-    public async Task MarkUsedAsync(string tokenId)
+    public async Task MarkUsedAsync(Guid tokenId)
     {
         var token = await _context.TwoFactorTokens.FirstOrDefaultAsync(i=>i.Id==tokenId);
         if(token==null) return;

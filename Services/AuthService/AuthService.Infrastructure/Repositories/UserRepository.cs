@@ -13,15 +13,15 @@ public class UserRepository : IUserRepository
     {
         _userManager = userManager;
     }
-    public async Task<bool> CheckPasswordAsync(string userId, string password)
+    public async Task<bool> CheckPasswordAsync(Guid userId, string password)
     {
-        var appUser = await _userManager.FindByIdAsync(userId);
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if(appUser==null) return false;
         return await _userManager.CheckPasswordAsync(appUser,password);
     }
-    public async Task<bool> UpdatePasswordAsync(string userId, string newPassword)
+    public async Task<bool> UpdatePasswordAsync(Guid userId, string newPassword)
     {
-        var appUser = await _userManager.FindByIdAsync(userId);
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if (appUser == null) return false;
         var token = await _userManager.GeneratePasswordResetTokenAsync(appUser);
         var result = await _userManager.ResetPasswordAsync(appUser, token, newPassword);
@@ -52,35 +52,44 @@ public class UserRepository : IUserRepository
          return MapToDomain(user);
     }
 
-    public async Task<User?> FindByIdAsync(string UserId)
+    public async Task<User?> FindByIdAsync(Guid UserId)
     {
-        var user = await _userManager.FindByIdAsync(UserId);
+        var user = await _userManager.FindByIdAsync(UserId.ToString());
          if(user == null) return null;
          return MapToDomain(user);
     }
 
-    public async Task<bool> SetEmailVerifiedAsync(string userId)
+    public async Task<bool> SetEmailVerifiedAsync(Guid userId)
     {
-        var appUser = await _userManager.FindByIdAsync(userId);
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if (appUser == null) return false;
         appUser.IsEmailVerified = true;
         var result = await _userManager.UpdateAsync(appUser);
         return result.Succeeded;
     }
 
-    public async Task<bool> SetTwoFactorEnabledAsync(string userId, bool enabled)
+    public async Task<bool> SetTwoFactorEnabledAsync(Guid userId, bool enabled)
     {
-        var appUser = await _userManager.FindByIdAsync(userId);
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if (appUser == null) return false;
         appUser.IsTwoFactorEnabled = enabled;
         var result = await _userManager.UpdateAsync(appUser);
         return result.Succeeded;
     }
+
+    public async Task<bool> DeleteUserAsync(Guid userId)
+    {
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
+        if (appUser == null) return false;
+        var result = await _userManager.DeleteAsync(appUser);
+        return result.Succeeded;
+    }
+
     private User MapToDomain(ApplicationUser appUser)
     {
         return new User
         {
-            Id = appUser.Id,
+            Id = Guid.Parse(appUser.Id),
             FullName = appUser.FullName,
             Email = appUser.Email!,
             Role = Enum.Parse<AuthService.Domain.Enums.UserRole>(appUser.Role),
