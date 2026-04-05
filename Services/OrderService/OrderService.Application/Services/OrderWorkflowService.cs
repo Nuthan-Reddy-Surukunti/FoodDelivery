@@ -186,8 +186,8 @@ public class OrderWorkflowService : IOrderWorkflowService
             new()
             {
                 Street = "123 Main St",
-                City = "San Francisco",
-                Pincode = "94105",
+                City = "Bengaluru",
+                Pincode = "560001",
                 AddressType = AddressType.Home,
                 Latitude = 37.7749,
                 Longitude = -122.4194
@@ -195,8 +195,8 @@ public class OrderWorkflowService : IOrderWorkflowService
             new()
             {
                 Street = "456 Work Ave",
-                City = "San Francisco",
-                Pincode = "94105",
+                City = "Bengaluru",
+                Pincode = "560002",
                 AddressType = AddressType.Work,
                 Latitude = 37.7900,
                 Longitude = -122.4000
@@ -282,8 +282,8 @@ public class OrderWorkflowService : IOrderWorkflowService
         // In a real app, get actual address details from UserService/AddressService
         var address = new Address(
             "123 Main St",
-            "San Francisco",
-            "94105",
+            "Bengaluru",
+            "560001",
             AddressType.Home,
             37.7749,
             -122.4194);

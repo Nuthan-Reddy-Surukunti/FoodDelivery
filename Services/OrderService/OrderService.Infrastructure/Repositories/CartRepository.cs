@@ -41,7 +41,62 @@ public class CartRepository : ICartRepository
 
     public async Task UpdateAsync(Cart cart, CancellationToken cancellationToken = default)
     {
-        _context.Carts.Update(cart);
+        var persistedItemIds = await _context.CartItems
+            .Where(item => item.CartId == cart.Id)
+            .Select(item => item.Id)
+            .ToListAsync(cancellationToken);
+
+        var persistedSet = persistedItemIds.ToHashSet();
+        var currentItems = cart.Items.ToList();
+        var currentItemIdSet = currentItems.Select(item => item.Id).ToHashSet();
+
+        if (_context.Entry(cart).State == EntityState.Detached)
+        {
+            _context.Carts.Attach(cart);
+        }
+
+        _context.Entry(cart).State = EntityState.Modified;
+
+        foreach (var item in currentItems)
+        {
+            var entry = _context.Entry(item);
+
+            if (persistedSet.Contains(item.Id))
+            {
+                if (entry.State == EntityState.Detached)
+                {
+                    _context.CartItems.Attach(item);
+                    entry = _context.Entry(item);
+                }
+
+                entry.State = EntityState.Modified;
+            }
+            else
+            {
+                if (entry.State == EntityState.Detached)
+                {
+                    _context.CartItems.Add(item);
+                }
+                else
+                {
+                    entry.State = EntityState.Added;
+                }
+            }
+        }
+
+        var removedItemIds = persistedItemIds
+            .Where(id => !currentItemIdSet.Contains(id))
+            .ToList();
+
+        if (removedItemIds.Count > 0)
+        {
+            var removedItems = await _context.CartItems
+                .Where(item => removedItemIds.Contains(item.Id))
+                .ToListAsync(cancellationToken);
+
+            _context.CartItems.RemoveRange(removedItems);
+        }
+
         await _context.SaveChangesAsync(cancellationToken);
     }
 
