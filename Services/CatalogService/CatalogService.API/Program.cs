@@ -3,6 +3,7 @@ using CatalogService.Infrastructure;
 using CatalogService.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,6 +16,9 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 // Application services (DTOs, mappings, business logic)
 builder.Services.AddApplicationServices();
 
+// Middleware services
+builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
+
 // Controllers with JSON naming policy
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -22,11 +26,18 @@ builder.Services.AddControllers()
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     });
 
+// === 2a. Endpoints API Explorer (required for Swagger in .NET 6+) ===
+builder.Services.AddEndpointsApiExplorer();
+
 // === 2. JWT Authentication ===
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -41,20 +52,52 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// === 3. CORS Configuration ===
-builder.Services.AddCors(options =>
+// === 3. CORS Configuration (enable when frontend is ready) ===
+// Uncomment when integrating React frontend at http://localhost:3000
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowFrontend", policy =>
+//     {
+//         policy.WithOrigins("http://localhost:3000")
+//             .AllowAnyMethod()
+//             .AllowAnyHeader()
+//             .AllowCredentials();
+//     });
+// });
+
+// === 4. Swagger/OpenAPI ===
+builder.Services.AddSwaggerGen(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
+    options.SwaggerDoc("v1", new() { Title = "Catalog Service", Version = "v1" });
+
+    // Add JWT support in Swagger UI
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        policy.WithOrigins("http://localhost:3000")
-            .AllowAnyMethod()
-            .AllowAnyHeader()
-            .AllowCredentials();
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token here"
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
     });
 });
 
-// === 4. Swagger/OpenAPI ===
-builder.Services.AddSwaggerGen();
+builder.Services.AddAuthorization();
 
 // === 5. Build the app ===
 var app = builder.Build();
@@ -71,7 +114,7 @@ app.UseHttpsRedirection();
 // Register global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
-app.UseCors("AllowFrontend");
+// app.UseCors("AllowFrontend"); // Enable when frontend is integrated
 
 // Authentication & Authorization
 app.UseAuthentication();
