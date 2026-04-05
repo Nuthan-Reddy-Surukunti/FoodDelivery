@@ -11,7 +11,7 @@ public static class ServiceRegistration
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         // Register AutoMapper with dependency injection
-        services.AddAutoMapper(typeof(ServiceRegistration).Assembly);
+        services.AddAutoMapper(cfg => { }, typeof(ServiceRegistration).Assembly);
 
         // Register service layer
         services.AddScoped<IRestaurantService, RestaurantService>();
