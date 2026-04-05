@@ -183,11 +183,19 @@ public class AuthService : IAuthService
     {
         var exsistingUser = await _userRepository.FindByEmailAsync(dto.Email);
         if(exsistingUser!=null) return new AuthRequestDto(){Success=false,Message="Email already registered"};
+        
+        // Validate role: only Customer and DeliveryAgent can self-register
+        if (!Enum.TryParse<UserRole>(dto.Role, out var parsedRole))
+            parsedRole = UserRole.Customer;
+        
+        if (parsedRole == UserRole.RestaurantPartner || parsedRole == UserRole.Admin)
+            return new AuthRequestDto(){Success=false,Message="This role requires admin approval. Please contact support."};
+        
         var user = new User()
         {
             FullName = dto.FullName,
             Email = dto.Email,
-            Role = Enum.TryParse<UserRole>(dto.Role, out var role) ? role : UserRole.Customer,
+            Role = parsedRole,
             IsActive = true,
             IsEmailVerified = false,
             CreatedAt = DateTime.UtcNow
