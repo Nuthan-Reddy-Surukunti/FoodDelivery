@@ -80,25 +80,83 @@ public class AuthService : IAuthService
         if (!passwordValid)
             return new AuthRequestDto { Success = false, Message = "Invalid credentials." };
 
-        // For RestaurantPartner and Admin roles: generate OTP instead of JWT
-        if (user.Role == UserRole.RestaurantPartner || user.Role == UserRole.Admin)
+        // For Admin: Always allow direct JWT (pre-verified on creation)
+        if (user.Role == UserRole.Admin)
         {
-            // Verify email first
-            if (!user.IsEmailVerified)
-                return new AuthRequestDto { Success = false, Message = "Please verify your email first." };
+            var adminRefreshToken = GenerateSecureToken();
+            await _refreshTokenRepository.AddAsync(new RefreshToken
+            {
+                UserId = user.Id,
+                Token = adminRefreshToken,
+                ExpiredAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false,
+                CreatedAt = DateTime.UtcNow
+            });
 
-            // Generate and send OTP
-            var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(user.Id);
-            if (!otpGenerated)
-                return new AuthRequestDto { Success = false, Message = "Failed to generate OTP. Please try again." };
+            var adminJwtToken = _jwtTokenGenerator.GenerateToken(user);
 
-            return new AuthRequestDto()
+            return new AuthRequestDto
             {
                 Success = true,
-                Message = "OTP sent to your email. Please verify to continue.",
-                IsTwoFactorRequired = true,
-                UserId = user.Id.ToString()
+                Message = "Login successful.",
+                Token = adminJwtToken,
+                RefreshToken = adminRefreshToken,
+                Role = user.Role.ToString()
             };
+        }
+
+        // For RestaurantPartner: Check AccountStatus
+        if (user.Role == UserRole.RestaurantPartner)
+        {
+            // If still pending (shouldn't reach here, but safety check)
+            if (user.AccountStatus == AccountStatus.Pending)
+                return new AuthRequestDto { Success = false, Message = "Your account is pending admin approval." };
+
+            // If approved but not yet verified by OTP
+            if (user.AccountStatus == AccountStatus.Active)
+            {
+                // Check email is verified
+                if (!user.IsEmailVerified)
+                    return new AuthRequestDto { Success = false, Message = "Please verify your email first." };
+
+                // Generate and send OTP for first-time verification
+                var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(user.Id);
+                if (!otpGenerated)
+                    return new AuthRequestDto { Success = false, Message = "Failed to generate OTP. Please try again." };
+
+                return new AuthRequestDto()
+                {
+                    Success = true,
+                    Message = "OTP sent to your email. Please verify to continue.",
+                    IsTwoFactorRequired = true,
+                    UserId = user.Id.ToString()
+                };
+            }
+
+            // If already verified by OTP (AccountStatus = Verified)
+            if (user.AccountStatus == AccountStatus.Verified)
+            {
+                var partnerRefreshToken = GenerateSecureToken();
+                await _refreshTokenRepository.AddAsync(new RefreshToken
+                {
+                    UserId = user.Id,
+                    Token = partnerRefreshToken,
+                    ExpiredAt = DateTime.UtcNow.AddDays(7),
+                    IsRevoked = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                var partnerJwtToken = _jwtTokenGenerator.GenerateToken(user);
+
+                return new AuthRequestDto
+                {
+                    Success = true,
+                    Message = "Login successful.",
+                    Token = partnerJwtToken,
+                    RefreshToken = partnerRefreshToken,
+                    Role = user.Role.ToString()
+                };
+            }
         }
 
         // For Customer/DeliveryAgent: check email verification
