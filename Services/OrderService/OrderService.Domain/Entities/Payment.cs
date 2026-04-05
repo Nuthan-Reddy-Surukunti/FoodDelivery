@@ -2,6 +2,7 @@ namespace OrderService.Domain.Entities;
 
 using OrderService.Domain.Common;
 using OrderService.Domain.Enums;
+using OrderService.Domain.Exceptions;
 using OrderService.Domain.ValueObjects;
 
 public class Payment : BaseEntity
@@ -36,14 +37,9 @@ public class Payment : BaseEntity
 
     public void MarkAsSuccess(string transactionId, DateTime atUtc)
     {
-        if (PaymentStatus == PaymentStatus.Success)
-        {
-            return;
-        }
-
         if (PaymentStatus != PaymentStatus.Pending)
         {
-            throw new InvalidOperationException("Only pending payments can be marked as success.");
+            throw new PaymentAlreadyProcessedException(Id);
         }
 
         if (string.IsNullOrWhiteSpace(transactionId))
@@ -59,14 +55,9 @@ public class Payment : BaseEntity
 
     public void MarkAsFailed(string reason, DateTime atUtc)
     {
-        if (PaymentStatus == PaymentStatus.Success)
-        {
-            throw new InvalidOperationException("A successful payment cannot be marked as failed.");
-        }
-
         if (PaymentStatus != PaymentStatus.Pending)
         {
-            throw new InvalidOperationException("Only pending payments can be marked as failed.");
+            throw new PaymentAlreadyProcessedException(Id);
         }
 
         FailureReason = string.IsNullOrWhiteSpace(reason) ? "Unknown failure" : reason.Trim();
@@ -79,17 +70,17 @@ public class Payment : BaseEntity
     {
         if (PaymentStatus != PaymentStatus.Success)
         {
-            throw new InvalidOperationException("Refund can only be initiated for successful payments.");
+            throw new PaymentException("Refund can only be initiated for successful payments.");
         }
 
         if (!refundAmount.Currency.Equals(Amount.Currency, StringComparison.OrdinalIgnoreCase))
         {
-            throw new InvalidOperationException("Refund currency must match payment currency.");
+            throw new PaymentException("Refund currency must match payment currency.");
         }
 
         if (refundAmount.Amount <= 0 || refundAmount.Amount > Amount.Amount)
         {
-            throw new InvalidOperationException("Refund amount must be positive and cannot exceed original payment amount.");
+            throw new InvalidRefundAmountException(refundAmount.Amount, Amount.Amount);
         }
 
         RefundedAmount = refundAmount;
@@ -102,7 +93,7 @@ public class Payment : BaseEntity
     {
         if (PaymentStatus != PaymentStatus.RefundInitiated)
         {
-            throw new InvalidOperationException("Refund must be initiated before completion.");
+            throw new PaymentException("Refund must be initiated before completion.");
         }
 
         PaymentStatus = PaymentStatus.Refunded;

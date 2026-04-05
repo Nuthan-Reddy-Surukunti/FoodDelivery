@@ -3,6 +3,7 @@ namespace OrderService.Domain.Entities;
 using OrderService.Domain.Common;
 using OrderService.Domain.Constants;
 using OrderService.Domain.Enums;
+using OrderService.Domain.Exceptions;
 using OrderService.Domain.ValueObjects;
 
 public class Order : BaseEntity
@@ -63,7 +64,7 @@ public class Order : BaseEntity
 
         if (existingItem is not null)
         {
-            throw new InvalidOperationException("Duplicate menu item entries are not allowed in order. Merge quantities before finalization.");
+            throw new OrderException("Duplicate menu item entries are not allowed in order. Merge quantities before finalization.");
         }
 
         _orderItems.Add(new OrderItem(Id, menuItemId, quantity, unitPriceSnapshot, customizationNotes));
@@ -82,9 +83,14 @@ public class Order : BaseEntity
 
     public void StartCheckout(Address deliveryAddress, DateTime atUtc)
     {
+        if (deliveryAddress is null)
+        {
+            throw new InsufficientAddressDataException();
+        }
+
         if (_orderItems.Count == 0)
         {
-            throw new InvalidOperationException("Cannot start checkout for an empty order.");
+            throw new OrderException("Cannot start checkout for an empty order.");
         }
 
         DeliveryAddress = deliveryAddress;
@@ -171,7 +177,7 @@ public class Order : BaseEntity
     {
         if (!CanCustomerCancel(atUtc))
         {
-            throw new InvalidOperationException("Customer cancellation is not allowed in the current state.");
+            throw new OrderCancellationNotAllowedException(OrderStatus);
         }
 
         MoveToNextStatus(OrderStatus.CancelRequestedByCustomer, atUtc);
@@ -298,7 +304,7 @@ public class Order : BaseEntity
     {
         if (!OrderStatusTransitionPolicy.CanTransition(OrderStatus, nextStatus))
         {
-            throw new InvalidOperationException($"Invalid order status transition from {OrderStatus} to {nextStatus}.");
+            throw new InvalidOrderStatusTransitionException(OrderStatus, nextStatus);
         }
 
         OrderStatus = nextStatus;
@@ -332,7 +338,7 @@ public class Order : BaseEntity
     {
         if (OrderStatus is not OrderStatus.DraftCart and not OrderStatus.CheckoutStarted)
         {
-            throw new InvalidOperationException("Order items cannot be changed after payment flow begins.");
+            throw new OrderException("Order items cannot be changed after payment flow begins.");
         }
     }
 

@@ -3,6 +3,7 @@ namespace OrderService.Domain.Entities;
 using OrderService.Domain.Common;
 using OrderService.Domain.Constants;
 using OrderService.Domain.Enums;
+using OrderService.Domain.Exceptions;
 using OrderService.Domain.ValueObjects;
 
 public class Cart : BaseEntity
@@ -44,7 +45,7 @@ public class Cart : BaseEntity
 
         if (IsMixedCart(itemRestaurantId))
         {
-            throw new InvalidOperationException("Cannot add item from a different restaurant to this cart.");
+            throw new MixedCartException(RestaurantId, itemRestaurantId);
         }
 
         var normalizedNotes = string.IsNullOrWhiteSpace(customizationNotes) ? null : customizationNotes.Trim();
@@ -111,7 +112,7 @@ public class Cart : BaseEntity
     {
         if (Status != CartStatus.Active)
         {
-            throw new InvalidOperationException("Only active carts can be modified.");
+            throw new CartException("Only active carts can be modified.");
         }
     }
 
