@@ -1,5 +1,6 @@
 using System;
 using AuthService.Domain.Entities;
+using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
 using AuthService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -35,10 +36,12 @@ public class UserRepository : IUserRepository
             UserName = user.Email,
             Email = user.Email,
             FullName = user.FullName,
+            UserName_Custom = user.UserName,
             Role = user.Role.ToString(),
             IsActive = true,
             IsEmailVerified = false,
             IsTwoFactorEnabled = false,
+            AccountStatus = (int)user.AccountStatus,
             CreatedAt = DateTime.UtcNow  
         };
         var result = await _userManager.CreateAsync(appUser,password);
@@ -68,6 +71,15 @@ public class UserRepository : IUserRepository
         return result.Succeeded;
     }
 
+    public async Task<bool> SetAccountStatusAsync(Guid userId, AccountStatus accountStatus)
+    {
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
+        if (appUser == null) return false;
+        appUser.AccountStatus = (int)accountStatus;
+        var result = await _userManager.UpdateAsync(appUser);
+        return result.Succeeded;
+    }
+
     public async Task<bool> SetTwoFactorEnabledAsync(Guid userId, bool enabled)
     {
         var appUser = await _userManager.FindByIdAsync(userId.ToString());
@@ -91,11 +103,16 @@ public class UserRepository : IUserRepository
         {
             Id = Guid.Parse(appUser.Id),
             FullName = appUser.FullName,
+            UserName = appUser.UserName_Custom,
             Email = appUser.Email!,
             Role = Enum.Parse<AuthService.Domain.Enums.UserRole>(appUser.Role),
             IsActive = appUser.IsActive,
             IsEmailVerified = appUser.IsEmailVerified,
             IsTwoFactorVerified = appUser.IsTwoFactorEnabled,
+            AccountStatus = (AuthService.Domain.Enums.AccountStatus)appUser.AccountStatus,
+            ApprovedByAdminId = !string.IsNullOrWhiteSpace(appUser.ApprovedByAdminId) ? Guid.Parse(appUser.ApprovedByAdminId) : null,
+            ApprovedAt = appUser.ApprovedAt,
+            ApprovalNotes = appUser.ApprovalNotes,
             CreatedAt = appUser.CreatedAt
         };
     }

@@ -19,6 +19,8 @@ public class Restaurant : BaseEntity
 
     public CuisineType CuisineType { get; set; }
 
+    public Guid? OwnerId { get; set; }
+
     public decimal Rating { get; set; } = 0;
 
     public decimal? MinOrderValue { get; set; }

@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Linq;
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
@@ -16,6 +17,7 @@ public class AuthService : IAuthService
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IEmailService _emailService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
+    private readonly IOtpService _otpService;
 
     public AuthService(
         IUserRepository userRepository,
@@ -24,7 +26,8 @@ public class AuthService : IAuthService
         ITwoFactorTokenRepository twoFactorTokenRepository,
         IRefreshTokenRepository refreshTokenRepository,
         IEmailService emailService,
-        IJwtTokenGenerator jwtTokenGenerator)
+        IJwtTokenGenerator jwtTokenGenerator,
+        IOtpService otpService)
     {
         _userRepository = userRepository;
         _passwordResetTokenRepository = passwordResetTokenRepository;
@@ -33,6 +36,7 @@ public class AuthService : IAuthService
         _refreshTokenRepository = refreshTokenRepository;
         _emailService = emailService;
         _jwtTokenGenerator = jwtTokenGenerator;
+        _otpService = otpService;
     }
     public async Task<AuthRequestDto> ForgotPasswordAsync(ForgotPasswordDto dto)
     {
@@ -63,15 +67,100 @@ public class AuthService : IAuthService
         var user = await _userRepository.FindByEmailAsync(dto.Email);
 
         if (user == null || !user.IsActive)
-        return new AuthRequestDto(){Success=false,Message="Invalid credentials."};
+            return new AuthRequestDto(){Success=false,Message="Invalid credentials."};
 
-        if (!user.IsEmailVerified)
-            return new AuthRequestDto { Success = false, Message = "Please verify your email first." };
+        // Check account status - pending approval
+        if (user.AccountStatus == AccountStatus.Pending)
+            return new AuthRequestDto { Success = false, Message = "Your account is pending admin approval." };
+        
+        // Check account status - rejected
+        if (user.AccountStatus == AccountStatus.Rejected)
+            return new AuthRequestDto { Success = false, Message = "Your account has been rejected. Please contact support." };
 
         var passwordValid = await _userRepository.CheckPasswordAsync(user.Id, dto.Password);
         if (!passwordValid)
             return new AuthRequestDto { Success = false, Message = "Invalid credentials." };
 
+        // For Admin: Always allow direct JWT (pre-verified on creation)
+        if (user.Role == UserRole.Admin)
+        {
+            var adminRefreshToken = GenerateSecureToken();
+            await _refreshTokenRepository.AddAsync(new RefreshToken
+            {
+                UserId = user.Id,
+                Token = adminRefreshToken,
+                ExpiredAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            var adminJwtToken = _jwtTokenGenerator.GenerateToken(user);
+
+            return new AuthRequestDto
+            {
+                Success = true,
+                Message = "Login successful.",
+                Token = adminJwtToken,
+                RefreshToken = adminRefreshToken,
+                Role = user.Role.ToString()
+            };
+        }
+
+        // For RestaurantPartner: Check AccountStatus
+        if (user.Role == UserRole.RestaurantPartner)
+        {
+            // If still pending (shouldn't reach here, but safety check)
+            if (user.AccountStatus == AccountStatus.Pending)
+                return new AuthRequestDto { Success = false, Message = "Your account is pending admin approval." };
+
+            // If approved but not yet verified by OTP
+            if (user.AccountStatus == AccountStatus.Active)
+            {
+                // Generate and send OTP for first-time verification after admin approval.
+                var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(user.Id);
+                if (!otpGenerated)
+                    return new AuthRequestDto { Success = false, Message = "Unable to send verification OTP. Please try again." };
+
+                return new AuthRequestDto()
+                {
+                    Success = true,
+                    Message = "If an account exists, a verification OTP has been sent to the registered email.",
+                    IsTwoFactorRequired = true,
+                    UserId = user.Id.ToString()
+                };
+            }
+
+            // If already verified by OTP (AccountStatus = Verified)
+            if (user.AccountStatus == AccountStatus.Verified)
+            {
+                var partnerRefreshToken = GenerateSecureToken();
+                await _refreshTokenRepository.AddAsync(new RefreshToken
+                {
+                    UserId = user.Id,
+                    Token = partnerRefreshToken,
+                    ExpiredAt = DateTime.UtcNow.AddDays(7),
+                    IsRevoked = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                var partnerJwtToken = _jwtTokenGenerator.GenerateToken(user);
+
+                return new AuthRequestDto
+                {
+                    Success = true,
+                    Message = "Login successful.",
+                    Token = partnerJwtToken,
+                    RefreshToken = partnerRefreshToken,
+                    Role = user.Role.ToString()
+                };
+            }
+        }
+
+        // For Customer/DeliveryAgent: check email verification
+        if (!user.IsEmailVerified)
+            return new AuthRequestDto { Success = false, Message = "Please verify your email first." };
+
+        // For Customer/DeliveryAgent with two-factor enabled
         if (user.IsTwoFactorVerified)
         {
             var otp = GenerateOtp();
@@ -183,34 +272,71 @@ public class AuthService : IAuthService
     {
         var exsistingUser = await _userRepository.FindByEmailAsync(dto.Email);
         if(exsistingUser!=null) return new AuthRequestDto(){Success=false,Message="Email already registered"};
+        
+        // Parse role: default to Customer if not specified
+        if (!Enum.TryParse<UserRole>(dto.Role, out var parsedRole))
+            parsedRole = UserRole.Customer;
+        
+        // Determine account status based on role
+        var accountStatus = AccountStatus.Verified; // Default for Customer/DeliveryAgent
+        if (parsedRole == UserRole.RestaurantPartner || parsedRole == UserRole.Admin)
+        {
+            // RestaurantPartner and Admin roles require admin approval
+            accountStatus = AccountStatus.Pending;
+        }
+        
         var user = new User()
         {
             FullName = dto.FullName,
             Email = dto.Email,
-            Role = Enum.TryParse<UserRole>(dto.Role, out var role) ? role : UserRole.Customer,
+            Role = parsedRole,
             IsActive = true,
-            IsEmailVerified = false,
+            IsEmailVerified = parsedRole != UserRole.RestaurantPartner && parsedRole != UserRole.Admin, // Email not verified for pending users
+            AccountStatus = accountStatus,
             CreatedAt = DateTime.UtcNow
         };
+        
         var created = await _userRepository.CreateUserAsync(user,dto.Password);
         if(!created) return new AuthRequestDto { Success = false, Message = "Registration failed." };
 
         var newUser = await _userRepository.FindByEmailAsync(dto.Email);
 
-        var otp = GenerateOtp();
-        var verificationToken = new EmailVerificationToken()
+        // For Customer/DeliveryAgent: send email verification OTP
+        // For RestaurantPartner/Admin: send admin notification (not OTP yet)
+        if (parsedRole == UserRole.RestaurantPartner || parsedRole == UserRole.Admin)
         {
-            UserId = newUser!.Id,
-            OTP = otp,
-            ExpiredAt = DateTime.UtcNow.AddMinutes(10),
-            IsUsed = false,
-            CreatedAt = DateTime.UtcNow
-        };
-        await _emailVerificationTokenRepository.AddAsync(verificationToken);
-        await _emailService.SendEmailAsync(newUser.Email,"Verify Your Email", $"Your OTP is: {otp}");
+            await _emailService.SendEmailAsync(
+                "admin@fooddelivery.com", // Send to admin email for approval
+                $"New {parsedRole} Registration Pending Approval",
+                $"A new {parsedRole} account has been created and is awaiting your approval.\n\n" +
+                $"User: {user.FullName}\n" +
+                $"Email: {user.Email}\n" +
+                $"Role: {parsedRole}\n\n" +
+                $"Please review and approve or reject this account.");
+            
+            return new AuthRequestDto()
+            {
+                Success = true,
+                Message = $"Registration successful! Your {parsedRole} account is pending admin approval. You will receive an email once approved."
+            };
+        }
+        else
+        {
+            // Send email verification OTP for Customer/DeliveryAgent
+            var otp = GenerateOtp();
+            var verificationToken = new EmailVerificationToken()
+            {
+                UserId = newUser!.Id,
+                OTP = otp,
+                ExpiredAt = DateTime.UtcNow.AddMinutes(10),
+                IsUsed = false,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _emailVerificationTokenRepository.AddAsync(verificationToken);
+            await _emailService.SendEmailAsync(newUser.Email, "Verify Your Email", $"Your OTP is: {otp}");
 
-        return new AuthRequestDto(){Success=true,Message="Registration successfull. Please verifiy your email"};
-
+            return new AuthRequestDto(){Success=true,Message="Registration successful. Please verify your email"};
+        }
     }
 
     public async Task<AuthRequestDto> ResetPasswordAsync(ResetPasswordRequestDto dto)
@@ -280,11 +406,25 @@ public class AuthService : IAuthService
         if (user == null)
             return new AuthRequestDto { Success = false, Message = "User not found." };
 
+        var normalizedOtp = new string((dto.Otp ?? string.Empty).Where(char.IsDigit).ToArray());
+        if (normalizedOtp.Length != 6)
+            return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
+
+        // Backward-compatible path: approved RestaurantPartner first-login OTP can be verified by email.
+        if (user.Role == UserRole.RestaurantPartner && user.AccountStatus == AccountStatus.Active)
+        {
+            var partnerOtpVerified = await _otpService.VerifyOtpAsync(user.Id, normalizedOtp);
+            if (!partnerOtpVerified)
+                return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
+
+            return new AuthRequestDto { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." };
+        }
+
         var token = await _emailVerificationTokenRepository.GetLatestByUserIdAsync(user.Id);
         if (token == null || token.IsUsed || token.ExpiredAt < DateTime.UtcNow)
             return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
 
-        if (token.OTP != dto.Otp)
+        if (token.OTP != normalizedOtp)
             return new AuthRequestDto { Success = false, Message = "Incorrect OTP." };
         
         await _emailVerificationTokenRepository.MarkUsedAsync(token.Id);
@@ -345,6 +485,48 @@ public class AuthService : IAuthService
             return new AuthRequestDto { Success = false, Message = "Failed to delete user." };
 
         return new AuthRequestDto { Success = true, Message = "User account deleted successfully." };
+    }
+
+    public async Task<AuthRequestDto> CreateAdminAsync(CreateAdminDto dto)
+    {
+        // Validate password match
+        if (dto.Password != dto.ConfirmPassword)
+            return new AuthRequestDto { Success = false, Message = "Passwords do not match." };
+
+        // Check if email already exists
+        var existingUser = await _userRepository.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+            return new AuthRequestDto { Success = false, Message = "Email already registered." };
+
+        // Create admin user with Verified status (fully approved)
+        var admin = new User()
+        {
+            FullName = dto.FullName,
+            Email = dto.Email,
+            Role = UserRole.Admin,
+            IsActive = true,
+            IsEmailVerified = true, // Admin email is pre-verified
+            AccountStatus = AccountStatus.Verified, // Admin is fully verified
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var created = await _userRepository.CreateUserAsync(admin, dto.Password);
+        if (!created)
+            return new AuthRequestDto { Success = false, Message = "Failed to create admin account." };
+
+        // Send admin creation confirmation email
+        await _emailService.SendEmailAsync(
+            dto.Email,
+            "Admin Account Created",
+            $"Your admin account has been successfully created.\n\n" +
+            $"Email: {dto.Email}\n\n" +
+            $"You can now log in and approve pending RestaurantPartner accounts.");
+
+        return new AuthRequestDto
+        {
+            Success = true,
+            Message = "Admin account created successfully."
+        };
     }
 
     private static string GenerateOtp()

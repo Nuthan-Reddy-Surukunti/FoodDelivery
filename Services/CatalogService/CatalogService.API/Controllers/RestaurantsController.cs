@@ -1,4 +1,5 @@
 using AutoMapper;
+using CatalogService.API.Utilities;
 using CatalogService.Application.DTOs.Restaurant;
 using CatalogService.Application.Interfaces;
 using CatalogService.Application.Exceptions;
@@ -22,7 +23,7 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all restaurants (paginated)
+    /// Get all restaurants (paginated) - active only by default, all for Admin
     /// </summary>
     [HttpGet]
     public async Task<ActionResult> GetAll(
@@ -31,7 +32,8 @@ public class RestaurantsController : ControllerBase
     {
         try
         {
-            var result = await _restaurantService.GetAllRestaurantsAsync(pageNumber, pageSize);
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.GetAllRestaurantsAsync(pageNumber, pageSize, userRole);
             return Ok(result);
         }
         catch (Exception ex)
@@ -41,14 +43,15 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get restaurant by ID
+    /// Get restaurant by ID - active only by default, all for Admin
     /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<RestaurantDetailDto>> GetById([FromRoute] Guid id)
     {
         try
         {
-            var result = await _restaurantService.GetRestaurantByIdAsync(id);
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.GetRestaurantByIdAsync(id, userRole);
             return Ok(result);
         }
         catch (RestaurantNotFoundException)
@@ -69,7 +72,9 @@ public class RestaurantsController : ControllerBase
 
         try
         {
-            var result = await _restaurantService.CreateRestaurantAsync(dto);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.CreateRestaurantAsync(dto, userId, userRole);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
         catch (InvalidRestaurantDataException ex)
@@ -95,7 +100,9 @@ public class RestaurantsController : ControllerBase
 
         try
         {
-            var result = await _restaurantService.UpdateRestaurantAsync(dto);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.UpdateRestaurantAsync(id, dto, userId, userRole);
             return Ok(result);
         }
         catch (RestaurantNotFoundException)
@@ -117,7 +124,9 @@ public class RestaurantsController : ControllerBase
     {
         try
         {
-            await _restaurantService.DeleteRestaurantAsync(id);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            await _restaurantService.DeleteRestaurantAsync(id, userId, userRole);
             return NoContent();
         }
         catch (RestaurantNotFoundException)

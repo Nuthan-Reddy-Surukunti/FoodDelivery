@@ -6,17 +6,17 @@ using CatalogService.Application.DTOs.Restaurant;
 
 public interface IRestaurantService
 {
-    Task<PaginatedResultDto<RestaurantDto>> GetAllRestaurantsAsync(int pageNumber, int pageSize);
+    Task<PaginatedResultDto<RestaurantDto>> GetAllRestaurantsAsync(int pageNumber, int pageSize, string? userRole = null);
 
-    Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id);
+    Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id, string? userRole = null);
 
-    Task<RestaurantDetailDto> CreateRestaurantAsync(CreateRestaurantDto dto);
+    Task<RestaurantDetailDto> CreateRestaurantAsync(CreateRestaurantDto dto, Guid userId, string userRole);
 
-    Task<RestaurantDetailDto> UpdateRestaurantAsync(UpdateRestaurantDto dto);
+    Task<RestaurantDetailDto> UpdateRestaurantAsync(Guid id, UpdateRestaurantDto dto, Guid userId, string userRole);
 
-    Task<bool> DeleteRestaurantAsync(Guid id);
+    Task<bool> DeleteRestaurantAsync(Guid id, Guid userId, string userRole);
 
-    Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber, int pageSize);
+    Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber, int pageSize, string? userRole = null);
 
     Task<RestaurantDetailDto> ToggleRestaurantStatusAsync(Guid id);
 

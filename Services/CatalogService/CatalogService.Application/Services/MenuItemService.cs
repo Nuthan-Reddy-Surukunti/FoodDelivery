@@ -22,22 +22,45 @@ public class MenuItemService : IMenuItemService
         _mapper = mapper;
     }
 
-    public async Task<MenuItemDto> GetMenuItemByIdAsync(Guid id)
+    public async Task<MenuItemDto> GetMenuItemByIdAsync(Guid id, string? userRole = null)
     {
         var menuItem = await _repository.GetByIdAsync(id);
         if (menuItem == null)
             throw new MenuItemNotFoundException(id);
 
+        // Check if parent restaurant is active and item is available unless user is Admin
+        if (userRole != "Admin")
+        {
+            var restaurant = await _restaurantRepository.GetByIdAsync(menuItem.RestaurantId);
+            if (restaurant == null || restaurant.Status != RestaurantStatus.Active)
+                throw new MenuItemNotFoundException(id);
+            
+            if (menuItem.AvailabilityStatus != ItemAvailabilityStatus.Available)
+                throw new MenuItemNotFoundException(id);
+        }
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10, string? userRole = null)
     {
         var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
         if (restaurant == null)
             throw new RestaurantNotFoundException(restaurantId);
 
+        // Check if restaurant is active unless user is Admin
+        if (userRole != "Admin" && restaurant.Status != RestaurantStatus.Active)
+            throw new RestaurantNotFoundException(restaurantId);
+
         var (items, totalCount) = await _repository.GetByRestaurantAsync(restaurantId, pageNumber, pageSize);
+        
+        // Filter by available status unless user is Admin
+        if (userRole != "Admin")
+        {
+            items = items.Where(i => i.AvailabilityStatus == ItemAvailabilityStatus.Available).ToList();
+            totalCount = items.Count;
+        }
+        
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
         
         return new PaginatedResultDto<MenuItemDto>
@@ -139,10 +162,19 @@ public class MenuItemService : IMenuItemService
         };
     }
 
-    public async Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto)
+    public async Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto, Guid userId, string userRole)
     {
         if (dto.Price <= 0)
             throw new InvalidMenuItemPriceException(0m);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(dto.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(dto.RestaurantId);
+        
+        // RestaurantPartner can only create items for their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only create items for your own restaurant.");
 
         var menuItem = _mapper.Map<MenuItem>(dto);
         var createdItem = await _repository.CreateAsync(menuItem);
@@ -150,7 +182,7 @@ public class MenuItemService : IMenuItemService
         return _mapper.Map<MenuItemDto>(createdItem);
     }
 
-    public async Task<MenuItemDto> UpdateMenuItemAsync(UpdateMenuItemDto dto)
+    public async Task<MenuItemDto> UpdateMenuItemAsync(UpdateMenuItemDto dto, Guid userId, string userRole)
     {
         if (dto.Id == Guid.Empty)
             throw new InvalidRestaurantDataException("MenuItem ID is required.");
@@ -161,6 +193,15 @@ public class MenuItemService : IMenuItemService
         var menuItem = await _repository.GetByIdAsync(dto.Id);
         if (menuItem == null)
             throw new MenuItemNotFoundException(dto.Id);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(menuItem.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(menuItem.RestaurantId);
+        
+        // RestaurantPartner can only update items in their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only update items in your own restaurant.");
 
         _mapper.Map(dto, menuItem);
         var updatedItem = await _repository.UpdateAsync(menuItem);
@@ -168,11 +209,20 @@ public class MenuItemService : IMenuItemService
         return _mapper.Map<MenuItemDto>(updatedItem);
     }
 
-    public async Task<bool> DeleteMenuItemAsync(Guid id)
+    public async Task<bool> DeleteMenuItemAsync(Guid id, Guid userId, string userRole)
     {
         var menuItem = await _repository.GetByIdAsync(id);
         if (menuItem == null)
             throw new MenuItemNotFoundException(id);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(menuItem.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(menuItem.RestaurantId);
+        
+        // RestaurantPartner can only delete items from their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only delete items from your own restaurant.");
 
         return await _repository.DeleteAsync(id);
     }

@@ -19,9 +19,17 @@ public class RestaurantService : IRestaurantService
         _mapper = mapper;
     }
 
-    public async Task<PaginatedResultDto<RestaurantDto>> GetAllRestaurantsAsync(int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginatedResultDto<RestaurantDto>> GetAllRestaurantsAsync(int pageNumber = 1, int pageSize = 10, string? userRole = null)
     {
         var (restaurants, totalCount) = await _repository.GetAllAsync(pageNumber, pageSize);
+        
+        // Filter by active status unless user is Admin
+        if (userRole != "Admin")
+        {
+            restaurants = restaurants.Where(r => r.Status == Domain.Enums.RestaurantStatus.Active).ToList();
+            totalCount = restaurants.Count;
+        }
+        
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(restaurants);
         
         return new PaginatedResultDto<RestaurantDto>
@@ -33,34 +41,47 @@ public class RestaurantService : IRestaurantService
         };
     }
 
-    public async Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id)
+    public async Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id, string? userRole = null)
     {
         var restaurant = await _repository.GetByIdAsync(id);
         if (restaurant == null)
             throw new RestaurantNotFoundException(id);
 
+        // Check if restaurant is active unless user is Admin
+        if (userRole != "Admin" && restaurant.Status != Domain.Enums.RestaurantStatus.Active)
+            throw new RestaurantNotFoundException(id);
+
         return _mapper.Map<RestaurantDetailDto>(restaurant);
     }
 
-    public async Task<RestaurantDetailDto> CreateRestaurantAsync(CreateRestaurantDto dto)
+    public async Task<RestaurantDetailDto> CreateRestaurantAsync(CreateRestaurantDto dto, Guid userId, string userRole)
     {
         if (string.IsNullOrWhiteSpace(dto.Name))
             throw new InvalidRestaurantDataException("Restaurant name is required.");
+        
+        // Only Admin can create restaurants
+        if (userRole != "Admin")
+            throw new UnauthorizedAccessException("Only administrators can create restaurants.");
 
         var restaurant = _mapper.Map<Restaurant>(dto);
+        restaurant.OwnerId = null; // Admin creates, but doesn't own
         var createdRestaurant = await _repository.CreateAsync(restaurant);
         
         return _mapper.Map<RestaurantDetailDto>(createdRestaurant);
     }
 
-    public async Task<RestaurantDetailDto> UpdateRestaurantAsync(UpdateRestaurantDto dto)
+    public async Task<RestaurantDetailDto> UpdateRestaurantAsync(Guid id, UpdateRestaurantDto dto, Guid userId, string userRole)
     {
-        if (dto.Id == Guid.Empty)
+        if (id == Guid.Empty)
             throw new InvalidRestaurantDataException("Restaurant ID is required.");
 
-        var restaurant = await _repository.GetByIdAsync(dto.Id);
+        var restaurant = await _repository.GetByIdAsync(id);
         if (restaurant == null)
-            throw new RestaurantNotFoundException(dto.Id);
+            throw new RestaurantNotFoundException(id);
+        
+        // Ownership validation: RestaurantPartner can only update own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only update your own restaurant.");
 
         _mapper.Map(dto, restaurant);
         var updatedRestaurant = await _repository.UpdateAsync(restaurant);
@@ -68,19 +89,34 @@ public class RestaurantService : IRestaurantService
         return _mapper.Map<RestaurantDetailDto>(updatedRestaurant);
     }
 
-    public async Task<bool> DeleteRestaurantAsync(Guid id)
+    public async Task<bool> DeleteRestaurantAsync(Guid id, Guid userId, string userRole)
     {
         var restaurant = await _repository.GetByIdAsync(id);
         if (restaurant == null)
             throw new RestaurantNotFoundException(id);
+        
+        // Only Admin can delete
+        if (userRole != "Admin")
+            throw new UnauthorizedAccessException("Only administrators can delete restaurants.");
+        
+        // Ownership validation for RestaurantPartner
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only delete your own restaurant.");
 
         return await _repository.DeleteAsync(id);
     }
 
-    public async Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber = 1, int pageSize = 10, string? userRole = null)
     {
         var (restaurants, totalCount) = await _repository.GetAllAsync(pageNumber, pageSize);
         var filteredRestaurants = restaurants.Where(r => r.City == city).ToList();
+        
+        // Filter by active status unless user is Admin
+        if (userRole != "Admin")
+        {
+            filteredRestaurants = filteredRestaurants.Where(r => r.Status == Domain.Enums.RestaurantStatus.Active).ToList();
+        }
+        
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(filteredRestaurants);
         
         return new PaginatedResultDto<RestaurantDto>

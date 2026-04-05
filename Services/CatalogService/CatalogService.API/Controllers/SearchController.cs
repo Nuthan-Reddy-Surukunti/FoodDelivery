@@ -71,10 +71,10 @@ public class SearchController : ControllerBase
     }
 
     /// <summary>
-    /// Search menu items by name across restaurants
+    /// Search restaurants by name
     /// </summary>
-    [HttpGet("items")]
-    public async Task<ActionResult> SearchMenuItems(
+    [HttpGet("restaurantsByName")]
+    public async Task<ActionResult> SearchRestaurantsByName(
         [FromQuery] string? query,
         [FromQuery] Guid restaurantId,
         [FromQuery] int pageNumber = 1,
