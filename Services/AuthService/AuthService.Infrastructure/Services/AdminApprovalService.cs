@@ -63,7 +63,7 @@ public class AdminApprovalService : IAdminApprovalService
                 await _emailService.SendEmailAsync(
                     user.Email,
                     "Your Account Has Been Approved",
-                    $"Congratulations! Your {user.Role} account has been approved. You can now log in and set up your profile.");
+                    $"Congratulations! Your {user.Role} account has been approved. On your first login, a verification OTP will be sent to your email. Verify that OTP to complete activation and log in.");
 
                 return true;
             }

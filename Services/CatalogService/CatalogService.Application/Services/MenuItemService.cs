@@ -22,22 +22,45 @@ public class MenuItemService : IMenuItemService
         _mapper = mapper;
     }
 
-    public async Task<MenuItemDto> GetMenuItemByIdAsync(Guid id)
+    public async Task<MenuItemDto> GetMenuItemByIdAsync(Guid id, string? userRole = null)
     {
         var menuItem = await _repository.GetByIdAsync(id);
         if (menuItem == null)
             throw new MenuItemNotFoundException(id);
 
+        // Check if parent restaurant is active and item is available unless user is Admin
+        if (userRole != "Admin")
+        {
+            var restaurant = await _restaurantRepository.GetByIdAsync(menuItem.RestaurantId);
+            if (restaurant == null || restaurant.Status != RestaurantStatus.Active)
+                throw new MenuItemNotFoundException(id);
+            
+            if (menuItem.AvailabilityStatus != ItemAvailabilityStatus.Available)
+                throw new MenuItemNotFoundException(id);
+        }
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10, string? userRole = null)
     {
         var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
         if (restaurant == null)
             throw new RestaurantNotFoundException(restaurantId);
 
+        // Check if restaurant is active unless user is Admin
+        if (userRole != "Admin" && restaurant.Status != RestaurantStatus.Active)
+            throw new RestaurantNotFoundException(restaurantId);
+
         var (items, totalCount) = await _repository.GetByRestaurantAsync(restaurantId, pageNumber, pageSize);
+        
+        // Filter by available status unless user is Admin
+        if (userRole != "Admin")
+        {
+            items = items.Where(i => i.AvailabilityStatus == ItemAvailabilityStatus.Available).ToList();
+            totalCount = items.Count;
+        }
+        
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
         
         return new PaginatedResultDto<MenuItemDto>

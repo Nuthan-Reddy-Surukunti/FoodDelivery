@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Linq;
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
@@ -115,19 +116,15 @@ public class AuthService : IAuthService
             // If approved but not yet verified by OTP
             if (user.AccountStatus == AccountStatus.Active)
             {
-                // Check email is verified
-                if (!user.IsEmailVerified)
-                    return new AuthRequestDto { Success = false, Message = "Please verify your email first." };
-
-                // Generate and send OTP for first-time verification
+                // Generate and send OTP for first-time verification after admin approval.
                 var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(user.Id);
                 if (!otpGenerated)
-                    return new AuthRequestDto { Success = false, Message = "Failed to generate OTP. Please try again." };
+                    return new AuthRequestDto { Success = false, Message = "Unable to send verification OTP. Please try again." };
 
                 return new AuthRequestDto()
                 {
                     Success = true,
-                    Message = "OTP sent to your email. Please verify to continue.",
+                    Message = "If an account exists, a verification OTP has been sent to the registered email.",
                     IsTwoFactorRequired = true,
                     UserId = user.Id.ToString()
                 };
@@ -409,11 +406,25 @@ public class AuthService : IAuthService
         if (user == null)
             return new AuthRequestDto { Success = false, Message = "User not found." };
 
+        var normalizedOtp = new string((dto.Otp ?? string.Empty).Where(char.IsDigit).ToArray());
+        if (normalizedOtp.Length != 6)
+            return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
+
+        // Backward-compatible path: approved RestaurantPartner first-login OTP can be verified by email.
+        if (user.Role == UserRole.RestaurantPartner && user.AccountStatus == AccountStatus.Active)
+        {
+            var partnerOtpVerified = await _otpService.VerifyOtpAsync(user.Id, normalizedOtp);
+            if (!partnerOtpVerified)
+                return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
+
+            return new AuthRequestDto { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." };
+        }
+
         var token = await _emailVerificationTokenRepository.GetLatestByUserIdAsync(user.Id);
         if (token == null || token.IsUsed || token.ExpiredAt < DateTime.UtcNow)
             return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
 
-        if (token.OTP != dto.Otp)
+        if (token.OTP != normalizedOtp)
             return new AuthRequestDto { Success = false, Message = "Incorrect OTP." };
         
         await _emailVerificationTokenRepository.MarkUsedAsync(token.Id);

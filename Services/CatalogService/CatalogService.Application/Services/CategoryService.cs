@@ -20,21 +20,33 @@ public class CategoryService : ICategoryService
         _mapper = mapper;
     }
 
-    public async Task<List<CategoryDto>> GetCategoriesByRestaurantAsync(Guid restaurantId)
+    public async Task<List<CategoryDto>> GetCategoriesByRestaurantAsync(Guid restaurantId, string? userRole = null)
     {
         var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
         if (restaurant == null)
+            throw new RestaurantNotFoundException(restaurantId);
+
+        // Check if restaurant is active unless user is Admin
+        if (userRole != "Admin" && restaurant.Status != CatalogService.Domain.Enums.RestaurantStatus.Active)
             throw new RestaurantNotFoundException(restaurantId);
 
         var categories = await _repository.GetByRestaurantAsync(restaurantId);
         return _mapper.Map<List<CategoryDto>>(categories);
     }
 
-    public async Task<CategoryDto> GetCategoryByIdAsync(Guid id)
+    public async Task<CategoryDto> GetCategoryByIdAsync(Guid id, string? userRole = null)
     {
         var category = await _repository.GetByIdAsync(id);
         if (category == null)
             throw new CategoryNotFoundException(id);
+
+        // Check if parent restaurant is active unless user is Admin
+        if (userRole != "Admin")
+        {
+            var restaurant = await _restaurantRepository.GetByIdAsync(category.RestaurantId);
+            if (restaurant == null || restaurant.Status != CatalogService.Domain.Enums.RestaurantStatus.Active)
+                throw new CategoryNotFoundException(id);
+        }
 
         return _mapper.Map<CategoryDto>(category);
     }

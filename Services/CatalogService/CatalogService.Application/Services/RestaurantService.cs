@@ -19,9 +19,17 @@ public class RestaurantService : IRestaurantService
         _mapper = mapper;
     }
 
-    public async Task<PaginatedResultDto<RestaurantDto>> GetAllRestaurantsAsync(int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginatedResultDto<RestaurantDto>> GetAllRestaurantsAsync(int pageNumber = 1, int pageSize = 10, string? userRole = null)
     {
         var (restaurants, totalCount) = await _repository.GetAllAsync(pageNumber, pageSize);
+        
+        // Filter by active status unless user is Admin
+        if (userRole != "Admin")
+        {
+            restaurants = restaurants.Where(r => r.Status == Domain.Enums.RestaurantStatus.Active).ToList();
+            totalCount = restaurants.Count;
+        }
+        
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(restaurants);
         
         return new PaginatedResultDto<RestaurantDto>
@@ -33,10 +41,14 @@ public class RestaurantService : IRestaurantService
         };
     }
 
-    public async Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id)
+    public async Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id, string? userRole = null)
     {
         var restaurant = await _repository.GetByIdAsync(id);
         if (restaurant == null)
+            throw new RestaurantNotFoundException(id);
+
+        // Check if restaurant is active unless user is Admin
+        if (userRole != "Admin" && restaurant.Status != Domain.Enums.RestaurantStatus.Active)
             throw new RestaurantNotFoundException(id);
 
         return _mapper.Map<RestaurantDetailDto>(restaurant);
@@ -94,10 +106,17 @@ public class RestaurantService : IRestaurantService
         return await _repository.DeleteAsync(id);
     }
 
-    public async Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber = 1, int pageSize = 10)
+    public async Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber = 1, int pageSize = 10, string? userRole = null)
     {
         var (restaurants, totalCount) = await _repository.GetAllAsync(pageNumber, pageSize);
         var filteredRestaurants = restaurants.Where(r => r.City == city).ToList();
+        
+        // Filter by active status unless user is Admin
+        if (userRole != "Admin")
+        {
+            filteredRestaurants = filteredRestaurants.Where(r => r.Status == Domain.Enums.RestaurantStatus.Active).ToList();
+        }
+        
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(filteredRestaurants);
         
         return new PaginatedResultDto<RestaurantDto>

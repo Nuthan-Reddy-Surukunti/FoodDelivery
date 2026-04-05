@@ -29,6 +29,9 @@ namespace AuthService.API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Verify email OTP for registration; also supports approved RestaurantPartner first-login OTP by email.
+        /// </summary>
         [HttpPost("verify-email")]
         public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailOtpRequestDto dto)
         {
@@ -114,16 +117,19 @@ namespace AuthService.API.Controllers
         }
 
         /// <summary>
-        /// Verify OTP for RestaurantPartner/Admin login
+        /// Verify OTP for RestaurantPartner first-login verification
         /// </summary>
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp([FromBody] OtpVerificationDto dto)
         {
+            if (dto.UserId == Guid.Empty || string.IsNullOrWhiteSpace(dto.OtpCode))
+                return BadRequest(new { Success = false, Message = "userId and otpCode are required." });
+
             var verified = await _otpService.VerifyOtpAsync(dto.UserId, dto.OtpCode);
             if (!verified)
                 return BadRequest(new { Success = false, Message = "Invalid or expired OTP." });
 
-            return Ok(new { Success = true, Message = "OTP verified successfully. You can now use the login token or proceed to authenticate." });
+            return Ok(new { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." });
         }
 
         /// <summary>

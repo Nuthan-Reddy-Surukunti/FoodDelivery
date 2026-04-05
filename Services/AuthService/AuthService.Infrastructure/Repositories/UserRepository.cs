@@ -1,5 +1,6 @@
 using System;
 using AuthService.Domain.Entities;
+using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
 using AuthService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -66,6 +67,15 @@ public class UserRepository : IUserRepository
         var appUser = await _userManager.FindByIdAsync(userId.ToString());
         if (appUser == null) return false;
         appUser.IsEmailVerified = true;
+        var result = await _userManager.UpdateAsync(appUser);
+        return result.Succeeded;
+    }
+
+    public async Task<bool> SetAccountStatusAsync(Guid userId, AccountStatus accountStatus)
+    {
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
+        if (appUser == null) return false;
+        appUser.AccountStatus = (int)accountStatus;
         var result = await _userManager.UpdateAsync(appUser);
         return result.Succeeded;
     }

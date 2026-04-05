@@ -6,9 +6,9 @@ using CatalogService.Domain.Enums;
 namespace CatalogService.Application.Interfaces;
 public interface IMenuItemService
 {
-    Task<MenuItemDto> GetMenuItemByIdAsync(Guid id);
+    Task<MenuItemDto> GetMenuItemByIdAsync(Guid id, string? userRole = null);
 
-    Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber, int pageSize);
+    Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber, int pageSize, string? userRole = null);
 
     Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByCategoryAsync(Guid categoryId, int pageNumber, int pageSize);
 

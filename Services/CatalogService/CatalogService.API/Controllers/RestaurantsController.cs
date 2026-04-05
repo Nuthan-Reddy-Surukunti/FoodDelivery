@@ -23,7 +23,7 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all restaurants (paginated)
+    /// Get all restaurants (paginated) - active only by default, all for Admin
     /// </summary>
     [HttpGet]
     public async Task<ActionResult> GetAll(
@@ -32,7 +32,8 @@ public class RestaurantsController : ControllerBase
     {
         try
         {
-            var result = await _restaurantService.GetAllRestaurantsAsync(pageNumber, pageSize);
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.GetAllRestaurantsAsync(pageNumber, pageSize, userRole);
             return Ok(result);
         }
         catch (Exception ex)
@@ -42,14 +43,15 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get restaurant by ID
+    /// Get restaurant by ID - active only by default, all for Admin
     /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<RestaurantDetailDto>> GetById([FromRoute] Guid id)
     {
         try
         {
-            var result = await _restaurantService.GetRestaurantByIdAsync(id);
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.GetRestaurantByIdAsync(id, userRole);
             return Ok(result);
         }
         catch (RestaurantNotFoundException)

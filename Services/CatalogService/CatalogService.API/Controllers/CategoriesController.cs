@@ -23,15 +23,20 @@ public class CategoriesController : ControllerBase
     }
 
     /// <summary>
-    /// Get all categories for a restaurant (ordered by display order)
+    /// Get all categories for a restaurant (ordered by display order) - active restaurant only
     /// </summary>
     [HttpGet("/api/restaurants/{restaurantId}/categories")]
     public async Task<ActionResult> GetByRestaurant([FromRoute] Guid restaurantId)
     {
         try
         {
-            var result = await _categoryService.GetCategoriesByRestaurantAsync(restaurantId);
+            var userRole = this.GetCurrentUserRole();
+            var result = await _categoryService.GetCategoriesByRestaurantAsync(restaurantId, userRole);
             return Ok(result);
+        }
+        catch (RestaurantNotFoundException)
+        {
+            return NotFound();
         }
         catch (Exception ex)
         {
@@ -40,14 +45,15 @@ public class CategoriesController : ControllerBase
     }
 
     /// <summary>
-    /// Get category by ID
+    /// Get category by ID - active restaurant only
     /// </summary>
     [HttpGet("{id}")]
     public async Task<ActionResult<CategoryDto>> GetById([FromRoute] Guid id)
     {
         try
         {
-            var result = await _categoryService.GetCategoryByIdAsync(id);
+            var userRole = this.GetCurrentUserRole();
+            var result = await _categoryService.GetCategoryByIdAsync(id, userRole);
             return Ok(result);
         }
         catch (CategoryNotFoundException)
@@ -57,10 +63,10 @@ public class CategoriesController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new category (Admin only)
+    /// Create a new category (Admin or RestaurantPartner - own restaurant only)
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,RestaurantPartner")]
     public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryDto dto)
     {
         if (!ModelState.IsValid)
@@ -81,13 +87,17 @@ public class CategoriesController : ControllerBase
         {
             return BadRequest(ex.Message);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+        }
     }
 
     /// <summary>
-    /// Update an existing category (Admin only)
+    /// Update an existing category (Admin or RestaurantPartner - own restaurant only)
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,RestaurantPartner")]
     public async Task<ActionResult<CategoryDto>> Update(
         [FromRoute] Guid id,
         [FromBody] UpdateCategoryDto dto)
@@ -113,13 +123,17 @@ public class CategoriesController : ControllerBase
         {
             return Conflict(ex.Message);
         }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+        }
     }
 
     /// <summary>
-    /// Delete a category (Admin only)
+    /// Delete a category (Admin or RestaurantPartner - own restaurant only)
     /// </summary>
     [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,RestaurantPartner")]
     public async Task<IActionResult> Delete([FromRoute] Guid id)
     {
         try
@@ -132,6 +146,14 @@ public class CategoriesController : ControllerBase
         catch (CategoryNotFoundException)
         {
             return NotFound();
+        }
+        catch (InvalidRestaurantDataException ex)
+        {
+            return BadRequest(ex.Message);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
         }
     }
 }
