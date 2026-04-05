@@ -1,3 +1,4 @@
+using OrderService.API.Middleware;
 using OrderService.Application;
 using OrderService.Infrastructure;
 
@@ -5,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
+builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
@@ -16,6 +18,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.MapControllers();
 
 app.Run();
