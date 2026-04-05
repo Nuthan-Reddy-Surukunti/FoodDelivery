@@ -62,3 +62,4 @@ public class AuthDbContext : IdentityDbContext<ApplicationUser>
         // In production, use a more secure approach or create an admin setup endpoint
         // Admin will be created via migrations or database initialization
     }
+}
