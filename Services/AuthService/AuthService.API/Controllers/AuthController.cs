@@ -172,5 +172,29 @@ namespace AuthService.API.Controllers
 
             return Ok(new { Success = true, Message = "User rejected." });
         }
+
+        /// <summary>
+        /// Create a new admin account (first admin can be created without auth, subsequent admins require Admin authorization)
+        /// </summary>
+        [HttpPost("admin/create")]
+        public async Task<IActionResult> CreateAdmin([FromBody] CreateAdminDto dto)
+        {
+            // Validation
+            if (string.IsNullOrWhiteSpace(dto.FullName) || string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
+                return BadRequest(new { Success = false, Message = "FullName, Email, and Password are required." });
+
+            if (!dto.Email.Contains("@"))
+                return BadRequest(new { Success = false, Message = "Invalid email format." });
+
+            if (dto.Password.Length < 8)
+                return BadRequest(new { Success = false, Message = "Password must be at least 8 characters." });
+
+            var result = await _authService.CreateAdminAsync(dto);
+            
+            if (!result.Success)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
     }
 }

@@ -418,6 +418,48 @@ public class AuthService : IAuthService
         return new AuthRequestDto { Success = true, Message = "User account deleted successfully." };
     }
 
+    public async Task<AuthRequestDto> CreateAdminAsync(CreateAdminDto dto)
+    {
+        // Validate password match
+        if (dto.Password != dto.ConfirmPassword)
+            return new AuthRequestDto { Success = false, Message = "Passwords do not match." };
+
+        // Check if email already exists
+        var existingUser = await _userRepository.FindByEmailAsync(dto.Email);
+        if (existingUser != null)
+            return new AuthRequestDto { Success = false, Message = "Email already registered." };
+
+        // Create admin user with Verified status (fully approved)
+        var admin = new User()
+        {
+            FullName = dto.FullName,
+            Email = dto.Email,
+            Role = UserRole.Admin,
+            IsActive = true,
+            IsEmailVerified = true, // Admin email is pre-verified
+            AccountStatus = AccountStatus.Verified, // Admin is fully verified
+            CreatedAt = DateTime.UtcNow
+        };
+
+        var created = await _userRepository.CreateUserAsync(admin, dto.Password);
+        if (!created)
+            return new AuthRequestDto { Success = false, Message = "Failed to create admin account." };
+
+        // Send admin creation confirmation email
+        await _emailService.SendEmailAsync(
+            dto.Email,
+            "Admin Account Created",
+            $"Your admin account has been successfully created.\n\n" +
+            $"Email: {dto.Email}\n\n" +
+            $"You can now log in and approve pending RestaurantPartner accounts.");
+
+        return new AuthRequestDto
+        {
+            Success = true,
+            Message = "Admin account created successfully."
+        };
+    }
+
     private static string GenerateOtp()
     {
         var random = new Random();

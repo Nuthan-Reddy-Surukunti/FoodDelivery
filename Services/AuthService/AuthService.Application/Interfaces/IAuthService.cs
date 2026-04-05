@@ -15,5 +15,6 @@ public interface IAuthService
     Task<AuthRequestDto> ResetPasswordAsync(ResetPasswordRequestDto request);
     Task<AuthRequestDto> ToggleTwoFactorAsync(string userId, ToggleTwoFactorRequestDto request);
     Task<AuthRequestDto> DeleteUserAsync(DeleteUserRequestDto request);
+    Task<AuthRequestDto> CreateAdminAsync(CreateAdminDto request);
 }
 
