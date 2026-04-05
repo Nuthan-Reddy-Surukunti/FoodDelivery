@@ -16,6 +16,8 @@ public class Cart : BaseEntity
 
     public CartStatus Status { get; private set; } = CartStatus.Active;
 
+    public CouponCode? AppliedCoupon { get; private set; }
+
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
 
     public Cart(Guid userId, Guid restaurantId)
@@ -106,6 +108,27 @@ public class Cart : BaseEntity
     {
         Status = CartStatus.Abandoned;
         Touch();
+    }
+
+    public void ApplyCoupon(CouponCode couponCode)
+    {
+        EnsureCartIsActive();
+        AppliedCoupon = couponCode ?? throw new ArgumentNullException(nameof(couponCode));
+        Touch();
+    }
+
+    public void RemoveCoupon()
+    {
+        if (AppliedCoupon is not null)
+        {
+            AppliedCoupon = null;
+            Touch();
+        }
+    }
+
+    public CouponCode? GetAppliedCoupon()
+    {
+        return AppliedCoupon;
     }
 
     private void EnsureCartIsActive()
