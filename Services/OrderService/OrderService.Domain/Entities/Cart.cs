@@ -20,6 +20,10 @@ public class Cart : BaseEntity
 
     public IReadOnlyCollection<CartItem> Items => _items.AsReadOnly();
 
+    private Cart()
+    {
+    }
+
     public Cart(Guid userId, Guid restaurantId)
     {
         if (userId == Guid.Empty)

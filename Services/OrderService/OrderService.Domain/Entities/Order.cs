@@ -38,6 +38,10 @@ public class Order : BaseEntity
 
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
 
+    private Order()
+    {
+    }
+
     public Order(Guid userId, Guid restaurantId)
     {
         if (userId == Guid.Empty)

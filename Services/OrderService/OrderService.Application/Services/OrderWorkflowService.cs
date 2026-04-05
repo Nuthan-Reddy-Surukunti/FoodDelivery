@@ -117,11 +117,24 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new ValidationException("Quantity must be greater than 0. Use RemoveCartItemAsync to remove items.");
         }
 
-        // Note: In a production scenario, you'd have a method in ICartRepository to find a cart by item ID
-        // For now, this demonstrates the pattern - the actual implementation would depend on repository design
-        // This method would need infrastructure support to locate which cart contains a specific item
-        // Placeholder for now - requires repository enhancement
-        throw new NotImplementedException("UpdateCartItemAsync requires repository support for item-to-cart lookup. This will be implemented in Infrastructure phase.");
+        var cartItem = await _cartRepository.GetCartItemAsync(request.CartItemId, cancellationToken)
+                      ?? throw new ResourceNotFoundException("CartItem", request.CartItemId);
+
+        var cart = await _cartRepository.GetByIdAsync(cartItem.CartId, cancellationToken)
+                   ?? throw new ResourceNotFoundException("Cart", cartItem.CartId);
+
+        if (cart.UserId != request.UserId)
+        {
+            throw new ValidationException("Cart item does not belong to the requested user.");
+        }
+
+        var existingCartItem = cart.Items.FirstOrDefault(item => item.Id == request.CartItemId)
+                              ?? throw new ResourceNotFoundException("CartItem", request.CartItemId);
+
+        existingCartItem.UpdateQuantity(request.NewQuantity);
+        await _cartRepository.UpdateAsync(cart, cancellationToken);
+
+        return MapCart(cart);
     }
 
     public async Task<CartDto> ApplyCouponAsync(ApplyCouponRequestDto request, CancellationToken cancellationToken = default)

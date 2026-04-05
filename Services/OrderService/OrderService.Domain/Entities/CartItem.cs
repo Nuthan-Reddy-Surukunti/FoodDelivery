@@ -16,6 +16,10 @@ public class CartItem : BaseEntity
 
     public decimal Subtotal => decimal.Round(Quantity * PriceSnapshot, 2, MidpointRounding.AwayFromZero);
 
+    private CartItem()
+    {
+    }
+
     public CartItem(Guid cartId, Guid menuItemId, int quantity, decimal priceSnapshot, string? customizationNotes = null)
     {
         if (cartId == Guid.Empty)

@@ -23,6 +23,11 @@ public class Payment : BaseEntity
 
     public Money? RefundedAmount { get; private set; }
 
+    private Payment()
+    {
+        Amount = Money.Zero();
+    }
+
     public Payment(Guid orderId, Money amount, PaymentMethod paymentMethod)
     {
         if (orderId == Guid.Empty)

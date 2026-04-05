@@ -17,6 +17,10 @@ public class DeliveryAssignment : BaseEntity
 
     public DeliveryStatus CurrentStatus { get; private set; } = DeliveryStatus.PickupPending;
 
+    private DeliveryAssignment()
+    {
+    }
+
     public DeliveryAssignment(Guid orderId, Guid deliveryAgentId, DateTime assignedAt)
     {
         if (orderId == Guid.Empty)

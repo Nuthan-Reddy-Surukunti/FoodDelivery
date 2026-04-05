@@ -16,6 +16,10 @@ public class OrderItem : BaseEntity
 
     public decimal Subtotal => CalculateSubtotal();
 
+    private OrderItem()
+    {
+    }
+
     public OrderItem(Guid orderId, Guid menuItemId, int quantity, decimal unitPriceSnapshot, string? customizationNotes = null)
     {
         if (orderId == Guid.Empty)
