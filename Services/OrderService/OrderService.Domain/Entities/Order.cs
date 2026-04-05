@@ -189,6 +189,13 @@ public class Order : BaseEntity
         Touch();
     }
 
+    public void ForceCancelByAdmin(DateTime atUtc)
+    {
+        OrderStatus = OrderStatus.CancelRequestedByCustomer;
+        CancelRequestedAt = atUtc;
+        Touch();
+    }
+
     public void InitiateRefund(DateTime atUtc)
     {
         if (!IsRefundEligible())

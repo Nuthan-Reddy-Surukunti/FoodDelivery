@@ -473,6 +473,25 @@ public class OrderWorkflowService : IOrderWorkflowService
         return MapOrder(order);
     }
 
+    public async Task<OrderDetailDto> CancelOrderAsync(Guid orderId, bool forceByAdmin = false, CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken)
+                    ?? throw new ResourceNotFoundException("Order", orderId);
+
+        var now = DateTime.UtcNow;
+        if (forceByAdmin)
+        {
+            order.ForceCancelByAdmin(now);
+        }
+        else
+        {
+            order.RequestCancellation(now);
+        }
+
+        await _orderRepository.UpdateAsync(order, cancellationToken);
+        return MapOrder(order);
+    }
+
     public async Task<OrderDetailDto> GetOrderByIdAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
         var order = await _orderRepository.GetOrderByIdWithItemsAsync(orderId, cancellationToken)
