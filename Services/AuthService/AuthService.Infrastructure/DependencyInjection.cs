@@ -32,10 +32,13 @@ public static class DependencyInjection
         services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<ITwoFactorTokenRepository, TwoFactorTokenRepository>();
+        services.AddScoped<IOtpTokenRepository, OtpTokenRepository>();
 
         // Register Services
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IEmailService, SmtpEmailService>();
+        services.AddScoped<IOtpService, OtpService>();
+        services.AddScoped<IAdminApprovalService, AdminApprovalService>();
 
         return services;
     }

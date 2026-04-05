@@ -10,10 +10,14 @@ namespace AuthService.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+        private readonly IOtpService _otpService;
+        private readonly IAdminApprovalService _adminApprovalService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IOtpService otpService, IAdminApprovalService adminApprovalService)
         {
             _authService = authService;
+            _otpService = otpService;
+            _adminApprovalService = adminApprovalService;
         }
 
         [HttpPost("register")]
@@ -107,6 +111,66 @@ namespace AuthService.API.Controllers
             if (!result.Success)
                 return BadRequest(result);
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Verify OTP for RestaurantPartner/Admin login
+        /// </summary>
+        [HttpPost("verify-otp")]
+        public async Task<IActionResult> VerifyOtp([FromBody] OtpVerificationDto dto)
+        {
+            var verified = await _otpService.VerifyOtpAsync(dto.UserId, dto.OtpCode);
+            if (!verified)
+                return BadRequest(new { Success = false, Message = "Invalid or expired OTP." });
+
+            return Ok(new { Success = true, Message = "OTP verified successfully. You can now use the login token or proceed to authenticate." });
+        }
+
+        /// <summary>
+        /// Get all pending RestaurantPartner/Admin approvals (Admin only)
+        /// </summary>
+        [HttpGet("admin/pending-approvals")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetPendingApprovals()
+        {
+            var approvals = await _adminApprovalService.GetPendingApprovalsAsync();
+            return Ok(new { Success = true, Data = approvals });
+        }
+
+        /// <summary>
+        /// Approve a pending RestaurantPartner registration (Admin only)
+        /// </summary>
+        [HttpPost("admin/approve-user")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ApproveUser([FromBody] AdminApprovalDto dto)
+        {
+            var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(adminId))
+                return Unauthorized();
+
+            var approved = await _adminApprovalService.ApproveUserAsync(dto.UserId, Guid.Parse(adminId), dto.Notes);
+            if (!approved)
+                return BadRequest(new { Success = false, Message = "Failed to approve user." });
+
+            return Ok(new { Success = true, Message = "User approved successfully." });
+        }
+
+        /// <summary>
+        /// Reject a pending RestaurantPartner registration (Admin only)
+        /// </summary>
+        [HttpPost("admin/reject-user")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RejectUser([FromBody] AdminRejectionDto dto)
+        {
+            var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(adminId))
+                return Unauthorized();
+
+            var rejected = await _adminApprovalService.RejectUserAsync(dto.UserId, Guid.Parse(adminId), dto.Reason);
+            if (!rejected)
+                return BadRequest(new { Success = false, Message = "Failed to reject user." });
+
+            return Ok(new { Success = true, Message = "User rejected." });
         }
     }
 }
