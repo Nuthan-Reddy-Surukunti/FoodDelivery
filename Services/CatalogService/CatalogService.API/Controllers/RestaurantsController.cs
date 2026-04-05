@@ -1,4 +1,5 @@
 using AutoMapper;
+using CatalogService.API.Utilities;
 using CatalogService.Application.DTOs.Restaurant;
 using CatalogService.Application.Interfaces;
 using CatalogService.Application.Exceptions;
@@ -69,7 +70,9 @@ public class RestaurantsController : ControllerBase
 
         try
         {
-            var result = await _restaurantService.CreateRestaurantAsync(dto);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.CreateRestaurantAsync(dto, userId, userRole);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
         catch (InvalidRestaurantDataException ex)
@@ -95,7 +98,9 @@ public class RestaurantsController : ControllerBase
 
         try
         {
-            var result = await _restaurantService.UpdateRestaurantAsync(dto);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.UpdateRestaurantAsync(id, dto, userId, userRole);
             return Ok(result);
         }
         catch (RestaurantNotFoundException)
@@ -117,7 +122,9 @@ public class RestaurantsController : ControllerBase
     {
         try
         {
-            await _restaurantService.DeleteRestaurantAsync(id);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            await _restaurantService.DeleteRestaurantAsync(id, userId, userRole);
             return NoContent();
         }
         catch (RestaurantNotFoundException)

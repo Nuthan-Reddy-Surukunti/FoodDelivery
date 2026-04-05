@@ -39,11 +39,15 @@ public class CategoryService : ICategoryService
         return _mapper.Map<CategoryDto>(category);
     }
 
-    public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto dto)
+    public async Task<CategoryDto> CreateCategoryAsync(CreateCategoryDto dto, Guid userId, string userRole)
     {
         var restaurant = await _restaurantRepository.GetByIdAsync(dto.RestaurantId);
         if (restaurant == null)
             throw new RestaurantNotFoundException(dto.RestaurantId);
+        
+        // RestaurantPartner can only create categories for their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only create categories for your own restaurant.");
 
         // Check for duplicate category name
         var existingCategory = await _repository.GetByNameAsync(dto.Name, dto.RestaurantId);
@@ -56,7 +60,7 @@ public class CategoryService : ICategoryService
         return _mapper.Map<CategoryDto>(createdCategory);
     }
 
-    public async Task<CategoryDto> UpdateCategoryAsync(UpdateCategoryDto dto)
+    public async Task<CategoryDto> UpdateCategoryAsync(UpdateCategoryDto dto, Guid userId, string userRole)
     {
         if (dto.Id == Guid.Empty)
             throw new InvalidRestaurantDataException("Category ID is required.");
@@ -64,6 +68,15 @@ public class CategoryService : ICategoryService
         var category = await _repository.GetByIdAsync(dto.Id);
         if (category == null)
             throw new CategoryNotFoundException(dto.Id);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(category.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(category.RestaurantId);
+        
+        // RestaurantPartner can only update categories in their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only update categories in your own restaurant.");
 
         // Check for duplicate if name is being updated
         if (!string.IsNullOrEmpty(dto.Name) && category.Name != dto.Name)
@@ -79,11 +92,20 @@ public class CategoryService : ICategoryService
         return _mapper.Map<CategoryDto>(updatedCategory);
     }
 
-    public async Task<bool> DeleteCategoryAsync(Guid id)
+    public async Task<bool> DeleteCategoryAsync(Guid id, Guid userId, string userRole)
     {
         var category = await _repository.GetByIdAsync(id);
         if (category == null)
             throw new CategoryNotFoundException(id);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(category.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(category.RestaurantId);
+        
+        // RestaurantPartner can only delete categories from their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only delete categories from your own restaurant.");
 
         // Check if category has menu items
         if (category.MenuItems.Count > 0)

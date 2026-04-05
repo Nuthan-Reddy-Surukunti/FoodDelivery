@@ -22,11 +22,11 @@ public interface IMenuItemService
 
     Task<PaginatedResultDto<MenuItemDto>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice, int pageNumber, int pageSize);
 
-    Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto);
+    Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto, Guid userId, string userRole);
 
-    Task<MenuItemDto> UpdateMenuItemAsync(UpdateMenuItemDto dto);
+    Task<MenuItemDto> UpdateMenuItemAsync(UpdateMenuItemDto dto, Guid userId, string userRole);
 
-    Task<bool> DeleteMenuItemAsync(Guid id);
+    Task<bool> DeleteMenuItemAsync(Guid id, Guid userId, string userRole);
 
     Task<MenuItemDto> ToggleAvailabilityAsync(Guid id, ItemAvailabilityStatus status);
 }

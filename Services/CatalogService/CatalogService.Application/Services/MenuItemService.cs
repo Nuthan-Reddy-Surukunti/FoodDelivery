@@ -139,10 +139,19 @@ public class MenuItemService : IMenuItemService
         };
     }
 
-    public async Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto)
+    public async Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto, Guid userId, string userRole)
     {
         if (dto.Price <= 0)
             throw new InvalidMenuItemPriceException(0m);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(dto.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(dto.RestaurantId);
+        
+        // RestaurantPartner can only create items for their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only create items for your own restaurant.");
 
         var menuItem = _mapper.Map<MenuItem>(dto);
         var createdItem = await _repository.CreateAsync(menuItem);
@@ -150,7 +159,7 @@ public class MenuItemService : IMenuItemService
         return _mapper.Map<MenuItemDto>(createdItem);
     }
 
-    public async Task<MenuItemDto> UpdateMenuItemAsync(UpdateMenuItemDto dto)
+    public async Task<MenuItemDto> UpdateMenuItemAsync(UpdateMenuItemDto dto, Guid userId, string userRole)
     {
         if (dto.Id == Guid.Empty)
             throw new InvalidRestaurantDataException("MenuItem ID is required.");
@@ -161,6 +170,15 @@ public class MenuItemService : IMenuItemService
         var menuItem = await _repository.GetByIdAsync(dto.Id);
         if (menuItem == null)
             throw new MenuItemNotFoundException(dto.Id);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(menuItem.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(menuItem.RestaurantId);
+        
+        // RestaurantPartner can only update items in their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only update items in your own restaurant.");
 
         _mapper.Map(dto, menuItem);
         var updatedItem = await _repository.UpdateAsync(menuItem);
@@ -168,11 +186,20 @@ public class MenuItemService : IMenuItemService
         return _mapper.Map<MenuItemDto>(updatedItem);
     }
 
-    public async Task<bool> DeleteMenuItemAsync(Guid id)
+    public async Task<bool> DeleteMenuItemAsync(Guid id, Guid userId, string userRole)
     {
         var menuItem = await _repository.GetByIdAsync(id);
         if (menuItem == null)
             throw new MenuItemNotFoundException(id);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(menuItem.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(menuItem.RestaurantId);
+        
+        // RestaurantPartner can only delete items from their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only delete items from your own restaurant.");
 
         return await _repository.DeleteAsync(id);
     }

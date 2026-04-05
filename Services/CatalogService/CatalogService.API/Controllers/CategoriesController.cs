@@ -1,4 +1,5 @@
 using AutoMapper;
+using CatalogService.API.Utilities;
 using CatalogService.Application.DTOs.Category;
 using CatalogService.Application.Interfaces;
 using CatalogService.Application.Exceptions;
@@ -67,7 +68,9 @@ public class CategoriesController : ControllerBase
 
         try
         {
-            var result = await _categoryService.CreateCategoryAsync(dto);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _categoryService.CreateCategoryAsync(dto, userId, userRole);
             return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
         }
         catch (DuplicateCategoryException ex)
@@ -97,7 +100,9 @@ public class CategoriesController : ControllerBase
 
         try
         {
-            var result = await _categoryService.UpdateCategoryAsync(dto);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _categoryService.UpdateCategoryAsync(dto, userId, userRole);
             return Ok(result);
         }
         catch (CategoryNotFoundException)
@@ -119,7 +124,9 @@ public class CategoriesController : ControllerBase
     {
         try
         {
-            await _categoryService.DeleteCategoryAsync(id);
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            await _categoryService.DeleteCategoryAsync(id, userId, userRole);
             return NoContent();
         }
         catch (CategoryNotFoundException)
