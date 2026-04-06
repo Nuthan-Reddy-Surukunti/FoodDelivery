@@ -13,6 +13,11 @@ public sealed class ReportMetrics
     public DateTime StartDate { get; }
     public DateTime EndDate { get; }
 
+    private ReportMetrics()
+    {
+        TotalRevenue = null!;
+    }
+
     private ReportMetrics(
         int totalOrders,
         Money totalRevenue,
