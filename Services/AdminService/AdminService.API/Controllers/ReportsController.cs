@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using AdminService.Application.Services;
 using AdminService.Application.DTOs.Requests;
 
@@ -6,6 +7,7 @@ namespace AdminService.API.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize(Roles = "Admin")]
 public class ReportsController : ControllerBase
 {
     private readonly ReportService _reportService;
