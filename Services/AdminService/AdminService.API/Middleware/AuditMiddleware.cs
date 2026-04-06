@@ -11,20 +11,18 @@ namespace AdminService.API.Middleware
     public class AuditMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly IAuditService _auditService;
 
-        public AuditMiddleware(RequestDelegate next, IAuditService auditService)
+        public AuditMiddleware(RequestDelegate next)
         {
             _next = next;
-            _auditService = auditService;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, IAuditService auditService)
         {
             // Only audit admin actions (POST, PUT, DELETE on admin endpoints)
             if (ShouldAudit(context))
             {
-                await AuditRequest(context);
+                await AuditRequest(context, auditService);
             }
 
             await _next(context);
@@ -50,7 +48,7 @@ namespace AdminService.API.Middleware
             return true;
         }
 
-        private async Task AuditRequest(HttpContext context)
+        private async Task AuditRequest(HttpContext context, IAuditService auditService)
         {
             var user = context.User;
             if (!user.Identity?.IsAuthenticated == true)
@@ -80,7 +78,7 @@ namespace AdminService.API.Middleware
 
             try
             {
-                await _auditService.LogActionAsync(
+                await auditService.LogActionAsync(
                     userId.Value,
                     userName,
                     action,
