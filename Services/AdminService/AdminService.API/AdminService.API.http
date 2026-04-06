@@ -1,6 +1,238 @@
 @AdminService.API_HostAddress = http://localhost:5174
+@restaurantId = 00000000-0000-0000-0000-000000000001
+@orderId = 00000000-0000-0000-0000-000000000002
+@menuItemId = 00000000-0000-0000-0000-000000000003
+@token = YOUR_JWT_TOKEN_HERE
 
-GET {{AdminService.API_HostAddress}}/weatherforecast/
+### ─── Dashboard ───────────────────────────────────────────────────────────────
+
+### Get dashboard KPIs
+GET {{AdminService.API_HostAddress}}/api/dashboard
 Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get approval queue
+GET {{AdminService.API_HostAddress}}/api/dashboard/approval-queue
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### ─── Restaurants ─────────────────────────────────────────────────────────────
+
+### Get all restaurants (paginated, optional status filter)
+GET {{AdminService.API_HostAddress}}/api/restaurants?page=1&pageSize=10&status=Pending
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get restaurant by ID
+GET {{AdminService.API_HostAddress}}/api/restaurants/{{restaurantId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get restaurants by owner
+GET {{AdminService.API_HostAddress}}/api/restaurants/owner/{{restaurantId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get pending restaurant approvals
+GET {{AdminService.API_HostAddress}}/api/restaurants/pending-approvals
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Approve restaurant
+POST {{AdminService.API_HostAddress}}/api/restaurants/{{restaurantId}}/approve
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "approvalNotes": "Verified documents and location"
+}
+
+###
+
+### Reject restaurant
+POST {{AdminService.API_HostAddress}}/api/restaurants/{{restaurantId}}/reject
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "rejectionReason": "Incomplete documentation"
+}
+
+###
+
+### Delete (soft) restaurant
+DELETE {{AdminService.API_HostAddress}}/api/restaurants/{{restaurantId}}
+Authorization: Bearer {{token}}
+
+###
+
+### ─── Menu Items ──────────────────────────────────────────────────────────────
+
+### Get all menu items (paginated, optional filters)
+GET {{AdminService.API_HostAddress}}/api/catalog/menu-items?page=1&pageSize=10&restaurantId={{restaurantId}}&approvalStatus=Pending
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get menu item by ID
+GET {{AdminService.API_HostAddress}}/api/catalog/menu-items/{{menuItemId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get pending menu item approvals
+GET {{AdminService.API_HostAddress}}/api/catalog/menu-items/pending-approvals
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get menu items by restaurant
+GET {{AdminService.API_HostAddress}}/api/catalog/menu-items/by-restaurant/{{restaurantId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get active menu items by restaurant (public)
+GET {{AdminService.API_HostAddress}}/api/catalog/menu-items/active/by-restaurant/{{restaurantId}}
+Accept: application/json
+
+###
+
+### Create menu item
+POST {{AdminService.API_HostAddress}}/api/catalog/menu-items
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "restaurantId": "{{restaurantId}}",
+  "name": "Chicken Biryani",
+  "description": "Aromatic basmati rice with tender chicken",
+  "price": 250.00,
+  "currency": "INR",
+  "categoryId": "main-course"
+}
+
+###
+
+### Update menu item
+PUT {{AdminService.API_HostAddress}}/api/catalog/menu-items/{{menuItemId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Special Chicken Biryani",
+  "description": "Upgraded recipe with extra spices",
+  "price": 280.00,
+  "currency": "INR"
+}
+
+###
+
+### Approve menu item
+POST {{AdminService.API_HostAddress}}/api/catalog/menu-items/{{menuItemId}}/approve
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "approvalNotes": "Content verified, safe for listing"
+}
+
+###
+
+### Reject menu item
+POST {{AdminService.API_HostAddress}}/api/catalog/menu-items/{{menuItemId}}/reject
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "rejectionReason": "Image does not match description"
+}
+
+###
+
+### Activate menu item
+PUT {{AdminService.API_HostAddress}}/api/catalog/menu-items/{{menuItemId}}/activate
+Authorization: Bearer {{token}}
+
+###
+
+### Deactivate menu item
+PUT {{AdminService.API_HostAddress}}/api/catalog/menu-items/{{menuItemId}}/deactivate
+Authorization: Bearer {{token}}
+
+###
+
+### ─── Orders ──────────────────────────────────────────────────────────────────
+
+### Get all orders (paginated, optional status filter)
+GET {{AdminService.API_HostAddress}}/api/orders?page=1&pageSize=10&status=Pending
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get order by ID
+GET {{AdminService.API_HostAddress}}/api/orders/{{orderId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Update order status (admin override)
+PUT {{AdminService.API_HostAddress}}/api/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "newStatus": "Cancelled",
+  "reason": "Customer requested cancellation via support",
+  "refundAmount": 250.00
+}
+
+###
+
+### ─── Reports ─────────────────────────────────────────────────────────────────
+
+### Get user analytics
+GET {{AdminService.API_HostAddress}}/api/reports/users?from=2026-01-01&to=2026-04-01
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get restaurant analytics
+GET {{AdminService.API_HostAddress}}/api/reports/restaurants?from=2026-01-01&to=2026-04-01
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get sales report
+GET {{AdminService.API_HostAddress}}/api/reports/sales?startDate=2026-01-01&endDate=2026-04-01
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get partner performance report
+GET {{AdminService.API_HostAddress}}/api/reports/partners?startDate=2026-01-01&endDate=2026-04-01
+Accept: application/json
+Authorization: Bearer {{token}}
 
 ###

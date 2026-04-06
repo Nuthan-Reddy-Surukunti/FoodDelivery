@@ -38,12 +38,10 @@ public class RestaurantService : IRestaurantService
     {
         RestaurantStatus? restaurantStatus = null;
         if (status != null && Enum.TryParse<RestaurantStatus>(status, out var parsedStatus))
-        {
             restaurantStatus = parsedStatus;
-        }
 
         var (restaurants, totalCount) = await _restaurantRepository.GetPagedAsync(pageNumber, pageSize, restaurantStatus, cancellationToken);
-        
+
         return new PagedResultDto<RestaurantDto>
         {
             Items = _mapper.Map<IEnumerable<RestaurantDto>>(restaurants),
@@ -65,25 +63,26 @@ public class RestaurantService : IRestaurantService
         if (restaurant == null)
             throw new KeyNotFoundException($"Restaurant with ID {id} not found");
 
-        // Get admin user info from HTTP context
         var httpContext = _httpContextAccessor.HttpContext;
         var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                              httpContext?.User?.FindFirst("sub")?.Value;
+                               httpContext?.User?.FindFirst("sub")?.Value;
         var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
-                           httpContext?.User?.FindFirst("name")?.Value ??
-                           httpContext?.User?.Identity?.Name ??
-                           "Unknown Admin";
+                            httpContext?.User?.FindFirst("name")?.Value ??
+                            httpContext?.User?.Identity?.Name ??
+                            "Unknown Admin";
 
-        ((Restaurant)restaurant).Approve(request.ApprovalNotes);
+        restaurant.Status = RestaurantStatus.Approved;
+        restaurant.ApprovedAt = DateTime.UtcNow;
+        restaurant.UpdatedAt = DateTime.UtcNow;
+        restaurant.RejectionReason = null;
+
         await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
 
-        // Log audit trail
         if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
         {
             var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
             var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
-
-            await _auditService.LogApprovalActionAsync("Restaurant", id, "Approved", 
+            await _auditService.LogApprovalActionAsync("Restaurant", id, "Approved",
                 request.ApprovalNotes, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
         }
 
@@ -96,25 +95,26 @@ public class RestaurantService : IRestaurantService
         if (restaurant == null)
             throw new KeyNotFoundException($"Restaurant with ID {id} not found");
 
-        // Get admin user info from HTTP context
         var httpContext = _httpContextAccessor.HttpContext;
         var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                              httpContext?.User?.FindFirst("sub")?.Value;
+                               httpContext?.User?.FindFirst("sub")?.Value;
         var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
-                           httpContext?.User?.FindFirst("name")?.Value ??
-                           httpContext?.User?.Identity?.Name ??
-                           "Unknown Admin";
+                            httpContext?.User?.FindFirst("name")?.Value ??
+                            httpContext?.User?.Identity?.Name ??
+                            "Unknown Admin";
 
-        ((Restaurant)restaurant).Reject(request.RejectionReason);
+        restaurant.Status = RestaurantStatus.Rejected;
+        restaurant.RejectedAt = DateTime.UtcNow;
+        restaurant.UpdatedAt = DateTime.UtcNow;
+        restaurant.RejectionReason = request.RejectionReason;
+
         await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
 
-        // Log audit trail
         if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
         {
             var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
             var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
-
-            await _auditService.LogApprovalActionAsync("Restaurant", id, "Rejected", 
+            await _auditService.LogApprovalActionAsync("Restaurant", id, "Rejected",
                 request.RejectionReason, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
         }
 

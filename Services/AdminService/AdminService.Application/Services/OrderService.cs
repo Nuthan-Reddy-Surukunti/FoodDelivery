@@ -38,12 +38,10 @@ public class OrderService : IOrderService
     {
         OrderStatus? orderStatus = null;
         if (status != null && Enum.TryParse<OrderStatus>(status, out var parsedStatus))
-        {
             orderStatus = parsedStatus;
-        }
 
         var (orders, totalCount) = await _orderRepository.GetPagedAsync(pageNumber, pageSize, orderStatus, cancellationToken);
-        
+
         return new PagedResultDto<OrderDto>
         {
             Items = _mapper.Map<IEnumerable<OrderDto>>(orders),
@@ -59,33 +57,30 @@ public class OrderService : IOrderService
         if (order == null)
             throw new KeyNotFoundException($"Order with ID {orderId} not found");
 
-        // Capture old status for audit logging
         var oldStatus = order.Status;
 
-        // Get admin user info from HTTP context
         var httpContext = _httpContextAccessor.HttpContext;
         var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                              httpContext?.User?.FindFirst("sub")?.Value;
+                               httpContext?.User?.FindFirst("sub")?.Value;
         var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
-                           httpContext?.User?.FindFirst("name")?.Value ??
-                           httpContext?.User?.Identity?.Name ??
-                           "Unknown Admin";
+                            httpContext?.User?.FindFirst("name")?.Value ??
+                            httpContext?.User?.Identity?.Name ??
+                            "Unknown Admin";
 
         var adminUserId = Guid.TryParse(adminUserIdClaim, out var userId) ? userId : Guid.Empty;
 
-        // Update status with admin override
-        order.UpdateStatusWithAdmin(newStatus, reason, adminUserIdClaim ?? "system", refundAmount);
+        order.Status = newStatus;
+        order.UpdatedAt = DateTime.UtcNow;
+        if (newStatus == OrderStatus.Delivered)
+            order.DeliveredAt = DateTime.UtcNow;
 
-        // Save changes
         await _orderRepository.UpdateAsync(order, cancellationToken);
 
-        // Log audit trail
         if (adminUserId != Guid.Empty)
         {
             var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
             var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
-
-            await _auditService.LogStatusChangeAsync(orderId, oldStatus.ToString(), newStatus.ToString(), 
+            await _auditService.LogStatusChangeAsync(orderId, oldStatus.ToString(), newStatus.ToString(),
                 reason, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
         }
 

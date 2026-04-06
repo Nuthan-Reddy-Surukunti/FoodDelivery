@@ -20,27 +20,10 @@ public class AdminServiceDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        // Apply entity configurations
         modelBuilder.ApplyConfiguration(new RestaurantConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
         modelBuilder.ApplyConfiguration(new ReportConfiguration());
         modelBuilder.ApplyConfiguration(new MenuItemConfiguration());
         modelBuilder.ApplyConfiguration(new AuditLogConfiguration());
-    }
-
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        // Clear domain events before saving
-        var restaurantEntities = ChangeTracker.Entries<Restaurant>().Select(e => e.Entity).ToList();
-        var orderEntities = ChangeTracker.Entries<Order>().Select(e => e.Entity).ToList();
-        var reportEntities = ChangeTracker.Entries<Report>().Select(e => e.Entity).ToList();
-        var menuItemEntities = ChangeTracker.Entries<MenuItem>().Select(e => e.Entity).ToList();
-
-        var result = await base.SaveChangesAsync(cancellationToken);
-
-        // Clear domain events after successful save
-
-        return result;
     }
 }

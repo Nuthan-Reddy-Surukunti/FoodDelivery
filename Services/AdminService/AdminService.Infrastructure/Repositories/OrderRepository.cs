@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
-using AdminService.Domain.ValueObjects;
 using AdminService.Infrastructure.Persistence;
 
 namespace AdminService.Infrastructure.Repositories;
@@ -62,11 +61,9 @@ public class OrderRepository : IOrderRepository
     public async Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, OrderStatus? status = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Orders.AsQueryable();
-        
+
         if (status.HasValue)
-        {
             query = query.Where(o => o.Status == status.Value);
-        }
 
         var totalCount = await query.CountAsync(cancellationToken);
         var items = await query
@@ -104,16 +101,9 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders.CountAsync(cancellationToken);
     }
 
-    public async Task<Money?> GetTotalRevenueAsync(CancellationToken cancellationToken = default)
+    public async Task<decimal> GetTotalRevenueAsync(CancellationToken cancellationToken = default)
     {
-        var orders = await _context.Orders.ToListAsync(cancellationToken);
-        if (!orders.Any())
-            return Money.Zero("USD");
-
-        decimal totalAmount = orders.Sum(o => o.TotalAmount.Amount);
-        var firstCurrency = orders.First().TotalAmount.Currency;
-        
-        return Money.Create(totalAmount, firstCurrency);
+        return await _context.Orders.SumAsync(o => o.TotalAmount, cancellationToken);
     }
 
     public async Task<int> GetOrdersCountByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
@@ -123,18 +113,10 @@ public class OrderRepository : IOrderRepository
             .CountAsync(cancellationToken);
     }
 
-    public async Task<Money?> GetRevenueBetweenDatesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    public async Task<decimal> GetRevenueBetweenDatesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        var orders = await _context.Orders
+        return await _context.Orders
             .Where(o => o.CreatedAt >= startDate && o.CreatedAt < endDate)
-            .ToListAsync(cancellationToken);
-            
-        if (!orders.Any())
-            return Money.Zero("USD");
-
-        decimal totalAmount = orders.Sum(o => o.TotalAmount.Amount);
-        var firstCurrency = orders.First().TotalAmount.Currency;
-        
-        return Money.Create(totalAmount, firstCurrency);
+            .SumAsync(o => o.TotalAmount, cancellationToken);
     }
 }

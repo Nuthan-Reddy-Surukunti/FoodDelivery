@@ -12,7 +12,7 @@ using OrderService.Infrastructure.Data;
 namespace OrderService.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    [Migration("20260405125138_InitialOrderInfrastructure")]
+    [Migration("20260406195343_InitialOrderInfrastructure")]
     partial class InitialOrderInfrastructure
     {
         /// <inheritdoc />
@@ -157,6 +157,27 @@ namespace OrderService.Infrastructure.Data.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int?>("DeliveryAddressType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("DeliveryCity")
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<double?>("DeliveryLatitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("DeliveryLongitude")
+                        .HasColumnType("float");
+
+                    b.Property<string>("DeliveryPincode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<string>("DeliveryStreet")
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
+
                     b.Property<DateTime?>("DeliveryTime")
                         .HasColumnType("datetime2");
 
@@ -238,8 +259,17 @@ namespace OrderService.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
 
                     b.Property<string>("FailureReason")
                         .HasMaxLength(500)
@@ -256,6 +286,14 @@ namespace OrderService.Infrastructure.Data.Migrations
 
                     b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("RefundedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("RefundedCurrency")
+                        .HasMaxLength(3)
+                        .HasColumnType("nvarchar(3)");
 
                     b.Property<string>("TransactionId")
                         .HasMaxLength(150)
@@ -275,7 +313,7 @@ namespace OrderService.Infrastructure.Data.Migrations
             modelBuilder.Entity("OrderService.Domain.Entities.CartItem", b =>
                 {
                     b.HasOne("OrderService.Domain.Entities.Cart", null)
-                        .WithMany("_items")
+                        .WithMany("Items")
                         .HasForeignKey("CartId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -290,58 +328,10 @@ namespace OrderService.Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("OrderService.Domain.Entities.Order", b =>
-                {
-                    b.OwnsOne("OrderService.Domain.ValueObjects.Address", "DeliveryAddress", b1 =>
-                        {
-                            b1.Property<Guid>("OrderId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<int>("AddressType")
-                                .HasColumnType("int")
-                                .HasColumnName("DeliveryAddressType");
-
-                            b1.Property<string>("City")
-                                .IsRequired()
-                                .HasMaxLength(120)
-                                .HasColumnType("nvarchar(120)")
-                                .HasColumnName("DeliveryCity");
-
-                            b1.Property<double?>("Latitude")
-                                .HasColumnType("float")
-                                .HasColumnName("DeliveryLatitude");
-
-                            b1.Property<double?>("Longitude")
-                                .HasColumnType("float")
-                                .HasColumnName("DeliveryLongitude");
-
-                            b1.Property<string>("Pincode")
-                                .IsRequired()
-                                .HasMaxLength(10)
-                                .HasColumnType("nvarchar(10)")
-                                .HasColumnName("DeliveryPincode");
-
-                            b1.Property<string>("Street")
-                                .IsRequired()
-                                .HasMaxLength(250)
-                                .HasColumnType("nvarchar(250)")
-                                .HasColumnName("DeliveryStreet");
-
-                            b1.HasKey("OrderId");
-
-                            b1.ToTable("Orders");
-
-                            b1.WithOwner()
-                                .HasForeignKey("OrderId");
-                        });
-
-                    b.Navigation("DeliveryAddress");
-                });
-
             modelBuilder.Entity("OrderService.Domain.Entities.OrderItem", b =>
                 {
                     b.HasOne("OrderService.Domain.Entities.Order", null)
-                        .WithMany("_orderItems")
+                        .WithMany("OrderItems")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -354,73 +344,20 @@ namespace OrderService.Infrastructure.Data.Migrations
                         .HasForeignKey("OrderService.Domain.Entities.Payment", "OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.OwnsOne("OrderService.Domain.ValueObjects.Money", "Amount", b1 =>
-                        {
-                            b1.Property<Guid>("PaymentId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("Amount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("nvarchar(3)")
-                                .HasColumnName("Currency");
-
-                            b1.HasKey("PaymentId");
-
-                            b1.ToTable("Payments");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PaymentId");
-                        });
-
-                    b.OwnsOne("OrderService.Domain.ValueObjects.Money", "RefundedAmount", b1 =>
-                        {
-                            b1.Property<Guid>("PaymentId")
-                                .HasColumnType("uniqueidentifier");
-
-                            b1.Property<decimal>("Amount")
-                                .HasPrecision(18, 2)
-                                .HasColumnType("decimal(18,2)")
-                                .HasColumnName("RefundedAmount");
-
-                            b1.Property<string>("Currency")
-                                .IsRequired()
-                                .HasMaxLength(3)
-                                .HasColumnType("nvarchar(3)")
-                                .HasColumnName("RefundedCurrency");
-
-                            b1.HasKey("PaymentId");
-
-                            b1.ToTable("Payments");
-
-                            b1.WithOwner()
-                                .HasForeignKey("PaymentId");
-                        });
-
-                    b.Navigation("Amount")
-                        .IsRequired();
-
-                    b.Navigation("RefundedAmount");
                 });
 
             modelBuilder.Entity("OrderService.Domain.Entities.Cart", b =>
                 {
-                    b.Navigation("_items");
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("OrderService.Domain.Entities.Order", b =>
                 {
                     b.Navigation("DeliveryAssignment");
 
-                    b.Navigation("Payment");
+                    b.Navigation("OrderItems");
 
-                    b.Navigation("_orderItems");
+                    b.Navigation("Payment");
                 });
 #pragma warning restore 612, 618
         }
