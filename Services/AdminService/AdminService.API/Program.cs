@@ -120,6 +120,22 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Seed database
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AdminServiceDbContext>();
+        await AdminServiceDbContextSeed.SeedAsync(context);
+        Log.Information("Database seeded successfully");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "An error occurred while seeding the database");
+    }
+}
+
 // Add error handling middleware
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
