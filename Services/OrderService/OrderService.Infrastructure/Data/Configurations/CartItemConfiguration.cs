@@ -21,7 +21,11 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
         builder.Property(item => item.Quantity)
             .IsRequired();
 
-        builder.Property(item => item.PriceSnapshot)
+        builder.Property(item => item.Price)
+            .HasPrecision(18, 2)
+            .IsRequired();
+
+        builder.Property(item => item.Subtotal)
             .HasPrecision(18, 2)
             .IsRequired();
 
@@ -34,7 +38,10 @@ public class CartItemConfiguration : IEntityTypeConfiguration<CartItem>
         builder.Property(item => item.UpdatedAt)
             .IsRequired();
 
-        builder.Ignore(item => item.Subtotal);
+        builder.HasOne(item => item.Cart)
+            .WithMany(cart => cart.Items)
+            .HasForeignKey(item => item.CartId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(item => item.CartId);
         builder.HasIndex(item => item.MenuItemId);

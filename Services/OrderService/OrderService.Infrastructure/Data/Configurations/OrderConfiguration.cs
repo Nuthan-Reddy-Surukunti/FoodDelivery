@@ -23,6 +23,29 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(order => order.AppliedCouponCode)
+            .HasMaxLength(100);
+
+        builder.Property(order => order.TotalAmount)
+            .HasPrecision(18, 2)
+            .IsRequired();
+
+        builder.Property(order => order.DeliveryAddressLine1)
+            .HasMaxLength(250);
+
+        builder.Property(order => order.DeliveryAddressLine2)
+            .HasMaxLength(250);
+
+        builder.Property(order => order.DeliveryCity)
+            .HasMaxLength(120);
+
+        builder.Property(order => order.DeliveryPostalCode)
+            .HasMaxLength(10);
+
+        builder.Property(order => order.DeliveryLatitude);
+
+        builder.Property(order => order.DeliveryLongitude);
+
         builder.Property(order => order.CreatedAt)
             .IsRequired();
 
@@ -34,49 +57,19 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(order => order.OrderStatus);
         builder.HasIndex(order => order.CreatedAt);
 
-        builder.Ignore(order => order.AppliedCoupon);
-        builder.Ignore(order => order.OrderItems);
-
-        builder.HasMany<OrderItem>("_orderItems")
-            .WithOne()
+        builder.HasMany(order => order.OrderItems)
+            .WithOne(item => item.Order)
             .HasForeignKey(item => item.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Navigation("_orderItems").UsePropertyAccessMode(PropertyAccessMode.Field);
-
         builder.HasOne(order => order.Payment)
-            .WithOne()
+            .WithOne(payment => payment.Order)
             .HasForeignKey<Payment>(payment => payment.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(order => order.DeliveryAssignment)
-            .WithOne()
+            .WithOne(assignment => assignment.Order)
             .HasForeignKey<DeliveryAssignment>(assignment => assignment.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.OwnsOne(order => order.DeliveryAddress, address =>
-        {
-            address.Property(value => value.Street)
-                .HasColumnName("DeliveryStreet")
-                .HasMaxLength(250);
-
-            address.Property(value => value.City)
-                .HasColumnName("DeliveryCity")
-                .HasMaxLength(120);
-
-            address.Property(value => value.Pincode)
-                .HasColumnName("DeliveryPincode")
-                .HasMaxLength(10);
-
-            address.Property(value => value.AddressType)
-                .HasColumnName("DeliveryAddressType")
-                .HasConversion<int>();
-
-            address.Property(value => value.Latitude)
-                .HasColumnName("DeliveryLatitude");
-
-            address.Property(value => value.Longitude)
-                .HasColumnName("DeliveryLongitude");
-        });
     }
 }

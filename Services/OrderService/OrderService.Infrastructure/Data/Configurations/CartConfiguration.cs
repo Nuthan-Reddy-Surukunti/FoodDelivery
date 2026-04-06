@@ -23,6 +23,13 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(cart => cart.AppliedCouponCode)
+            .HasMaxLength(100);
+
+        builder.Property(cart => cart.TotalAmount)
+            .HasPrecision(18, 2)
+            .IsRequired();
+
         builder.Property(cart => cart.CreatedAt)
             .IsRequired();
 
@@ -38,14 +45,9 @@ public class CartConfiguration : IEntityTypeConfiguration<Cart>
             .HasFilter($"[{nameof(Cart.Status)}] = {(int)CartStatus.Active}")
             .HasDatabaseName("IX_Carts_UserRestaurant_Active");
 
-        builder.Ignore(cart => cart.AppliedCoupon);
-        builder.Ignore(cart => cart.Items);
-
-        builder.HasMany<CartItem>("_items")
-            .WithOne()
+        builder.HasMany(cart => cart.Items)
+            .WithOne(item => item.Cart)
             .HasForeignKey(item => item.CartId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        builder.Navigation("_items").UsePropertyAccessMode(PropertyAccessMode.Field);
     }
 }

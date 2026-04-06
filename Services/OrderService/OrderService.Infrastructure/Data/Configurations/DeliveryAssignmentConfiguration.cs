@@ -21,6 +21,10 @@ public class DeliveryAssignmentConfiguration : IEntityTypeConfiguration<Delivery
         builder.Property(assignment => assignment.AssignedAt)
             .IsRequired();
 
+        builder.Property(assignment => assignment.PickedUpAt);
+
+        builder.Property(assignment => assignment.DeliveredAt);
+
         builder.Property(assignment => assignment.CurrentStatus)
             .HasConversion<int>()
             .IsRequired();
@@ -30,6 +34,11 @@ public class DeliveryAssignmentConfiguration : IEntityTypeConfiguration<Delivery
 
         builder.Property(assignment => assignment.UpdatedAt)
             .IsRequired();
+
+        builder.HasOne(assignment => assignment.Order)
+            .WithOne(order => order.DeliveryAssignment)
+            .HasForeignKey<DeliveryAssignment>(assignment => assignment.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(assignment => assignment.OrderId)
             .IsUnique();

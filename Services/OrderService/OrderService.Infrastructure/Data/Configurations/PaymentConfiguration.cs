@@ -23,6 +23,13 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
             .HasConversion<int>()
             .IsRequired();
 
+        builder.Property(payment => payment.Amount)
+            .HasPrecision(18, 2)
+            .IsRequired();
+
+        builder.Property(payment => payment.RefundedAmount)
+            .HasPrecision(18, 2);
+
         builder.Property(payment => payment.TransactionId)
             .HasMaxLength(150);
 
@@ -40,26 +47,9 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.HasIndex(payment => payment.OrderId)
             .IsUnique();
 
-        builder.OwnsOne(payment => payment.Amount, amount =>
-        {
-            amount.Property(money => money.Amount)
-                .HasColumnName("Amount")
-                .HasPrecision(18, 2);
-
-            amount.Property(money => money.Currency)
-                .HasColumnName("Currency")
-                .HasMaxLength(3);
-        });
-
-        builder.OwnsOne(payment => payment.RefundedAmount, refunded =>
-        {
-            refunded.Property(money => money.Amount)
-                .HasColumnName("RefundedAmount")
-                .HasPrecision(18, 2);
-
-            refunded.Property(money => money.Currency)
-                .HasColumnName("RefundedCurrency")
-                .HasMaxLength(3);
-        });
+        builder.HasOne(payment => payment.Order)
+            .WithOne(order => order.Payment)
+            .HasForeignKey<Payment>(payment => payment.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -21,7 +21,11 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(item => item.Quantity)
             .IsRequired();
 
-        builder.Property(item => item.UnitPriceSnapshot)
+        builder.Property(item => item.UnitPrice)
+            .HasPrecision(18, 2)
+            .IsRequired();
+
+        builder.Property(item => item.Subtotal)
             .HasPrecision(18, 2)
             .IsRequired();
 
@@ -34,7 +38,10 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(item => item.UpdatedAt)
             .IsRequired();
 
-        builder.Ignore(item => item.Subtotal);
+        builder.HasOne(item => item.Order)
+            .WithMany(order => order.OrderItems)
+            .HasForeignKey(item => item.OrderId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasIndex(item => item.OrderId);
         builder.HasIndex(item => item.MenuItemId);
