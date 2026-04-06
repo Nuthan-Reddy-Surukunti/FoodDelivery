@@ -10,11 +10,11 @@ using OrderService.Application.DTOs.Requests;
 using OrderService.Application.Exceptions;
 using OrderService.Application.Interfaces;
 using OrderService.Domain.Common;
+using OrderService.Domain.Constants;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Domain.Exceptions;
 using OrderService.Domain.Interfaces;
-using OrderService.Domain.ValueObjects;
 
 public class OrderWorkflowService : IOrderWorkflowService
 {
@@ -43,7 +43,7 @@ public class OrderWorkflowService : IOrderWorkflowService
         var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(userId, restaurantId, cancellationToken);
         if (cart is null)
         {
-            cart = new Cart(userId, restaurantId);
+            cart = new Cart { UserId = userId, RestaurantId = restaurantId };
             await _cartRepository.AddAsync(cart, cancellationToken);
         }
 
@@ -56,16 +56,42 @@ public class OrderWorkflowService : IOrderWorkflowService
         ValidateIdentity(request.RestaurantId, nameof(request.RestaurantId));
         ValidateIdentity(request.MenuItemId, nameof(request.MenuItemId));
 
+        if (request.Quantity <= 0)
+        {
+            throw new ValidationException("Quantity must be greater than 0.");
+        }
+
         var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(request.UserId, request.RestaurantId, cancellationToken);
         var isNewCart = cart is null;
-        cart ??= new Cart(request.UserId, request.RestaurantId);
+        cart ??= new Cart { UserId = request.UserId, RestaurantId = request.RestaurantId };
 
-        cart.AddItem(
-            request.RestaurantId,
-            request.MenuItemId,
-            request.Quantity,
-            request.PriceSnapshot,
-            request.CustomizationNotes);
+        if (cart.Status != CartStatus.Active)
+        {
+            throw new CartException("Only active carts can be modified.");
+        }
+
+        var normalizedNotes = string.IsNullOrWhiteSpace(request.CustomizationNotes) ? null : request.CustomizationNotes.Trim();
+        var existingItem = cart.Items.FirstOrDefault(i =>
+            i.MenuItemId == request.MenuItemId &&
+            string.Equals(i.CustomizationNotes, normalizedNotes, StringComparison.Ordinal));
+
+        if (existingItem is not null)
+        {
+            existingItem.Quantity += request.Quantity;
+        }
+        else
+        {
+            cart.Items.Add(new CartItem
+            {
+                CartId = cart.Id,
+                MenuItemId = request.MenuItemId,
+                Quantity = request.Quantity,
+                PriceSnapshot = request.PriceSnapshot,
+                CustomizationNotes = normalizedNotes
+            });
+        }
+
+        cart.UpdatedAt = DateTime.UtcNow;
 
         if (isNewCart)
         {
@@ -87,7 +113,13 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new ResourceNotFoundException("Cart", request.RestaurantId);
         }
 
-        cart.RemoveItem(request.CartItemId);
+        var itemToRemove = cart.Items.FirstOrDefault(i => i.Id == request.CartItemId);
+        if (itemToRemove is not null)
+        {
+            cart.Items.Remove(itemToRemove);
+            cart.UpdatedAt = DateTime.UtcNow;
+        }
+
         await _cartRepository.UpdateAsync(cart, cancellationToken);
 
         return MapCart(cart);
@@ -101,7 +133,8 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new ResourceNotFoundException("Cart", restaurantId);
         }
 
-        cart.ClearCart();
+        cart.Items.Clear();
+        cart.UpdatedAt = DateTime.UtcNow;
         await _cartRepository.UpdateAsync(cart, cancellationToken);
 
         return MapCart(cart);
@@ -131,7 +164,8 @@ public class OrderWorkflowService : IOrderWorkflowService
         var existingCartItem = cart.Items.FirstOrDefault(item => item.Id == request.CartItemId)
                               ?? throw new ResourceNotFoundException("CartItem", request.CartItemId);
 
-        existingCartItem.UpdateQuantity(request.NewQuantity);
+        existingCartItem.Quantity = request.NewQuantity;
+        existingCartItem.UpdatedAt = DateTime.UtcNow;
         await _cartRepository.UpdateAsync(cart, cancellationToken);
 
         return MapCart(cart);
@@ -158,21 +192,7 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new CartEmptyException(cart.Id);
         }
 
-        // Validate coupon code exists and is applicable
-        // This would typically call a CouponService from external service
-        // For now, create a default valid coupon (requires discount %, min order value, and expiry date)
-        var couponCode = new CouponCode(
-            request.CouponCode.Trim(),
-            discountPercentage: 10,
-            minOrderValue: new Money(100),
-            expiryDateUtc: DateTime.UtcNow.AddDays(30),
-            restaurantId: cart.RestaurantId);
-
-        // In a real implementation, verify coupon validity from external service
-        // For now, just store it in the domain entity
-        cart.ApplyCoupon(couponCode);
-        await _cartRepository.UpdateAsync(cart, cancellationToken);
-
+        // Coupon tracking is not persisted; validation would call an external CouponService
         return MapCart(cart);
     }
 
@@ -244,7 +264,6 @@ public class OrderWorkflowService : IOrderWorkflowService
         // In a real app, this would call RestaurantService
         // if (!restaurantIsActive) throw new ValidationException("Restaurant is not accepting orders.");
 
-        // All validations passed
         return true;
     }
 
@@ -255,7 +274,6 @@ public class OrderWorkflowService : IOrderWorkflowService
         ValidateIdentity(request.SelectedAddressId, nameof(request.SelectedAddressId));
         ValidateIdentity(request.SelectedTimeSlotId, nameof(request.SelectedTimeSlotId));
 
-        // Validate checkout first
         await ValidateCheckoutAsync(
             new CheckoutValidationRequestDto
             {
@@ -273,29 +291,36 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new ValidationException("Cart is empty or does not exist.");
         }
 
-        var order = new Order(request.UserId, request.RestaurantId);
+        var order = new Order { UserId = request.UserId, RestaurantId = request.RestaurantId };
         foreach (var cartItem in cart.Items)
         {
-            order.AddItem(cartItem.MenuItemId, cartItem.Quantity, cartItem.PriceSnapshot, cartItem.CustomizationNotes);
+            order.OrderItems.Add(new OrderItem
+            {
+                OrderId = order.Id,
+                MenuItemId = cartItem.MenuItemId,
+                Quantity = cartItem.Quantity,
+                UnitPriceSnapshot = cartItem.PriceSnapshot,
+                CustomizationNotes = cartItem.CustomizationNotes
+            });
         }
 
         // In a real app, get actual address details from UserService/AddressService
-        var address = new Address(
-            "123 Main St",
-            "Bengaluru",
-            "560001",
-            AddressType.Home,
-            37.7749,
-            -122.4194);
-
         var now = DateTime.UtcNow;
-        order.StartCheckout(address, now);
-        order.MarkPaymentPending(now);
+        order.DeliveryStreet = "123 Main St";
+        order.DeliveryCity = "Bengaluru";
+        order.DeliveryPincode = "560001";
+        order.DeliveryAddressType = AddressType.Home;
+        order.DeliveryLatitude = 37.7749;
+        order.DeliveryLongitude = -122.4194;
+
+        TransitionOrderStatus(order, OrderStatus.CheckoutStarted, now);
+        TransitionOrderStatus(order, OrderStatus.PaymentPending, now);
 
         await _orderRepository.AddAsync(order, cancellationToken);
 
         // Clear cart after order creation
-        cart.ClearCart();
+        cart.Items.Clear();
+        cart.UpdatedAt = DateTime.UtcNow;
         await _cartRepository.UpdateAsync(cart, cancellationToken);
 
         return MapOrder(order);
@@ -314,27 +339,34 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new CartEmptyException(cart.Id);
         }
 
-        var order = new Order(request.UserId, request.RestaurantId);
+        var order = new Order { UserId = request.UserId, RestaurantId = request.RestaurantId };
         foreach (var cartItem in cart.Items)
         {
-            order.AddItem(cartItem.MenuItemId, cartItem.Quantity, cartItem.PriceSnapshot, cartItem.CustomizationNotes);
+            order.OrderItems.Add(new OrderItem
+            {
+                OrderId = order.Id,
+                MenuItemId = cartItem.MenuItemId,
+                Quantity = cartItem.Quantity,
+                UnitPriceSnapshot = cartItem.PriceSnapshot,
+                CustomizationNotes = cartItem.CustomizationNotes
+            });
         }
 
-        var address = new Address(
-            request.DeliveryAddress.Street,
-            request.DeliveryAddress.City,
-            request.DeliveryAddress.Pincode,
-            request.DeliveryAddress.AddressType,
-            request.DeliveryAddress.Latitude,
-            request.DeliveryAddress.Longitude);
-
         var now = DateTime.UtcNow;
-        order.StartCheckout(address, now);
-        order.MarkPaymentPending(now);
+        order.DeliveryStreet = request.DeliveryAddress.Street;
+        order.DeliveryCity = request.DeliveryAddress.City;
+        order.DeliveryPincode = request.DeliveryAddress.Pincode;
+        order.DeliveryAddressType = request.DeliveryAddress.AddressType;
+        order.DeliveryLatitude = request.DeliveryAddress.Latitude;
+        order.DeliveryLongitude = request.DeliveryAddress.Longitude;
+
+        TransitionOrderStatus(order, OrderStatus.CheckoutStarted, now);
+        TransitionOrderStatus(order, OrderStatus.PaymentPending, now);
 
         await _orderRepository.AddAsync(order, cancellationToken);
 
-        cart.ClearCart();
+        cart.Items.Clear();
+        cart.UpdatedAt = DateTime.UtcNow;
         await _cartRepository.UpdateAsync(cart, cancellationToken);
 
         return MapOrder(order);
@@ -346,12 +378,18 @@ public class OrderWorkflowService : IOrderWorkflowService
                     ?? await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken)
                     ?? throw new ResourceNotFoundException("Order", request.OrderId);
 
-        var amount = request.Amount.HasValue && request.Amount.Value > 0
-            ? new Money(request.Amount.Value)
-            : order.CalculateTotal(request.TaxPercentage);
+        var amountValue = request.Amount.HasValue && request.Amount.Value > 0
+            ? request.Amount.Value
+            : CalculateOrderTotal(order, request.TaxPercentage);
 
         var isNewPayment = order.Payment is null;
-        var payment = order.Payment ?? new Payment(order.Id, amount, request.PaymentMethod);
+        var payment = order.Payment ?? new Payment
+        {
+            OrderId = order.Id,
+            Amount = amountValue,
+            Currency = "USD",
+            PaymentMethod = request.PaymentMethod
+        };
 
         var now = DateTime.UtcNow;
         if (request.IsSuccessful)
@@ -360,20 +398,30 @@ public class OrderWorkflowService : IOrderWorkflowService
                 ? $"SIM-{Guid.NewGuid():N}"[..12]
                 : request.TransactionId.Trim();
 
-            payment.MarkAsSuccess(transactionId, now);
-            order.AttachPayment(payment);
-            order.MarkPaid(now);
+            payment.TransactionId = transactionId;
+            payment.PaymentStatus = PaymentStatus.Success;
+            payment.ProcessedAt = now;
+            payment.UpdatedAt = now;
+
+            order.Payment = payment;
+            TransitionOrderStatus(order, OrderStatus.Paid, now);
+            order.PaymentCompletedAt = now;
 
             if (request.AutoAcceptByRestaurant)
             {
-                order.AcceptByRestaurant(now.AddMinutes(1));
+                var acceptTime = now.AddMinutes(1);
+                TransitionOrderStatus(order, OrderStatus.RestaurantAccepted, acceptTime);
             }
         }
         else
         {
-            payment.MarkAsFailed(request.FailureReason ?? "Simulated payment failure.", now);
-            order.AttachPayment(payment);
-            order.MoveToNextStatus(OrderStatus.PaymentFailed, now);
+            payment.FailureReason = request.FailureReason ?? "Simulated payment failure.";
+            payment.PaymentStatus = PaymentStatus.Failed;
+            payment.ProcessedAt = now;
+            payment.UpdatedAt = now;
+
+            order.Payment = payment;
+            TransitionOrderStatus(order, OrderStatus.PaymentFailed, now);
         }
 
         if (isNewPayment)
@@ -395,8 +443,22 @@ public class OrderWorkflowService : IOrderWorkflowService
         var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken)
                     ?? throw new ResourceNotFoundException("Order", request.OrderId);
 
-        var assignment = new DeliveryAssignment(order.Id, request.DeliveryAgentId, DateTime.UtcNow);
-        order.AssignDelivery(assignment);
+        var isEligible = order.DeliveryAssignment is null &&
+                         OrderStatusTransitionPolicy.IsEligibleForDeliveryAssignment(order.OrderStatus);
+        if (!isEligible)
+        {
+            throw new InvalidOperationException("Order is not eligible for delivery assignment.");
+        }
+
+        var assignment = new DeliveryAssignment
+        {
+            OrderId = order.Id,
+            DeliveryAgentId = request.DeliveryAgentId,
+            AssignedAt = DateTime.UtcNow
+        };
+
+        order.DeliveryAssignment = assignment;
+        order.UpdatedAt = DateTime.UtcNow;
 
         await _deliveryAssignmentRepository.AddAsync(assignment, cancellationToken);
         await _orderRepository.UpdateAsync(order, cancellationToken);
@@ -413,43 +475,51 @@ public class OrderWorkflowService : IOrderWorkflowService
         switch (request.TargetStatus)
         {
             case OrderStatus.RestaurantAccepted:
-                order.AcceptByRestaurant(now);
+                TransitionOrderStatus(order, OrderStatus.RestaurantAccepted, now);
                 break;
             case OrderStatus.RestaurantRejected:
-                order.RejectByRestaurant(now);
+                TransitionOrderStatus(order, OrderStatus.RestaurantRejected, now);
                 break;
             case OrderStatus.Preparing:
-                order.StartPreparing(now);
+                TransitionOrderStatus(order, OrderStatus.Preparing, now);
+                order.PreparationStartTime = now;
                 break;
             case OrderStatus.ReadyForPickup:
-                order.MarkReadyForPickup(now);
+                TransitionOrderStatus(order, OrderStatus.ReadyForPickup, now);
                 break;
             case OrderStatus.PickedUp:
-                order.MarkPickedUp(now);
+                TransitionOrderStatus(order, OrderStatus.PickedUp, now);
+                order.PickupTime = now;
                 if (order.DeliveryAssignment is not null)
                 {
-                    order.DeliveryAssignment.MarkAsPickedUp(now);
+                    order.DeliveryAssignment.PickedUpAt = now;
+                    order.DeliveryAssignment.CurrentStatus = DeliveryStatus.PickedUp;
+                    order.DeliveryAssignment.UpdatedAt = now;
                     await _deliveryAssignmentRepository.UpdateAsync(order.DeliveryAssignment, cancellationToken);
                 }
                 break;
             case OrderStatus.OutForDelivery:
-                order.MarkOutForDelivery(now);
+                TransitionOrderStatus(order, OrderStatus.OutForDelivery, now);
                 if (order.DeliveryAssignment is not null)
                 {
-                    order.DeliveryAssignment.MarkAsInTransit(now);
+                    order.DeliveryAssignment.CurrentStatus = DeliveryStatus.InTransit;
+                    order.DeliveryAssignment.UpdatedAt = now;
                     await _deliveryAssignmentRepository.UpdateAsync(order.DeliveryAssignment, cancellationToken);
                 }
                 break;
             case OrderStatus.Delivered:
-                order.MarkDelivered(now);
+                TransitionOrderStatus(order, OrderStatus.Delivered, now);
+                order.DeliveryTime = now;
                 if (order.DeliveryAssignment is not null)
                 {
-                    order.DeliveryAssignment.MarkAsDelivered(now);
+                    order.DeliveryAssignment.DeliveredAt = now;
+                    order.DeliveryAssignment.CurrentStatus = DeliveryStatus.Delivered;
+                    order.DeliveryAssignment.UpdatedAt = now;
                     await _deliveryAssignmentRepository.UpdateAsync(order.DeliveryAssignment, cancellationToken);
                 }
                 break;
             case OrderStatus.CancelRequestedByCustomer:
-                order.RequestCancellation(now);
+                RequestOrderCancellation(order, now);
                 break;
             case OrderStatus.RefundInitiated:
                 InitiateOrderRefund(order, request.RefundAmount, now);
@@ -481,11 +551,13 @@ public class OrderWorkflowService : IOrderWorkflowService
         var now = DateTime.UtcNow;
         if (forceByAdmin)
         {
-            order.ForceCancelByAdmin(now);
+            order.OrderStatus = OrderStatus.CancelRequestedByCustomer;
+            order.CancelRequestedAt = now;
+            order.UpdatedAt = now;
         }
         else
         {
-            order.RequestCancellation(now);
+            RequestOrderCancellation(order, now);
         }
 
         await _orderRepository.UpdateAsync(order, cancellationToken);
@@ -598,6 +670,38 @@ public class OrderWorkflowService : IOrderWorkflowService
         }
     }
 
+    private static void TransitionOrderStatus(Order order, OrderStatus nextStatus, DateTime atUtc)
+    {
+        if (!OrderStatusTransitionPolicy.CanTransition(order.OrderStatus, nextStatus))
+        {
+            throw new InvalidOrderStatusTransitionException(order.OrderStatus, nextStatus);
+        }
+
+        order.OrderStatus = nextStatus;
+        order.UpdatedAt = atUtc;
+    }
+
+    private static void RequestOrderCancellation(Order order, DateTime now)
+    {
+        if (order.PreparationStartTime.HasValue)
+        {
+            throw new OrderCancellationNotAllowedException(order.OrderStatus);
+        }
+
+        if (order.CreatedAt.AddMinutes(DomainConstants.CustomerCancellationWindowMinutes) < now)
+        {
+            throw new OrderCancellationNotAllowedException(order.OrderStatus);
+        }
+
+        if (!OrderStatusTransitionPolicy.CanCustomerCancel(order.OrderStatus))
+        {
+            throw new OrderCancellationNotAllowedException(order.OrderStatus);
+        }
+
+        TransitionOrderStatus(order, OrderStatus.CancelRequestedByCustomer, now);
+        order.CancelRequestedAt = now;
+    }
+
     private static void InitiateOrderRefund(Order order, decimal? refundAmount, DateTime now)
     {
         if (order.Payment is null)
@@ -605,12 +709,20 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new ValidationException("Payment must exist before refund initiation.");
         }
 
-        var amount = refundAmount.HasValue
-            ? new Money(refundAmount.Value, order.Payment.Amount.Currency)
-            : order.Payment.Amount;
+        var refundAmt = refundAmount.HasValue ? refundAmount.Value : order.Payment.Amount;
 
-        order.Payment.InitiateRefund(amount, now);
-        order.InitiateRefund(now);
+        if (refundAmt <= 0 || refundAmt > order.Payment.Amount)
+        {
+            throw new InvalidRefundAmountException(refundAmt, order.Payment.Amount);
+        }
+
+        order.Payment.RefundedAmount = refundAmt;
+        order.Payment.RefundedCurrency = order.Payment.Currency;
+        order.Payment.PaymentStatus = PaymentStatus.RefundInitiated;
+        order.Payment.ProcessedAt = now;
+        order.Payment.UpdatedAt = now;
+
+        TransitionOrderStatus(order, OrderStatus.RefundInitiated, now);
     }
 
     private static void CompleteOrderRefund(Order order, DateTime now)
@@ -622,17 +734,31 @@ public class OrderWorkflowService : IOrderWorkflowService
 
         if (order.Payment.PaymentStatus != PaymentStatus.RefundInitiated)
         {
-            order.Payment.InitiateRefund(order.Payment.Amount, now);
-            order.InitiateRefund(now);
+            InitiateOrderRefund(order, null, now);
         }
 
-        order.Payment.CompleteRefund(now);
-        order.MarkRefunded(now);
+        order.Payment.PaymentStatus = PaymentStatus.Refunded;
+        order.Payment.ProcessedAt = now;
+        order.Payment.UpdatedAt = now;
+
+        TransitionOrderStatus(order, OrderStatus.Refunded, now);
+    }
+
+    private static decimal CalculateOrderSubtotal(Order order)
+    {
+        return order.OrderItems.Sum(item => item.Subtotal);
+    }
+
+    private static decimal CalculateOrderTotal(Order order, decimal taxPercentage)
+    {
+        var subtotal = CalculateOrderSubtotal(order);
+        var tax = decimal.Round(subtotal * taxPercentage / 100, 2, MidpointRounding.AwayFromZero);
+        return subtotal + tax;
     }
 
     private static CartDto MapCart(Cart cart)
     {
-        var total = cart.CalculateTotal();
+        var total = cart.Items.Sum(item => item.Subtotal);
         return new CartDto
         {
             CartId = cart.Id,
@@ -641,8 +767,8 @@ public class OrderWorkflowService : IOrderWorkflowService
             Status = cart.Status,
             CreatedAt = cart.CreatedAt,
             UpdatedAt = cart.UpdatedAt,
-            TotalAmount = total.Amount,
-            Currency = total.Currency,
+            TotalAmount = total,
+            Currency = "USD",
             Items = cart.Items.Select(item => new CartItemDto
             {
                 CartItemId = item.Id,
@@ -657,8 +783,7 @@ public class OrderWorkflowService : IOrderWorkflowService
 
     private static OrderDetailDto MapOrder(Order order)
     {
-        var subtotal = order.CalculateSubtotal();
-        var total = order.CalculateTotal(0, subtotal.Currency);
+        var subtotal = CalculateOrderSubtotal(order);
 
         return new OrderDetailDto
         {
@@ -668,19 +793,19 @@ public class OrderWorkflowService : IOrderWorkflowService
             OrderStatus = order.OrderStatus,
             CreatedAt = order.CreatedAt,
             UpdatedAt = order.UpdatedAt,
-            Subtotal = subtotal.Amount,
-            Total = total.Amount,
-            Currency = subtotal.Currency,
-            DeliveryAddress = order.DeliveryAddress is null
+            Subtotal = subtotal,
+            Total = subtotal,
+            Currency = "USD",
+            DeliveryAddress = order.DeliveryStreet is null
                 ? null
                 : new AddressDto
                 {
-                    Street = order.DeliveryAddress.Street,
-                    City = order.DeliveryAddress.City,
-                    Pincode = order.DeliveryAddress.Pincode,
-                    Latitude = order.DeliveryAddress.Latitude,
-                    Longitude = order.DeliveryAddress.Longitude,
-                    AddressType = order.DeliveryAddress.AddressType
+                    Street = order.DeliveryStreet,
+                    City = order.DeliveryCity ?? string.Empty,
+                    Pincode = order.DeliveryPincode ?? string.Empty,
+                    Latitude = order.DeliveryLatitude,
+                    Longitude = order.DeliveryLongitude,
+                    AddressType = order.DeliveryAddressType ?? AddressType.Home
                 },
             Items = order.OrderItems.Select(item => new OrderItemDto
             {
@@ -698,9 +823,9 @@ public class OrderWorkflowService : IOrderWorkflowService
                     PaymentId = order.Payment.Id,
                     PaymentMethod = order.Payment.PaymentMethod,
                     PaymentStatus = order.Payment.PaymentStatus,
-                    Amount = order.Payment.Amount.Amount,
-                    Currency = order.Payment.Amount.Currency,
-                    RefundedAmount = order.Payment.RefundedAmount?.Amount,
+                    Amount = order.Payment.Amount,
+                    Currency = order.Payment.Currency,
+                    RefundedAmount = order.Payment.RefundedAmount,
                     TransactionId = order.Payment.TransactionId,
                     FailureReason = order.Payment.FailureReason,
                     ProcessedAt = order.Payment.ProcessedAt
