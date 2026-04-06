@@ -47,24 +47,5 @@ public class OrderService : IOrderService
         };
     }
 
-    public async Task<IEnumerable<OrderDto>> GetDisputedOrdersAsync(CancellationToken cancellationToken = default)
-    {
-        var orders = await _orderRepository.GetDisputedOrdersAsync(cancellationToken);
-        return _mapper.Map<IEnumerable<OrderDto>>(orders);
-    }
 
-    public async Task<OrderDto> ResolveDisputeAsync(Guid id, ResolveDisputeRequest request, CancellationToken cancellationToken = default)
-    {
-        var order = await _orderRepository.GetByIdAsync(id, cancellationToken);
-        if (order == null)
-            throw new KeyNotFoundException($"Order with ID {id} not found");
-
-        if (!Enum.TryParse<DisputeStatus>(request.Resolution, out var resolution))
-            throw new ArgumentException($"Invalid resolution status: {request.Resolution}");
-
-        ((Order)order).ResolveDispute(resolution, request.ResolutionNotes, request.RefundAmount);
-        await _orderRepository.UpdateAsync(order, cancellationToken);
-
-        return _mapper.Map<OrderDto>(order);
-    }
 }

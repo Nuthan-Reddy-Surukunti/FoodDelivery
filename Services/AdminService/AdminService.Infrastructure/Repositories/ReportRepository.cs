@@ -90,22 +90,6 @@ public class ReportRepository : IReportRepository
         return ReportMetrics.Create(totalOrders, totalRevenue, customerIds, restaurantIds, avgOrderValue, startDate, endDate);
     }
 
-    public async Task<ReportMetrics> GetUserAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
-    {
-        var totalCustomers = await _context.Users
-            .Where(u => u.Role == UserRole.Customer && u.CreatedAt >= startDate && u.CreatedAt <= endDate)
-            .CountAsync(cancellationToken);
-
-        var totalRestaurants = await _context.Restaurants
-            .Where(r => r.CreatedAt >= startDate && r.CreatedAt <= endDate)
-            .CountAsync(cancellationToken);
-
-        var totalOrders = await _context.Orders
-            .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
-            .CountAsync(cancellationToken);
-
-        return ReportMetrics.Create(totalOrders, Money.Zero("USD"), totalCustomers, totalRestaurants, 0, startDate, endDate);
-    }
 
     public async Task<ReportMetrics> GetRestaurantPerformanceAsync(Guid restaurantId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {

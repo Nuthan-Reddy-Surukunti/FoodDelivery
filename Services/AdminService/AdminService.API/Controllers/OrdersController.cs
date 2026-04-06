@@ -41,24 +41,5 @@ public class OrdersController : ControllerBase
         }
     }
 
-    [HttpGet("disputed")]
-    public async Task<IActionResult> GetDisputedOrders()
-    {
-        var orders = await _orderService.GetDisputedOrdersAsync();
-        return Ok(orders);
-    }
 
-    [HttpPost("{id}/resolve-dispute")]
-    public async Task<IActionResult> ResolveDispute(Guid id, [FromBody] ResolveDisputeRequest request)
-    {
-        try
-        {
-            var order = await _orderService.ResolveDisputeAsync(id, request);
-            return Ok(order);
-        }
-        catch (KeyNotFoundException ex)
-        {
-            return NotFound(new { message = ex.Message });
-        }
-    }
 }

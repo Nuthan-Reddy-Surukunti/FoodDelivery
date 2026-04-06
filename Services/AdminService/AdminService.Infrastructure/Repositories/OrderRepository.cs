@@ -60,13 +60,7 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders.Where(o => o.Status == status).ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<object>> GetDisputedOrdersAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.Orders
-            .Where(o => o.Status == OrderStatus.Disputed)
-            .OrderBy(o => o.DisputeRaisedAt)
-            .ToListAsync(cancellationToken);
-    }
+
 
     public async Task<(IEnumerable<object> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, OrderStatus? status = null, CancellationToken cancellationToken = default)
     {

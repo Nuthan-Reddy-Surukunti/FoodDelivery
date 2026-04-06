@@ -38,10 +38,5 @@ public enum OrderStatus
     /// <summary>
     /// Order was cancelled
     /// </summary>
-    Cancelled = 7,
-
-    /// <summary>
-    /// Order has a dispute
-    /// </summary>
-    Disputed = 8
+    Cancelled = 7
 }

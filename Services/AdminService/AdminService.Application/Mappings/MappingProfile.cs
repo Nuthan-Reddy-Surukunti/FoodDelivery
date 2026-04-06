@@ -27,9 +27,7 @@ public class MappingProfile : Profile
         CreateMap<Order, OrderDto>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
             .ForMember(dest => dest.TotalAmount, opt => opt.MapFrom(src => src.TotalAmount.Amount))
-            .ForMember(dest => dest.Currency, opt => opt.MapFrom(src => src.TotalAmount.Currency))
-            .ForMember(dest => dest.DisputeStatus, opt => opt.MapFrom(src => 
-                src.DisputeStatus.HasValue ? src.DisputeStatus.Value.ToString() : null));
+            .ForMember(dest => dest.Currency, opt => opt.MapFrom(src => src.TotalAmount.Currency));
 
         // Report mappings
         CreateMap<Report, ReportDto>()

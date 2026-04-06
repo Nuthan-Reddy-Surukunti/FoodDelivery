@@ -36,15 +36,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
                 .HasColumnName("Currency");
         });
 
-        builder.Property(o => o.DisputeStatus)
-            .HasConversion<string>();
-
-        builder.Property(o => o.DisputeReason)
-            .HasMaxLength(1000);
-
-        builder.Property(o => o.DisputeResolutionNotes)
-            .HasMaxLength(1000);
-
         builder.Property(o => o.CreatedAt)
             .IsRequired();
 
@@ -52,14 +43,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.Property(o => o.DeliveredAt);
 
-        builder.Property(o => o.DisputeRaisedAt);
-
-        builder.Property(o => o.DisputeResolvedAt);
-
         builder.HasIndex(o => o.CustomerId);
         builder.HasIndex(o => o.RestaurantId);
         builder.HasIndex(o => o.Status);
-        builder.HasIndex(o => o.DisputeStatus);
 
         builder.Ignore(o => o.DomainEvents);
     }

@@ -46,12 +46,6 @@ public class ReportService : IReportService
 
     public async Task<ReportDto> GenerateUserAnalyticsAsync(GenerateReportRequest request, CancellationToken cancellationToken = default)
     {
-        var metrics = await _reportRepository.GetUserAnalyticsAsync(request.StartDate, request.EndDate, cancellationToken);
-        var report = Report.Create(ReportType.UserAnalytics, metrics, request.StartDate, request.EndDate, request.FilterCriteria);
-        
-        var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
-        return _mapper.Map<ReportDto>(savedReport);
-    }
 
     public async Task<ReportDto> GenerateRestaurantPerformanceAsync(GenerateReportRequest request, CancellationToken cancellationToken = default)
     {

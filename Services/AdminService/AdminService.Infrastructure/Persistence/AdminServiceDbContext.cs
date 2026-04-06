@@ -35,10 +35,6 @@ public class AdminServiceDbContext : DbContext
         var result = await base.SaveChangesAsync(cancellationToken);
 
         // Clear domain events after successful save
-        foreach (var user in userEntities) user.ClearDomainEvents();
-        foreach (var restaurant in restaurantEntities) restaurant.ClearDomainEvents();
-        foreach (var order in orderEntities) order.ClearDomainEvents();
-        foreach (var report in reportEntities) report.ClearDomainEvents();
 
         return result;
     }
