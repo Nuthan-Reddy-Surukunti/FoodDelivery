@@ -28,7 +28,10 @@ try
     builder.Host.UseSerilog();
 
 // Add DbContext
-
+builder.Services.AddDbContext<AdminServiceDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") 
+        ?? "Server=localhost;Database=AdminServiceDb;Trusted_Connection=True;TrustServerCertificate=True;",
+        sqlOptions => sqlOptions.EnableRetryOnFailure()));
 // Add Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
