@@ -12,8 +12,20 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using Serilog;
 
-var builder = WebApplication.CreateBuilder(args);
+Log.Logger = new LoggerConfiguration()
+    .WriteTo.Console()
+    .WriteTo.File("logs/adminservice-.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+try
+{
+    Log.Information("Starting Admin Service");
+
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Host.UseSerilog();
 
 // Add DbContext
 builder.Services.AddDbContext<AdminServiceDbContext>(options =>
@@ -128,3 +140,12 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Admin Service failed to start");
+}
+finally
+{
+    Log.CloseAndFlush();
+}
