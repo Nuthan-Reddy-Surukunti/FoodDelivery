@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using AdminService.Infrastructure.Persistence;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Interfaces;
-using AdminService.Domain.ValueObjects;
 using AdminService.Domain.Enums;
 
 namespace AdminService.Infrastructure.Repositories;
@@ -16,28 +15,26 @@ public class ReportRepository : IReportRepository
         _context = context;
     }
 
-    public async Task<object?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Report?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Reports.FindAsync(new object[] { id }, cancellationToken);
     }
 
-    public async Task<IEnumerable<object>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Report>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Reports.ToListAsync(cancellationToken);
     }
 
-    public async Task<object> AddAsync(object entity, CancellationToken cancellationToken = default)
+    public async Task<Report> AddAsync(Report entity, CancellationToken cancellationToken = default)
     {
-        var report = (Report)entity;
-        await _context.Reports.AddAsync(report, cancellationToken);
+        await _context.Reports.AddAsync(entity, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
-        return report;
+        return entity;
     }
 
-    public async Task UpdateAsync(object entity, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Report entity, CancellationToken cancellationToken = default)
     {
-        var report = (Report)entity;
-        _context.Reports.Update(report);
+        _context.Reports.Update(entity);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
@@ -56,7 +53,7 @@ public class ReportRepository : IReportRepository
         return await _context.Reports.AnyAsync(r => r.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<object>> GetByTypeAsync(ReportType reportType, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Report>> GetByTypeAsync(ReportType reportType, CancellationToken cancellationToken = default)
     {
         return await _context.Reports
             .Where(r => r.Type == reportType)
@@ -64,7 +61,7 @@ public class ReportRepository : IReportRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<object>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Report>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         return await _context.Reports
             .Where(r => r.GeneratedAt >= startDate && r.GeneratedAt <= endDate)
@@ -72,38 +69,20 @@ public class ReportRepository : IReportRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<ReportMetrics> GetSalesMetricsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    public async Task<(int TotalOrders, decimal TotalRevenue, string Currency, int TotalCustomers, int TotalRestaurants, double AverageOrderValue)> GetSalesMetricsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         var orders = await _context.Orders
             .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
             .ToListAsync(cancellationToken);
 
         var totalOrders = orders.Count;
-        var totalRevenue = orders.Any() 
-            ? Money.Create(orders.Sum(o => o.TotalAmount.Amount), orders.First().TotalAmount.Currency)
-            : Money.Zero("USD");
-        
-        var customerIds = orders.Select(o => o.CustomerId).Distinct().Count();
-        var restaurantIds = orders.Select(o => o.RestaurantId).Distinct().Count();
-        var avgOrderValue = totalOrders > 0 ? (double)totalRevenue.Amount / totalOrders : 0;
+        var totalRevenue = orders.Sum(o => o.TotalAmount);
+        var currency = orders.FirstOrDefault()?.Currency ?? "USD";
+        var totalCustomers = orders.Select(o => o.CustomerId).Distinct().Count();
+        var totalRestaurants = orders.Select(o => o.RestaurantId).Distinct().Count();
+        var avgOrderValue = totalOrders > 0 ? (double)totalRevenue / totalOrders : 0;
 
-        return ReportMetrics.Create(totalOrders, totalRevenue, customerIds, restaurantIds, avgOrderValue, startDate, endDate);
-    }
-
-    public async Task<ReportMetrics> GetRestaurantPerformanceAsync(Guid restaurantId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
-    {
-        var orders = await _context.Orders
-            .Where(o => o.RestaurantId == restaurantId && o.CreatedAt >= startDate && o.CreatedAt <= endDate)
-            .ToListAsync(cancellationToken);
-
-        var totalOrders = orders.Count;
-        var totalRevenue = orders.Any()
-            ? Money.Create(orders.Sum(o => o.TotalAmount.Amount), orders.First().TotalAmount.Currency)
-            : Money.Zero("USD");
-
-        var avgOrderValue = totalOrders > 0 ? (double)totalRevenue.Amount / totalOrders : 0;
-
-        return ReportMetrics.Create(totalOrders, totalRevenue, 0, 1, avgOrderValue, startDate, endDate);
+        return (totalOrders, totalRevenue, currency, totalCustomers, totalRestaurants, avgOrderValue);
     }
 
     public async Task<Dictionary<string, int>> GetOrderAnalyticsByStatusAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
@@ -126,14 +105,12 @@ public class ReportRepository : IReportRepository
         var totalRegistrations = orders.Select(o => o.CustomerId).Distinct().Count();
         var activeUsers = orders.GroupBy(o => o.CustomerId).Count();
 
-        var analytics = new Dictionary<string, object>
+        return new Dictionary<string, object>
         {
             { "TotalRegistrations", totalRegistrations },
             { "ActiveUsers", activeUsers },
             { "UsersByRole", new Dictionary<string, int> { { "Customer", totalRegistrations } } }
         };
-
-        return analytics;
     }
 
     public async Task<Dictionary<string, object>> GetRestaurantAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
@@ -144,21 +121,19 @@ public class ReportRepository : IReportRepository
             .ToListAsync(cancellationToken);
 
         var totalRestaurants = restaurants.Count;
-        var pendingCount = restaurants.Count(r => r.Status.ToString() == "Pending");
-        var approvedCount = restaurants.Count(r => r.Status.ToString() == "Approved");
-        var totalRevenue = orders.Any() 
-            ? orders.Sum(o => o.TotalAmount.Amount)
-            : 0m;
+        var pendingCount = restaurants.Count(r => r.Status == Domain.Enums.RestaurantStatus.Pending);
+        var approvedCount = restaurants.Count(r => r.Status == Domain.Enums.RestaurantStatus.Approved);
+        var totalRevenue = orders.Sum(o => o.TotalAmount);
 
         var revenueByRestaurant = new Dictionary<Guid, decimal>();
         foreach (var restaurantId in orders.Select(o => o.RestaurantId).Distinct())
         {
             revenueByRestaurant[restaurantId] = orders
                 .Where(o => o.RestaurantId == restaurantId)
-                .Sum(o => o.TotalAmount.Amount);
+                .Sum(o => o.TotalAmount);
         }
 
-        var analytics = new Dictionary<string, object>
+        return new Dictionary<string, object>
         {
             { "TotalRestaurants", totalRestaurants },
             { "PendingApprovals", pendingCount },
@@ -166,7 +141,5 @@ public class ReportRepository : IReportRepository
             { "TotalRevenue", totalRevenue },
             { "RevenueByRestaurant", revenueByRestaurant }
         };
-
-        return analytics;
     }
 }

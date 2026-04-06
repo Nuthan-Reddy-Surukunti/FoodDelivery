@@ -5,15 +5,11 @@ using AdminService.Application.Interfaces;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
-using AdminService.Domain.ValueObjects;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
 namespace AdminService.Application.Services;
 
-/// <summary>
-/// Service implementation for menu item management with moderation capabilities
-/// </summary>
 public class MenuItemService : IMenuItemService
 {
     private readonly IMenuItemRepository _menuItemRepository;
@@ -48,15 +44,11 @@ public class MenuItemService : IMenuItemService
     {
         MenuItemStatus? itemStatus = null;
         if (status != null && Enum.TryParse<MenuItemStatus>(status, true, out var parsedStatus))
-        {
             itemStatus = parsedStatus;
-        }
 
         ApprovalStatus? approvalStatusEnum = null;
         if (approvalStatus != null && Enum.TryParse<ApprovalStatus>(approvalStatus, true, out var parsedApprovalStatus))
-        {
             approvalStatusEnum = parsedApprovalStatus;
-        }
 
         var (items, totalCount) = await _menuItemRepository.GetPagedAsync(
             restaurantId, pageNumber, pageSize, itemStatus, approvalStatusEnum, cancellationToken);
@@ -81,7 +73,6 @@ public class MenuItemService : IMenuItemService
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        // Validate required fields
         if (string.IsNullOrWhiteSpace(request.Name))
             throw new ArgumentException("Menu item name is required", nameof(request));
 
@@ -94,15 +85,21 @@ public class MenuItemService : IMenuItemService
         if (request.RestaurantId == Guid.Empty)
             throw new ArgumentException("Restaurant ID is required", nameof(request));
 
-        // Create Money value object
-        var price = Money.Create(request.Price, request.Currency);
-        
-        // Create menu item entity
-        var menuItem = MenuItem.Create(request.RestaurantId, request.Name, request.Description, price, request.CategoryId);
-        
-        // Save to repository
+        var menuItem = new MenuItem
+        {
+            RestaurantId = request.RestaurantId,
+            Name = request.Name,
+            Description = request.Description,
+            Price = request.Price,
+            Currency = request.Currency ?? "USD",
+            CategoryId = request.CategoryId,
+            Status = MenuItemStatus.Inactive,
+            ApprovalStatus = ApprovalStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
+
         await _menuItemRepository.AddAsync(menuItem, cancellationToken);
-        
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
@@ -115,21 +112,38 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        // Update price if provided
-        Money? newPrice = null;
-        if (request.Price.HasValue && !string.IsNullOrWhiteSpace(request.Currency))
+        if (!string.IsNullOrWhiteSpace(request.Name))
+            menuItem.Name = request.Name;
+
+        if (!string.IsNullOrWhiteSpace(request.Description))
+            menuItem.Description = request.Description;
+
+        if (request.Price.HasValue)
         {
             if (request.Price.Value <= 0)
                 throw new ArgumentException("Menu item price must be greater than zero", nameof(request.Price));
-            
-            newPrice = Money.Create(request.Price.Value, request.Currency);
+            menuItem.Price = request.Price.Value;
         }
 
-        // Update menu item details
-        menuItem.UpdateDetails(request.Name, request.Description, newPrice, request.CategoryId);
-        
+        if (!string.IsNullOrWhiteSpace(request.Currency))
+            menuItem.Currency = request.Currency;
+
+        if (request.CategoryId != menuItem.CategoryId)
+            menuItem.CategoryId = request.CategoryId;
+
+        // Reset to pending approval if previously approved
+        if (menuItem.ApprovalStatus == ApprovalStatus.Approved)
+        {
+            menuItem.ApprovalStatus = ApprovalStatus.Pending;
+            menuItem.ApprovedBy = null;
+            menuItem.ApprovedAt = null;
+            menuItem.ApprovalNotes = null;
+        }
+
+        menuItem.UpdatedAt = DateTime.UtcNow;
+
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
-        
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
@@ -139,9 +153,10 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Activate();
+        menuItem.Status = MenuItemStatus.Active;
+        menuItem.UpdatedAt = DateTime.UtcNow;
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
-        
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
@@ -151,9 +166,10 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Deactivate();
+        menuItem.Status = MenuItemStatus.Inactive;
+        menuItem.UpdatedAt = DateTime.UtcNow;
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
-        
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
@@ -169,27 +185,32 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Approve(approvedBy, request.ApprovalNotes);
+        menuItem.ApprovalStatus = ApprovalStatus.Approved;
+        menuItem.ApprovedBy = approvedBy;
+        menuItem.ApprovedAt = DateTime.UtcNow;
+        menuItem.ApprovalNotes = request.ApprovalNotes;
+        menuItem.RejectionReason = null;
+        menuItem.RejectedBy = null;
+        menuItem.RejectedAt = null;
+        menuItem.UpdatedAt = DateTime.UtcNow;
+
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
 
-        // Log audit trail
         var httpContext = _httpContextAccessor.HttpContext;
         var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                              httpContext?.User?.FindFirst("sub")?.Value;
+                               httpContext?.User?.FindFirst("sub")?.Value;
         var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
-                           httpContext?.User?.FindFirst("name")?.Value ??
-                           httpContext?.User?.Identity?.Name ??
-                           approvedBy;
+                            httpContext?.User?.FindFirst("name")?.Value ??
+                            httpContext?.User?.Identity?.Name ?? approvedBy;
 
         if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
         {
             var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
             var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
-
-            await _auditService.LogApprovalActionAsync("MenuItem", id, "Approved", 
+            await _auditService.LogApprovalActionAsync("MenuItem", id, "Approved",
                 request.ApprovalNotes, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
         }
-        
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
@@ -208,27 +229,33 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Reject(rejectedBy, request.RejectionReason);
+        menuItem.ApprovalStatus = ApprovalStatus.Rejected;
+        menuItem.RejectedBy = rejectedBy;
+        menuItem.RejectionReason = request.RejectionReason;
+        menuItem.RejectedAt = DateTime.UtcNow;
+        menuItem.Status = MenuItemStatus.Inactive;
+        menuItem.ApprovalNotes = null;
+        menuItem.ApprovedBy = null;
+        menuItem.ApprovedAt = null;
+        menuItem.UpdatedAt = DateTime.UtcNow;
+
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
 
-        // Log audit trail
         var httpContext = _httpContextAccessor.HttpContext;
         var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
-                              httpContext?.User?.FindFirst("sub")?.Value;
+                               httpContext?.User?.FindFirst("sub")?.Value;
         var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
-                           httpContext?.User?.FindFirst("name")?.Value ??
-                           httpContext?.User?.Identity?.Name ??
-                           rejectedBy;
+                            httpContext?.User?.FindFirst("name")?.Value ??
+                            httpContext?.User?.Identity?.Name ?? rejectedBy;
 
         if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
         {
             var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
             var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
-
-            await _auditService.LogApprovalActionAsync("MenuItem", id, "Rejected", 
+            await _auditService.LogApprovalActionAsync("MenuItem", id, "Rejected",
                 request.RejectionReason, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
         }
-        
+
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
