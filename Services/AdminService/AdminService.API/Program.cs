@@ -28,9 +28,6 @@ try
     builder.Host.UseSerilog();
 
 // Add DbContext
-builder.Services.AddDbContext<AdminServiceDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Server=localhost;Database=AdminServiceDb;Trusted_Connection=True;TrustServerCertificate=True;"));
 
 // Add Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
