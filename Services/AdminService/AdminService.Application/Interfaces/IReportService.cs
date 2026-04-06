@@ -1,0 +1,14 @@
+using AdminService.Application.DTOs.Requests;
+using AdminService.Application.DTOs.Responses;
+
+namespace AdminService.Application.Interfaces;
+
+public interface IReportService
+{
+    Task<ReportDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ReportDto>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<ReportDto> GenerateSalesReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<UserAnalyticsDto> GetUserAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<RestaurantAnalyticsDto> GetRestaurantAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<ReportDto> GeneratePartnerPerformanceReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+}
