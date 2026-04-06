@@ -4,6 +4,7 @@ using AdminService.Application.Services;
 using AdminService.Application.Mappings;
 using AdminService.Application.Validators;
 using AdminService.Domain.Interfaces;
+using AdminService.API.Middleware;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -45,6 +46,9 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Add error handling middleware
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
