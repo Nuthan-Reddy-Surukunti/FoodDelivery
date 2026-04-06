@@ -13,4 +13,6 @@ public interface IRestaurantRepository : IRepository<object>
     Task<int> GetCountByStatusAsync(RestaurantStatus status, CancellationToken cancellationToken = default);
     Task ApproveRestaurantAsync(Guid restaurantId, CancellationToken cancellationToken = default);
     Task RejectRestaurantAsync(Guid restaurantId, string reason, CancellationToken cancellationToken = default);
+    Task<IEnumerable<object>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default);
+    Task SoftDeleteAsync(Guid restaurantId, CancellationToken cancellationToken = default);
 }

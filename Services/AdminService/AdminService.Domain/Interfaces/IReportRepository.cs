@@ -13,4 +13,6 @@ public interface IReportRepository : IRepository<object>
     Task<ReportMetrics> GetSalesMetricsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
     Task<ReportMetrics> GetRestaurantPerformanceAsync(Guid restaurantId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
     Task<Dictionary<string, int>> GetOrderAnalyticsByStatusAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<Dictionary<string, object>> GetUserRegistrationAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<Dictionary<string, object>> GetRestaurantAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 }

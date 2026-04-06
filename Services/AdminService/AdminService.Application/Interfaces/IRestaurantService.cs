@@ -10,4 +10,6 @@ public interface IRestaurantService
     Task<IEnumerable<RestaurantDto>> GetPendingApprovalsAsync(CancellationToken cancellationToken = default);
     Task<RestaurantDto> ApproveAsync(Guid id, ApproveRestaurantRequest request, CancellationToken cancellationToken = default);
     Task<RestaurantDto> RejectAsync(Guid id, RejectRestaurantRequest request, CancellationToken cancellationToken = default);
+    Task<IEnumerable<RestaurantDto>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default);
+    Task DeleteAsync(Guid restaurantId, CancellationToken cancellationToken = default);
 }

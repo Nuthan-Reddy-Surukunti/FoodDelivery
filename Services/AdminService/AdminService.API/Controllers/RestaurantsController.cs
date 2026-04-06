@@ -41,6 +41,13 @@ public class RestaurantsController : ControllerBase
         }
     }
 
+    [HttpGet("owner/{ownerId}")]
+    public async Task<IActionResult> GetRestaurantsByOwner(Guid ownerId)
+    {
+        var restaurants = await _restaurantService.GetByOwnerIdAsync(ownerId);
+        return Ok(restaurants);
+    }
+
     [HttpGet("pending-approvals")]
     public async Task<IActionResult> GetPendingApprovals()
     {
@@ -69,6 +76,20 @@ public class RestaurantsController : ControllerBase
         {
             var restaurant = await _restaurantService.RejectAsync(id, request);
             return Ok(restaurant);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{restaurantId}")]
+    public async Task<IActionResult> DeleteRestaurant(Guid restaurantId)
+    {
+        try
+        {
+            await _restaurantService.DeleteAsync(restaurantId);
+            return NoContent();
         }
         catch (KeyNotFoundException ex)
         {

@@ -110,4 +110,22 @@ public class RestaurantRepository : IRestaurantRepository
             await _context.SaveChangesAsync(cancellationToken);
         }
     }
+
+    public async Task<IEnumerable<object>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Restaurants
+            .Where(r => r.OwnerId == ownerId && r.IsActive)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task SoftDeleteAsync(Guid restaurantId, CancellationToken cancellationToken = default)
+    {
+        var restaurant = await _context.Restaurants.FindAsync(new object[] { restaurantId }, cancellationToken);
+        if (restaurant != null)
+        {
+            restaurant.SoftDelete();
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+    }
+
 }

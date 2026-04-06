@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using AdminService.Infrastructure.Persistence;
 using AdminService.Domain.Entities;
-using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
 using AdminService.Domain.ValueObjects;
-using AdminService.Infrastructure.Persistence;
+using AdminService.Domain.Enums;
 
 namespace AdminService.Infrastructure.Repositories;
 
@@ -67,7 +67,7 @@ public class ReportRepository : IReportRepository
     public async Task<IEnumerable<object>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         return await _context.Reports
-            .Where(r => r.StartDate >= startDate && r.EndDate <= endDate)
+            .Where(r => r.GeneratedAt >= startDate && r.GeneratedAt <= endDate)
             .OrderByDescending(r => r.GeneratedAt)
             .ToListAsync(cancellationToken);
     }
@@ -89,7 +89,6 @@ public class ReportRepository : IReportRepository
 
         return ReportMetrics.Create(totalOrders, totalRevenue, customerIds, restaurantIds, avgOrderValue, startDate, endDate);
     }
-
 
     public async Task<ReportMetrics> GetRestaurantPerformanceAsync(Guid restaurantId, DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
@@ -116,5 +115,58 @@ public class ReportRepository : IReportRepository
             .ToListAsync(cancellationToken);
 
         return orders.ToDictionary(x => x.Status, x => x.Count);
+    }
+
+    public async Task<Dictionary<string, object>> GetUserRegistrationAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    {
+        var orders = await _context.Orders
+            .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+            .ToListAsync(cancellationToken);
+
+        var totalRegistrations = orders.Select(o => o.CustomerId).Distinct().Count();
+        var activeUsers = orders.GroupBy(o => o.CustomerId).Count();
+
+        var analytics = new Dictionary<string, object>
+        {
+            { "TotalRegistrations", totalRegistrations },
+            { "ActiveUsers", activeUsers },
+            { "UsersByRole", new Dictionary<string, int> { { "Customer", totalRegistrations } } }
+        };
+
+        return analytics;
+    }
+
+    public async Task<Dictionary<string, object>> GetRestaurantAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    {
+        var restaurants = await _context.Restaurants.ToListAsync(cancellationToken);
+        var orders = await _context.Orders
+            .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+            .ToListAsync(cancellationToken);
+
+        var totalRestaurants = restaurants.Count;
+        var pendingCount = restaurants.Count(r => r.Status.ToString() == "Pending");
+        var approvedCount = restaurants.Count(r => r.Status.ToString() == "Approved");
+        var totalRevenue = orders.Any() 
+            ? orders.Sum(o => o.TotalAmount.Amount)
+            : 0m;
+
+        var revenueByRestaurant = new Dictionary<Guid, decimal>();
+        foreach (var restaurantId in orders.Select(o => o.RestaurantId).Distinct())
+        {
+            revenueByRestaurant[restaurantId] = orders
+                .Where(o => o.RestaurantId == restaurantId)
+                .Sum(o => o.TotalAmount.Amount);
+        }
+
+        var analytics = new Dictionary<string, object>
+        {
+            { "TotalRestaurants", totalRestaurants },
+            { "PendingApprovals", pendingCount },
+            { "ApprovedCount", approvedCount },
+            { "TotalRevenue", totalRevenue },
+            { "RevenueByRestaurant", revenueByRestaurant }
+        };
+
+        return analytics;
     }
 }

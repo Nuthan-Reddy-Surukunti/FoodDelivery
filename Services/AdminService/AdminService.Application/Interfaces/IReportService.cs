@@ -7,7 +7,8 @@ public interface IReportService
 {
     Task<ReportDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<IEnumerable<ReportDto>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
-    Task<ReportDto> GenerateSalesReportAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
-    Task<ReportDto> GenerateUserAnalyticsAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
-    Task<ReportDto> GenerateRestaurantPerformanceAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
+    Task<ReportDto> GenerateSalesReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<UserAnalyticsDto> GetUserAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<RestaurantAnalyticsDto> GetRestaurantAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<ReportDto> GeneratePartnerPerformanceReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 }

@@ -35,43 +35,74 @@ public class ReportService : IReportService
         return _mapper.Map<IEnumerable<ReportDto>>(reports);
     }
 
-    public async Task<ReportDto> GenerateSalesReportAsync(GenerateReportRequest request, CancellationToken cancellationToken = default)
+    public async Task<ReportDto> GenerateSalesReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        var metrics = await _reportRepository.GetSalesMetricsAsync(request.StartDate, request.EndDate, cancellationToken);
-        var report = Report.Create(ReportType.Sales, metrics, request.StartDate, request.EndDate, request.FilterCriteria);
+        var metrics = await _reportRepository.GetSalesMetricsAsync(startDate, endDate, cancellationToken);
+        var report = Report.Create(ReportType.Sales, metrics, startDate, endDate);
         
         var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
         return _mapper.Map<ReportDto>(savedReport);
     }
 
-    public async Task<ReportDto> GenerateUserAnalyticsAsync(GenerateReportRequest request, CancellationToken cancellationToken = default)
+    public async Task<UserAnalyticsDto> GetUserAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        var analytics = await _reportRepository.GetOrderAnalyticsByStatusAsync(request.StartDate, request.EndDate, cancellationToken);
-        // Create empty metrics for user analytics (would need proper implementation based on analytics data)
-        var metrics = ReportMetrics.Empty(request.StartDate, request.EndDate, "USD");
-        var report = Report.Create(ReportType.UserAnalytics, metrics, request.StartDate, request.EndDate, request.FilterCriteria);
+        var analytics = await _reportRepository.GetUserRegistrationAnalyticsAsync(startDate, endDate, cancellationToken);
         
-        var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
-        return _mapper.Map<ReportDto>(savedReport);
+        var totalRegistrations = (int)(analytics.ContainsKey("TotalRegistrations") ? analytics["TotalRegistrations"] : 0);
+        var activeUsers = (int)(analytics.ContainsKey("ActiveUsers") ? analytics["ActiveUsers"] : 0);
+        var usersByRole = analytics.ContainsKey("UsersByRole") 
+            ? (Dictionary<string, int>)analytics["UsersByRole"] 
+            : new Dictionary<string, int> { { "Customer", totalRegistrations } };
+
+        var dto = new UserAnalyticsDto
+        {
+            TotalUsersRegistered = totalRegistrations,
+            ActiveUsers = activeUsers,
+            UsersByRole = usersByRole,
+            RegistrationTrend = new List<RegistrationTrendDto>
+            {
+                new RegistrationTrendDto { Date = startDate, NewRegistrations = totalRegistrations }
+            },
+            StartDate = startDate,
+            EndDate = endDate,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        return dto;
     }
 
-    public async Task<ReportDto> GenerateRestaurantPerformanceAsync(GenerateReportRequest request, CancellationToken cancellationToken = default)
+    public async Task<RestaurantAnalyticsDto> GetRestaurantAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        if (!request.RestaurantId.HasValue)
-            throw new ArgumentException("Restaurant ID is required for restaurant performance report");
-
-        var metrics = await _reportRepository.GetRestaurantPerformanceAsync(request.RestaurantId.Value, request.StartDate, request.EndDate, cancellationToken);
-        var report = Report.Create(ReportType.RestaurantPerformance, metrics, request.StartDate, request.EndDate, request.FilterCriteria);
+        var analytics = await _reportRepository.GetRestaurantAnalyticsAsync(startDate, endDate, cancellationToken);
         
-        var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
-        return _mapper.Map<ReportDto>(savedReport);
+        var totalRestaurants = (int)(analytics.ContainsKey("TotalRestaurants") ? analytics["TotalRestaurants"] : 0);
+        var pendingApprovals = (int)(analytics.ContainsKey("PendingApprovals") ? analytics["PendingApprovals"] : 0);
+        var approvedCount = (int)(analytics.ContainsKey("ApprovedCount") ? analytics["ApprovedCount"] : 0);
+        var totalRevenue = (decimal)(analytics.ContainsKey("TotalRevenue") ? analytics["TotalRevenue"] : 0m);
+        var revenueByRestaurant = analytics.ContainsKey("RevenueByRestaurant") 
+            ? (Dictionary<Guid, decimal>)analytics["RevenueByRestaurant"] 
+            : new Dictionary<Guid, decimal>();
+
+        var dto = new RestaurantAnalyticsDto
+        {
+            TotalRestaurants = totalRestaurants,
+            PendingApprovals = pendingApprovals,
+            ApprovedCount = approvedCount,
+            TotalRevenue = totalRevenue,
+            Currency = "USD",
+            RevenueByRestaurant = revenueByRestaurant,
+            StartDate = startDate,
+            EndDate = endDate,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        return dto;
     }
 
-    public async Task<ReportDto> GenerateCustomReportAsync(GenerateReportRequest request, CancellationToken cancellationToken = default)
+    public async Task<ReportDto> GeneratePartnerPerformanceReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        // For custom reports, we'll use sales metrics as a base
-        var metrics = await _reportRepository.GetSalesMetricsAsync(request.StartDate, request.EndDate, cancellationToken);
-        var report = Report.Create(ReportType.Custom, metrics, request.StartDate, request.EndDate, request.FilterCriteria);
+        var metrics = await _reportRepository.GetSalesMetricsAsync(startDate, endDate, cancellationToken);
+        var report = Report.Create(ReportType.RestaurantPerformance, metrics, startDate, endDate);
         
         var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
         return _mapper.Map<ReportDto>(savedReport);

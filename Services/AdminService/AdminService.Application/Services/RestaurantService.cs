@@ -120,4 +120,19 @@ public class RestaurantService : IRestaurantService
 
         return _mapper.Map<RestaurantDto>(restaurant);
     }
+
+    public async Task<IEnumerable<RestaurantDto>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default)
+    {
+        var restaurants = await _restaurantRepository.GetByOwnerIdAsync(ownerId, cancellationToken);
+        return _mapper.Map<IEnumerable<RestaurantDto>>(restaurants);
+    }
+
+    public async Task DeleteAsync(Guid restaurantId, CancellationToken cancellationToken = default)
+    {
+        var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId, cancellationToken);
+        if (restaurant == null)
+            throw new KeyNotFoundException($"Restaurant with ID {restaurantId} not found");
+
+        await _restaurantRepository.SoftDeleteAsync(restaurantId, cancellationToken);
+    }
 }
