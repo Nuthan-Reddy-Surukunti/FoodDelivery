@@ -51,7 +51,6 @@ builder.Services.AddAutoMapper(cfg =>
 });
 
 // Add FluentValidation
-builder.Services.AddValidatorsFromAssemblyContaining<CreateUserRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
 
 // Add Controllers

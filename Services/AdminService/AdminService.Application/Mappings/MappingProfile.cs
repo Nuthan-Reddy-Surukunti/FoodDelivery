@@ -11,10 +11,6 @@ public class MappingProfile : Profile
 {
     public MappingProfile()
     {
-        // User mappings
-        CreateMap<User, UserDto>()
-            .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.Role.ToString()))
-            .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.ContactInfo.Phone));
 
         // Restaurant mappings
         CreateMap<Restaurant, RestaurantDto>()
