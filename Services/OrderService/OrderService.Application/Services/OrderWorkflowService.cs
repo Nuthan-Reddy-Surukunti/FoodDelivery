@@ -301,45 +301,6 @@ public class OrderWorkflowService : IOrderWorkflowService
         return MapOrder(order);
     }
 
-    public async Task<OrderDetailDto> CheckoutAsync(CheckoutRequestDto request, CancellationToken cancellationToken = default)
-    {
-        var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(request.UserId, request.RestaurantId, cancellationToken);
-        if (cart is null)
-        {
-            throw new ResourceNotFoundException("Cart", request.RestaurantId);
-        }
-
-        if (!cart.Items.Any())
-        {
-            throw new CartEmptyException(cart.Id);
-        }
-
-        var order = new Order(request.UserId, request.RestaurantId);
-        foreach (var cartItem in cart.Items)
-        {
-            order.AddItem(cartItem.MenuItemId, cartItem.Quantity, cartItem.PriceSnapshot, cartItem.CustomizationNotes);
-        }
-
-        var address = new Address(
-            request.DeliveryAddress.Street,
-            request.DeliveryAddress.City,
-            request.DeliveryAddress.Pincode,
-            request.DeliveryAddress.AddressType,
-            request.DeliveryAddress.Latitude,
-            request.DeliveryAddress.Longitude);
-
-        var now = DateTime.UtcNow;
-        order.StartCheckout(address, now);
-        order.MarkPaymentPending(now);
-
-        await _orderRepository.AddAsync(order, cancellationToken);
-
-        cart.ClearCart();
-        await _cartRepository.UpdateAsync(cart, cancellationToken);
-
-        return MapOrder(order);
-    }
-
     public async Task<OrderDetailDto> SimulatePaymentAsync(SimulatePaymentRequestDto request, CancellationToken cancellationToken = default)
     {
         var order = await _orderRepository.GetOrderByIdWithItemsAsync(request.OrderId, cancellationToken)
@@ -385,20 +346,6 @@ public class OrderWorkflowService : IOrderWorkflowService
             await _paymentRepository.UpdateAsync(payment, cancellationToken);
         }
 
-        await _orderRepository.UpdateAsync(order, cancellationToken);
-
-        return MapOrder(order);
-    }
-
-    public async Task<OrderDetailDto> AssignDeliveryAsync(AssignDeliveryRequestDto request, CancellationToken cancellationToken = default)
-    {
-        var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken)
-                    ?? throw new ResourceNotFoundException("Order", request.OrderId);
-
-        var assignment = new DeliveryAssignment(order.Id, request.DeliveryAgentId, DateTime.UtcNow);
-        order.AssignDelivery(assignment);
-
-        await _deliveryAssignmentRepository.AddAsync(assignment, cancellationToken);
         await _orderRepository.UpdateAsync(order, cancellationToken);
 
         return MapOrder(order);
@@ -532,6 +479,140 @@ public class OrderWorkflowService : IOrderWorkflowService
         AddTimelineIfPresent(timeline, OrderStatus.CancelRequestedByCustomer, order.CancelRequestedAt, "Cancellation requested");
 
         return timeline.OrderBy(item => item.OccurredAt).ToList();
+    }
+
+    public async Task<bool> ValidateCartItemsAsync(Guid userId, Guid restaurantId, CancellationToken cancellationToken = default)
+    {
+        ValidateIdentity(userId, nameof(userId));
+        ValidateIdentity(restaurantId, nameof(restaurantId));
+
+        var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(userId, restaurantId, cancellationToken);
+        if (cart is null || !cart.Items.Any())
+        {
+            throw new ValidationException("Cart is empty or does not exist.");
+        }
+
+        // Validate all cart items exist and are in stock
+        // In production, this would call CatalogService to verify item availability and stock
+        // For now, domain validation is sufficient
+        foreach (var item in cart.Items)
+        {
+            if (!item.IsValid())
+            {
+                throw new ValidationException($"Cart item {item.MenuItemId} is invalid (quantity or price issue).");
+            }
+        }
+
+        return true;
+    }
+
+    public async Task<PricingBreakdownDto> CalculateTotalsAsync(Guid userId, Guid restaurantId, decimal taxPercentage = 0, CancellationToken cancellationToken = default)
+    {
+        ValidateIdentity(userId, nameof(userId));
+        ValidateIdentity(restaurantId, nameof(restaurantId));
+
+        var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(userId, restaurantId, cancellationToken);
+        if (cart is null || !cart.Items.Any())
+        {
+            throw new ValidationException("Cart is empty or does not exist.");
+        }
+
+        var subtotal = cart.CalculateTotal();
+        var discount = Money.Zero(subtotal.Currency);
+
+        if (cart.AppliedCoupon is not null)
+        {
+            discount = cart.AppliedCoupon.CalculateDiscount(subtotal);
+        }
+
+        var taxAmount = subtotal.Multiply(taxPercentage / 100);
+        var total = subtotal.Add(taxAmount).Subtract(discount);
+
+        return new PricingBreakdownDto
+        {
+            Subtotal = subtotal.Amount,
+            Tax = taxAmount.Amount,
+            Discount = discount.Amount,
+            Total = total.Amount,
+            Currency = subtotal.Currency,
+            TaxPercentage = taxPercentage
+        };
+    }
+
+    public async Task<IReadOnlyList<OrderDetailDto>> GetOrderQueueAsync(CancellationToken cancellationToken = default)
+    {
+        // Returns all active orders (not delivered or refunded)
+        // Admin/partner can view this queue
+        var orders = await _orderRepository.GetActiveOrdersAsync(cancellationToken);
+        return orders.Select(MapOrder).ToList();
+    }
+
+    public async Task<OrderDetailDto> ReorderFromHistoryAsync(Guid orderId, CancellationToken cancellationToken = default)
+    {
+        var originalOrder = await _orderRepository.GetOrderByIdWithItemsAsync(orderId, cancellationToken)
+                           ?? await _orderRepository.GetByIdAsync(orderId, cancellationToken)
+                           ?? throw new ResourceNotFoundException("Order", orderId);
+
+        // Create new order from original items
+        var newOrder = new Order(originalOrder.UserId, originalOrder.RestaurantId);
+        foreach (var item in originalOrder.OrderItems)
+        {
+            newOrder.AddItem(item.MenuItemId, item.Quantity, item.UnitPriceSnapshot, item.CustomizationNotes);
+        }
+
+        // Set delivery address from original order if available
+        if (originalOrder.DeliveryAddress is not null)
+        {
+            var now = DateTime.UtcNow;
+            newOrder.StartCheckout(originalOrder.DeliveryAddress, now);
+            newOrder.MarkPaymentPending(now);
+        }
+
+        await _orderRepository.AddAsync(newOrder, cancellationToken);
+        return MapOrder(newOrder);
+    }
+
+    public async Task<IReadOnlyList<DeliveryAssignmentDto>> GetAssignedDeliveriesAsync(Guid deliveryAgentId, CancellationToken cancellationToken = default)
+    {
+        ValidateIdentity(deliveryAgentId, nameof(deliveryAgentId));
+
+        var assignments = await _deliveryAssignmentRepository.GetAssignmentsByAgentIdAsync(deliveryAgentId, cancellationToken);
+
+        return assignments.Select(a => new DeliveryAssignmentDto
+        {
+            DeliveryAssignmentId = a.Id,
+            DeliveryAgentId = a.DeliveryAgentId,
+            AssignedAt = a.AssignedAt,
+            PickedUpAt = a.PickedUpAt,
+            DeliveredAt = a.DeliveredAt,
+            CurrentStatus = a.CurrentStatus
+        }).ToList();
+    }
+
+    public async Task<PaymentResponseDto> ProcessPaymentAsync(Guid orderId, ProcessPaymentRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken)
+                   ?? throw new ResourceNotFoundException("Order", orderId);
+
+        // TODO: Integrate with real payment gateway (Stripe, Razorpay, etc.)
+        // For now, this is a placeholder for future real payment processing
+        var payment = new Payment(order.Id, new Money(request.Amount), request.PaymentMethod);
+
+        var now = DateTime.UtcNow;
+        payment.MarkAsSuccess(request.TransactionId ?? $"REAL-{Guid.NewGuid():N}"[..12], now);
+
+        await _paymentRepository.AddAsync(payment, cancellationToken);
+
+        return new PaymentResponseDto
+        {
+            PaymentId = payment.Id,
+            PaymentStatus = payment.PaymentStatus,
+            TransactionId = payment.TransactionId,
+            Amount = payment.Amount.Amount,
+            Currency = payment.Amount.Currency,
+            PaymentMethod = payment.PaymentMethod,
+            ProcessedAt = now
+        };
     }
 
     private static List<TimeSlotDto> GetAvailableTimeSlots()

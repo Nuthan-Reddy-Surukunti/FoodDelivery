@@ -47,17 +47,6 @@ public class OrderRepository : IOrderRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Order>> GetOrdersReadyForDeliveryAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.Orders
-            .Include("_orderItems")
-            .Include(order => order.Payment)
-            .Include(order => order.DeliveryAssignment)
-            .Where(order => order.OrderStatus == OrderStatus.ReadyForPickup)
-            .OrderBy(order => order.UpdatedAt)
-            .ToListAsync(cancellationToken);
-    }
-
     public async Task<Order?> GetOrderByIdWithItemsAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
         return await _context.Orders

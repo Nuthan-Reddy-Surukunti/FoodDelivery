@@ -12,13 +12,5 @@ public interface ICartRepository
 
     Task UpdateAsync(Cart cart, CancellationToken cancellationToken = default);
 
-    Task RemoveAsync(Guid cartId, CancellationToken cancellationToken = default);
-
     Task<CartItem?> GetCartItemAsync(Guid cartItemId, CancellationToken cancellationToken = default);
-
-    Task AddCartItemAsync(CartItem cartItem, CancellationToken cancellationToken = default);
-
-    Task RemoveCartItemAsync(Guid cartItemId, CancellationToken cancellationToken = default);
-
-    Task ClearCartAsync(Guid cartId, CancellationToken cancellationToken = default);
 }

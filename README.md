@@ -73,8 +73,8 @@ docker compose up --build
 | Auth API | http://localhost:5001 |
 | Catalog API | http://localhost:5002 |
 | Order API | http://localhost:5003 |
-| Payment API | http://localhost:5004 |
-| Admin API | http://localhost:5005 |
+| Admin API | http://localhost:5004 |
+| Payment API | http://localhost:5005 |
 | RabbitMQ UI | http://localhost:15672 |
 
 > Default RabbitMQ credentials: `guest / guest`  

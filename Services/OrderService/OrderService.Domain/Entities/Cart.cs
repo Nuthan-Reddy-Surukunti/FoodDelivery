@@ -103,17 +103,6 @@ public class Cart : BaseEntity
         return itemRestaurantId != RestaurantId;
     }
 
-    public bool IsExpired(DateTime atUtc)
-    {
-        return UpdatedAt.AddDays(DomainConstants.CartExpiryDays) < atUtc;
-    }
-
-    public void MarkAbandoned()
-    {
-        Status = CartStatus.Abandoned;
-        Touch();
-    }
-
     public void ApplyCoupon(CouponCode couponCode)
     {
         EnsureCartIsActive();

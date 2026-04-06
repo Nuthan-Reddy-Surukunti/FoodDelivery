@@ -1,4 +1,4 @@
-@AdminService.API_HostAddress = http://localhost:5174
+@AdminService.API_HostAddress = http://localhost:5004
 
 GET {{AdminService.API_HostAddress}}/weatherforecast/
 Accept: application/json

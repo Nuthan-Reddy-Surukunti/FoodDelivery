@@ -146,7 +146,7 @@ services:
       dockerfile: Services/PaymentService/PaymentService.API/Dockerfile
     container_name: fd-payment-api
     ports:
-      - "5004:8080"
+      - "5005:8080"
     environment:
       ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=PaymentDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
       RabbitMQ__Host: rabbitmq
@@ -169,7 +169,7 @@ services:
       dockerfile: Services/AdminService/AdminService.API/Dockerfile
     container_name: fd-admin-api
     ports:
-      - "5005:8080"
+      - "5004:8080"
     environment:
       ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=AdminDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
       RabbitMQ__Host: rabbitmq
