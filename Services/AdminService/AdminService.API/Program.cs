@@ -1,6 +1,7 @@
 using AdminService.Infrastructure.Persistence;
 using AdminService.Infrastructure.Repositories;
 using AdminService.Application.Services;
+using AdminService.Application.Interfaces;
 using AdminService.Application.Mappings;
 using AdminService.Application.Validators;
 using AdminService.Domain.Interfaces;
@@ -33,16 +34,19 @@ builder.Services.AddDbContext<AdminServiceDbContext>(options =>
         ?? "Server=localhost;Database=AdminServiceDb;Trusted_Connection=True;TrustServerCertificate=True;",
         sqlOptions => sqlOptions.EnableRetryOnFailure()));
 // Add Repositories
-builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
+builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
 // Add Application Services
-builder.Services.AddScoped<UserService>();
-builder.Services.AddScoped<RestaurantService>();
-builder.Services.AddScoped<OrderService>();
-builder.Services.AddScoped<ReportService>();
+builder.Services.AddScoped<IRestaurantService, RestaurantService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<IReportService, ReportService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IMenuItemService, MenuItemService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // Add AutoMapper
 builder.Services.AddAutoMapper(cfg => 
@@ -52,9 +56,16 @@ builder.Services.AddAutoMapper(cfg =>
 
 // Add FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateMenuItemRequestValidator>();
+
+// Add HTTP Context Accessor for audit logging
+builder.Services.AddHttpContextAccessor();
 
 // Add Controllers
 builder.Services.AddControllers();
+
+// Add HTTP Context Accessor for getting current user info
+builder.Services.AddHttpContextAccessor();
 
 // Add Authentication
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
@@ -149,6 +160,9 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Add audit middleware after authentication/authorization
+app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
 

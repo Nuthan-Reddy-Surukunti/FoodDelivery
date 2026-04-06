@@ -77,39 +77,9 @@ public class Restaurant
         AddDomainEvent(new RestaurantRejectedEvent(Id, Name, rejectionReason));
     }
 
-    public void Suspend(string reason)
-    {
-        if (Status != RestaurantStatus.Approved)
-            throw new InvalidOperationException($"Cannot suspend restaurant with status: {Status}");
 
-        Status = RestaurantStatus.Suspended;
-        UpdatedAt = DateTime.UtcNow;
-        RejectionReason = reason;
-    }
 
-    public void Activate()
-    {
-        if (Status == RestaurantStatus.Rejected)
-            throw new InvalidOperationException("Cannot activate a rejected restaurant");
 
-        Status = RestaurantStatus.Approved;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void Deactivate()
-    {
-        Status = RestaurantStatus.Inactive;
-        UpdatedAt = DateTime.UtcNow;
-    }
-
-    public void UpdateDetails(string name, string description, Address address, ContactInfo contactInfo)
-    {
-        Name = name ?? throw new ArgumentNullException(nameof(name));
-        Description = description ?? throw new ArgumentNullException(nameof(description));
-        Address = address ?? throw new ArgumentNullException(nameof(address));
-        ContactInfo = contactInfo ?? throw new ArgumentNullException(nameof(contactInfo));
-        UpdatedAt = DateTime.UtcNow;
-    }
 
     public void ClearDomainEvents() => _domainEvents.Clear();
 

@@ -1,6 +1,7 @@
 using AdminService.Domain.Enums;
 using AdminService.Domain.ValueObjects;
 using AdminService.Domain.Events;
+using AdminService.Domain.Services;
 
 namespace AdminService.Domain.Entities;
 
@@ -50,6 +51,45 @@ public class Order
         {
             DeliveredAt = DateTime.UtcNow;
         }
+    }
+
+    public void UpdateStatusWithAdmin(OrderStatus newStatus, string reason, string adminUserId, decimal? refundAmount = null)
+    {
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("Reason is required for admin status changes", nameof(reason));
+
+        if (refundAmount.HasValue && refundAmount.Value > TotalAmount.Amount)
+            throw new ArgumentException("Refund amount cannot exceed order total", nameof(refundAmount));
+
+        var previousStatus = Status;
+        
+        // Validate transition using business rules
+        if (!OrderStatusTransitionService.IsTransitionAllowed(Status, newStatus))
+        {
+            // Admin override is required - log this change with extra detail
+            if (string.IsNullOrWhiteSpace(reason) || reason.Length < 10)
+                throw new ArgumentException("Admin override requires detailed reason (min 10 characters)", nameof(reason));
+        }
+
+        Status = newStatus;
+        UpdatedAt = DateTime.UtcNow;
+
+        if (newStatus == OrderStatus.Delivered)
+        {
+            DeliveredAt = DateTime.UtcNow;
+        }
+
+        // Create domain event for audit trail
+        var statusChangedEvent = new OrderStatusChangedEvent(
+            Id, 
+            previousStatus, 
+            newStatus, 
+            reason, 
+            adminUserId,
+            refundAmount
+        );
+        
+        AddDomainEvent(statusChangedEvent);
     }
 
     public void ClearDomainEvents() => _domainEvents.Clear();

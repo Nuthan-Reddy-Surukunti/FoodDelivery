@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using AdminService.Application.Services;
-using AdminService.Application.DTOs.Requests;
+using AdminService.Application.Interfaces;
 
 namespace AdminService.API.Controllers;
 
@@ -10,13 +9,54 @@ namespace AdminService.API.Controllers;
 [Authorize(Roles = "Admin")]
 public class ReportsController : ControllerBase
 {
-    private readonly ReportService _reportService;
+    private readonly IReportService _reportService;
 
-    public ReportsController(ReportService reportService)
+    public ReportsController(IReportService reportService)
     {
         _reportService = reportService;
     }
 
+    /// <summary>
+    /// Generate sales report (PRD Required: GET /admin/reports/sales)
+    /// </summary>
+    [HttpGet("sales")]
+    public async Task<IActionResult> GetSalesReport(
+        [FromQuery] DateTime startDate,
+        [FromQuery] DateTime endDate,
+        [FromQuery] Guid? restaurantId = null)
+    {
+        var report = await _reportService.GenerateSalesReportAsync(startDate, endDate, restaurantId);
+        return Ok(report);
+    }
+
+    /// <summary>
+    /// Generate partner performance report (PRD Required: GET /admin/reports/partners)
+    /// </summary>
+    [HttpGet("partners")]
+    public async Task<IActionResult> GetPartnerPerformanceReport(
+        [FromQuery] DateTime startDate,
+        [FromQuery] DateTime endDate,
+        [FromQuery] Guid? restaurantId = null)
+    {
+        var report = await _reportService.GeneratePartnerPerformanceReportAsync(startDate, endDate, restaurantId);
+        return Ok(report);
+    }
+
+    /// <summary>
+    /// Get reports by date range
+    /// </summary>
+    [HttpGet("by-date-range")]
+    public async Task<IActionResult> GetReportsByDateRange(
+        [FromQuery] DateTime startDate,
+        [FromQuery] DateTime endDate)
+    {
+        var reports = await _reportService.GetByDateRangeAsync(startDate, endDate);
+        return Ok(reports);
+    }
+
+    /// <summary>
+    /// Get specific report by ID
+    /// </summary>
     [HttpGet("{id}")]
     public async Task<IActionResult> GetReport(Guid id)
     {
@@ -29,42 +69,5 @@ public class ReportsController : ControllerBase
         {
             return NotFound(new { message = ex.Message });
         }
-    }
-
-    [HttpGet("by-date-range")]
-    public async Task<IActionResult> GetReportsByDateRange(
-        [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate)
-    {
-        var reports = await _reportService.GetByDateRangeAsync(startDate, endDate);
-        return Ok(reports);
-    }
-
-    [HttpPost("sales")]
-    public async Task<IActionResult> GenerateSalesReport([FromBody] GenerateReportRequest request)
-    {
-        var report = await _reportService.GenerateSalesReportAsync(request);
-        return CreatedAtAction(nameof(GetReport), new { id = report.Id }, report);
-    }
-
-    [HttpPost("user-analytics")]
-    public async Task<IActionResult> GenerateUserAnalytics([FromBody] GenerateReportRequest request)
-    {
-        var report = await _reportService.GenerateUserAnalyticsAsync(request);
-        return CreatedAtAction(nameof(GetReport), new { id = report.Id }, report);
-    }
-
-    [HttpPost("restaurant-performance")]
-    public async Task<IActionResult> GenerateRestaurantPerformance([FromBody] GenerateReportRequest request)
-    {
-        var report = await _reportService.GenerateRestaurantPerformanceAsync(request);
-        return CreatedAtAction(nameof(GetReport), new { id = report.Id }, report);
-    }
-
-    [HttpPost("custom")]
-    public async Task<IActionResult> GenerateCustomReport([FromBody] GenerateReportRequest request)
-    {
-        var report = await _reportService.GenerateCustomReportAsync(request);
-        return CreatedAtAction(nameof(GetReport), new { id = report.Id }, report);
     }
 }

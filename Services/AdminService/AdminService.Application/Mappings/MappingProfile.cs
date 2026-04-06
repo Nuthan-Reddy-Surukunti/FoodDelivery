@@ -1,4 +1,5 @@
 using AutoMapper;
+using AdminService.Application.DTOs;
 using AdminService.Application.DTOs.Requests;
 using AdminService.Application.DTOs.Responses;
 using AdminService.Domain.Entities;
@@ -23,6 +24,14 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.Phone, opt => opt.MapFrom(src => src.ContactInfo.Phone))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()));
 
+        // MenuItem mappings
+        CreateMap<MenuItem, MenuItemDto>()
+            .ForMember(dest => dest.Price, opt => opt.MapFrom(src => src.Price.Amount))
+            .ForMember(dest => dest.Currency, opt => opt.MapFrom(src => src.Price.Currency))
+            .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
+            .ForMember(dest => dest.ApprovalStatus, opt => opt.MapFrom(src => src.ApprovalStatus.ToString()))
+            .ForMember(dest => dest.CanBeOrdered, opt => opt.MapFrom(src => src.CanBeOrdered()));
+
         // Order mappings
         CreateMap<Order, OrderDto>()
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status.ToString()))
@@ -38,5 +47,8 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.TotalCustomers, opt => opt.MapFrom(src => src.Metrics.TotalCustomers))
             .ForMember(dest => dest.TotalRestaurants, opt => opt.MapFrom(src => src.Metrics.TotalRestaurants))
             .ForMember(dest => dest.AverageOrderValue, opt => opt.MapFrom(src => src.Metrics.AverageOrderValue));
+
+        // AuditLog mappings
+        CreateMap<AuditLog, AuditLogDto>();
     }
 }

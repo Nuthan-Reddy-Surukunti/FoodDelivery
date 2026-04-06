@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
+using AdminService.Domain.ValueObjects;
 using AdminService.Infrastructure.Persistence;
 
 namespace AdminService.Infrastructure.Repositories;
@@ -15,28 +16,26 @@ public class OrderRepository : IOrderRepository
         _context = context;
     }
 
-    public async Task<object?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Orders.FindAsync(new object[] { id }, cancellationToken);
     }
 
-    public async Task<IEnumerable<object>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Order>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Orders.ToListAsync(cancellationToken);
     }
 
-    public async Task<object> AddAsync(object entity, CancellationToken cancellationToken = default)
+    public async Task<Order> AddAsync(Order entity, CancellationToken cancellationToken = default)
     {
-        var order = (Order)entity;
-        await _context.Orders.AddAsync(order, cancellationToken);
+        await _context.Orders.AddAsync(entity, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
-        return order;
+        return entity;
     }
 
-    public async Task UpdateAsync(object entity, CancellationToken cancellationToken = default)
+    public async Task UpdateAsync(Order entity, CancellationToken cancellationToken = default)
     {
-        var order = (Order)entity;
-        _context.Orders.Update(order);
+        _context.Orders.Update(entity);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
@@ -55,14 +54,12 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders.AnyAsync(o => o.Id == id, cancellationToken);
     }
 
-    public async Task<IEnumerable<object>> GetByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default)
     {
         return await _context.Orders.Where(o => o.Status == status).ToListAsync(cancellationToken);
     }
 
-
-
-    public async Task<(IEnumerable<object> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, OrderStatus? status = null, CancellationToken cancellationToken = default)
+    public async Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, OrderStatus? status = null, CancellationToken cancellationToken = default)
     {
         var query = _context.Orders.AsQueryable();
         
@@ -81,7 +78,7 @@ public class OrderRepository : IOrderRepository
         return (items, totalCount);
     }
 
-    public async Task<IEnumerable<object>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Order>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken cancellationToken = default)
     {
         return await _context.Orders
             .Where(o => o.CustomerId == customerId)
@@ -89,7 +86,7 @@ public class OrderRepository : IOrderRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IEnumerable<object>> GetOrdersByRestaurantAsync(Guid restaurantId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<Order>> GetOrdersByRestaurantAsync(Guid restaurantId, CancellationToken cancellationToken = default)
     {
         return await _context.Orders
             .Where(o => o.RestaurantId == restaurantId)
@@ -100,5 +97,44 @@ public class OrderRepository : IOrderRepository
     public async Task<int> GetCountByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default)
     {
         return await _context.Orders.CountAsync(o => o.Status == status, cancellationToken);
+    }
+
+    public async Task<int> GetTotalOrdersCountAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Orders.CountAsync(cancellationToken);
+    }
+
+    public async Task<Money?> GetTotalRevenueAsync(CancellationToken cancellationToken = default)
+    {
+        var orders = await _context.Orders.ToListAsync(cancellationToken);
+        if (!orders.Any())
+            return Money.Zero("USD");
+
+        decimal totalAmount = orders.Sum(o => o.TotalAmount.Amount);
+        var firstCurrency = orders.First().TotalAmount.Currency;
+        
+        return Money.Create(totalAmount, firstCurrency);
+    }
+
+    public async Task<int> GetOrdersCountByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    {
+        return await _context.Orders
+            .Where(o => o.CreatedAt >= startDate && o.CreatedAt < endDate)
+            .CountAsync(cancellationToken);
+    }
+
+    public async Task<Money?> GetRevenueBetweenDatesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    {
+        var orders = await _context.Orders
+            .Where(o => o.CreatedAt >= startDate && o.CreatedAt < endDate)
+            .ToListAsync(cancellationToken);
+            
+        if (!orders.Any())
+            return Money.Zero("USD");
+
+        decimal totalAmount = orders.Sum(o => o.TotalAmount.Amount);
+        var firstCurrency = orders.First().TotalAmount.Currency;
+        
+        return Money.Create(totalAmount, firstCurrency);
     }
 }

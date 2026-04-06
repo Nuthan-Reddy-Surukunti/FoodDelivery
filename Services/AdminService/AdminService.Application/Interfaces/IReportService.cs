@@ -10,5 +10,4 @@ public interface IReportService
     Task<ReportDto> GenerateSalesReportAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
     Task<ReportDto> GenerateUserAnalyticsAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
     Task<ReportDto> GenerateRestaurantPerformanceAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
-    Task<ReportDto> GenerateCustomReportAsync(GenerateReportRequest request, CancellationToken cancellationToken = default);
 }

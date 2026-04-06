@@ -5,6 +5,8 @@ using AdminService.Application.Interfaces;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
+using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
 
 namespace AdminService.Application.Services;
 
@@ -12,11 +14,15 @@ public class RestaurantService : IRestaurantService
 {
     private readonly IRestaurantRepository _restaurantRepository;
     private readonly IMapper _mapper;
+    private readonly IAuditService _auditService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public RestaurantService(IRestaurantRepository restaurantRepository, IMapper mapper)
+    public RestaurantService(IRestaurantRepository restaurantRepository, IMapper mapper, IAuditService auditService, IHttpContextAccessor httpContextAccessor)
     {
         _restaurantRepository = restaurantRepository;
         _mapper = mapper;
+        _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
+        _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
     }
 
     public async Task<RestaurantDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -59,8 +65,27 @@ public class RestaurantService : IRestaurantService
         if (restaurant == null)
             throw new KeyNotFoundException($"Restaurant with ID {id} not found");
 
+        // Get admin user info from HTTP context
+        var httpContext = _httpContextAccessor.HttpContext;
+        var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                              httpContext?.User?.FindFirst("sub")?.Value;
+        var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
+                           httpContext?.User?.FindFirst("name")?.Value ??
+                           httpContext?.User?.Identity?.Name ??
+                           "Unknown Admin";
+
         ((Restaurant)restaurant).Approve(request.ApprovalNotes);
         await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
+
+        // Log audit trail
+        if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
+        {
+            var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+
+            await _auditService.LogApprovalActionAsync("Restaurant", id, "Approved", 
+                request.ApprovalNotes, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
+        }
 
         return _mapper.Map<RestaurantDto>(restaurant);
     }
@@ -71,8 +96,27 @@ public class RestaurantService : IRestaurantService
         if (restaurant == null)
             throw new KeyNotFoundException($"Restaurant with ID {id} not found");
 
+        // Get admin user info from HTTP context
+        var httpContext = _httpContextAccessor.HttpContext;
+        var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                              httpContext?.User?.FindFirst("sub")?.Value;
+        var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
+                           httpContext?.User?.FindFirst("name")?.Value ??
+                           httpContext?.User?.Identity?.Name ??
+                           "Unknown Admin";
+
         ((Restaurant)restaurant).Reject(request.RejectionReason);
         await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
+
+        // Log audit trail
+        if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
+        {
+            var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+
+            await _auditService.LogApprovalActionAsync("Restaurant", id, "Rejected", 
+                request.RejectionReason, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
+        }
 
         return _mapper.Map<RestaurantDto>(restaurant);
     }

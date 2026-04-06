@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using AdminService.Application.Services;
+using AdminService.Application.Interfaces;
 using AdminService.Application.DTOs.Requests;
 
 namespace AdminService.API.Controllers;
@@ -10,9 +10,9 @@ namespace AdminService.API.Controllers;
 [Authorize(Roles = "Admin")]
 public class OrdersController : ControllerBase
 {
-    private readonly OrderService _orderService;
+    private readonly IOrderService _orderService;
 
-    public OrdersController(OrderService orderService)
+    public OrdersController(IOrderService orderService)
     {
         _orderService = orderService;
     }
@@ -41,5 +41,26 @@ public class OrdersController : ControllerBase
         }
     }
 
-
+    [HttpPut("{id}/status")]
+    public async Task<IActionResult> UpdateOrderStatus(Guid id, [FromBody] UpdateOrderStatusRequest request)
+    {
+        try
+        {
+            var updatedOrder = await _orderService.UpdateOrderStatusAsync(
+                id, 
+                request.NewStatus, 
+                request.Reason, 
+                request.RefundAmount);
+                
+            return Ok(updatedOrder);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
 }

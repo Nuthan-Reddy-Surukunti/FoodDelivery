@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using AdminService.Application.Services;
+using AdminService.Application.Interfaces;
 using AdminService.Application.DTOs.Requests;
 
 namespace AdminService.API.Controllers;
@@ -10,9 +10,9 @@ namespace AdminService.API.Controllers;
 [Authorize(Roles = "Admin")]
 public class RestaurantsController : ControllerBase
 {
-    private readonly RestaurantService _restaurantService;
+    private readonly IRestaurantService _restaurantService;
 
-    public RestaurantsController(RestaurantService restaurantService)
+    public RestaurantsController(IRestaurantService restaurantService)
     {
         _restaurantService = restaurantService;
     }
