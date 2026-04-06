@@ -45,6 +45,10 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddDbContextCheck<AdminServiceDbContext>("database");
+
 var app = builder.Build();
 
 // Add error handling middleware
@@ -62,5 +66,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapHealthChecks("/health");
 
 app.Run();
