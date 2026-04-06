@@ -709,11 +709,13 @@ public class OrderWorkflowService : IOrderWorkflowService
             throw new ValidationException("Payment must exist before refund initiation.");
         }
 
-        var refundAmt = refundAmount.HasValue ? refundAmount.Value : order.Payment.Amount;
+        var alreadyRefunded = order.Payment.RefundedAmount ?? 0m;
+        var maxRefundable = order.Payment.Amount - alreadyRefunded;
+        var refundAmt = refundAmount ?? maxRefundable;
 
-        if (refundAmt <= 0 || refundAmt > order.Payment.Amount)
+        if (refundAmt <= 0 || refundAmt > maxRefundable)
         {
-            throw new InvalidRefundAmountException(refundAmt, order.Payment.Amount);
+            throw new InvalidRefundAmountException(refundAmt, maxRefundable);
         }
 
         order.Payment.RefundedAmount = refundAmt;
