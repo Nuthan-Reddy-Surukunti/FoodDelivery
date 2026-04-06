@@ -1,6 +1,173 @@
 @CatalogService.API_HostAddress = http://localhost:5078
+@restaurantId = 00000000-0000-0000-0000-000000000001
+@menuItemId = 00000000-0000-0000-0000-000000000002
+@categoryId = 00000000-0000-0000-0000-000000000003
+@token = YOUR_JWT_TOKEN_HERE
 
-GET {{CatalogService.API_HostAddress}}/weatherforecast/
+### ─── Restaurants ─────────────────────────────────────────────────────────────
+
+### Get all restaurants (paginated, with optional filters)
+GET {{CatalogService.API_HostAddress}}/api/restaurants?page=1&pageSize=10
+Accept: application/json
+
+###
+
+### Get restaurant by ID
+GET {{CatalogService.API_HostAddress}}/api/restaurants/{{restaurantId}}
+Accept: application/json
+
+###
+
+### Create restaurant
+POST {{CatalogService.API_HostAddress}}/api/restaurants
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Spice Garden",
+  "description": "Authentic Indian cuisine",
+  "address": "123 MG Road",
+  "city": "Hyderabad",
+  "latitude": 17.385,
+  "longitude": 78.4867,
+  "cuisineType": 1,
+  "ownerId": "00000000-0000-0000-0000-000000000010",
+  "minOrderValue": 150,
+  "deliveryTime": 30,
+  "contactPhone": "+91-9876543210",
+  "contactEmail": "spicegarden@example.com"
+}
+
+###
+
+### Update restaurant
+PUT {{CatalogService.API_HostAddress}}/api/restaurants/{{restaurantId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Spice Garden Premium",
+  "description": "Updated description",
+  "deliveryTime": 25
+}
+
+###
+
+### Delete restaurant
+DELETE {{CatalogService.API_HostAddress}}/api/restaurants/{{restaurantId}}
+Authorization: Bearer {{token}}
+
+###
+
+### ─── Menu Items ──────────────────────────────────────────────────────────────
+
+### Get menu item by ID
+GET {{CatalogService.API_HostAddress}}/api/menuitems/{{menuItemId}}
+Accept: application/json
+
+###
+
+### Get restaurant menu
+GET {{CatalogService.API_HostAddress}}/api/restaurants/{{restaurantId}}/menu
+Accept: application/json
+
+###
+
+### Create menu item
+POST {{CatalogService.API_HostAddress}}/api/menuitems
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "restaurantId": "{{restaurantId}}",
+  "name": "Chicken Biryani",
+  "description": "Aromatic basmati rice with tender chicken",
+  "price": 250.00,
+  "isVegetarian": false,
+  "categoryId": "{{categoryId}}"
+}
+
+###
+
+### Update menu item
+PUT {{CatalogService.API_HostAddress}}/api/menuitems/{{menuItemId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Special Chicken Biryani",
+  "price": 280.00
+}
+
+###
+
+### Delete menu item
+DELETE {{CatalogService.API_HostAddress}}/api/menuitems/{{menuItemId}}
+Authorization: Bearer {{token}}
+
+###
+
+### ─── Categories ──────────────────────────────────────────────────────────────
+
+### Get categories by restaurant
+GET {{CatalogService.API_HostAddress}}/api/restaurants/{{restaurantId}}/categories
+Accept: application/json
+
+###
+
+### Get category by ID
+GET {{CatalogService.API_HostAddress}}/api/categories/{{categoryId}}
+Accept: application/json
+
+###
+
+### Create category
+POST {{CatalogService.API_HostAddress}}/api/categories
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "restaurantId": "{{restaurantId}}",
+  "name": "Main Course",
+  "displayOrder": 1
+}
+
+###
+
+### Update category
+PUT {{CatalogService.API_HostAddress}}/api/categories/{{categoryId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Main Dishes",
+  "displayOrder": 2
+}
+
+###
+
+### Delete category
+DELETE {{CatalogService.API_HostAddress}}/api/categories/{{categoryId}}
+Authorization: Bearer {{token}}
+
+###
+
+### ─── Search ──────────────────────────────────────────────────────────────────
+
+### Search restaurants by filters
+GET {{CatalogService.API_HostAddress}}/api/search/restaurants?city=Hyderabad&cuisineType=1
+Accept: application/json
+
+###
+
+### Search restaurants by name
+GET {{CatalogService.API_HostAddress}}/api/search/restaurantsByName?name=Spice
+Accept: application/json
+
+###
+
+### Get homepage data
+GET {{CatalogService.API_HostAddress}}/api/search/home
 Accept: application/json
 
 ###

@@ -1,6 +1,157 @@
 @AuthService.API_HostAddress = http://localhost:5244
+@token = YOUR_JWT_TOKEN_HERE
 
-GET {{AuthService.API_HostAddress}}/weatherforecast/
+### ─── Authentication ─────────────────────────────────────────────────────────
+
+### Register new user
+POST {{AuthService.API_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!",
+  "role": "Customer"
+}
+
+###
+
+### Verify email OTP
+POST {{AuthService.API_HostAddress}}/api/auth/verify-email
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+
+###
+
+### Login
+POST {{AuthService.API_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+
+###
+
+### Verify 2FA OTP
+POST {{AuthService.API_HostAddress}}/api/auth/verify-2fa
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "otp": "654321"
+}
+
+###
+
+### Refresh token
+POST {{AuthService.API_HostAddress}}/api/auth/refresh-token
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN"
+}
+
+###
+
+### Logout
+POST {{AuthService.API_HostAddress}}/api/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "YOUR_REFRESH_TOKEN"
+}
+
+###
+
+### Forgot password
+POST {{AuthService.API_HostAddress}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "user@example.com"
+}
+
+###
+
+### Reset password
+POST {{AuthService.API_HostAddress}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "otp": "123456",
+  "newPassword": "NewPassword123!"
+}
+
+###
+
+### Toggle 2FA
+PUT {{AuthService.API_HostAddress}}/api/auth/toggle-2fa
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "enable": true
+}
+
+###
+
+### Delete account
+DELETE {{AuthService.API_HostAddress}}/api/auth/delete-account
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "password": "Password123!"
+}
+
+###
+
+### ─── Admin ───────────────────────────────────────────────────────────────────
+
+### Get pending user approvals
+GET {{AuthService.API_HostAddress}}/api/auth/admin/pending-approvals
 Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Approve user
+POST {{AuthService.API_HostAddress}}/api/auth/admin/approve-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "00000000-0000-0000-0000-000000000001"
+}
+
+###
+
+### Reject user
+POST {{AuthService.API_HostAddress}}/api/auth/admin/reject-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "00000000-0000-0000-0000-000000000001",
+  "reason": "Invalid documents"
+}
+
+###
+
+### Create admin account
+POST {{AuthService.API_HostAddress}}/api/auth/admin/create
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "email": "admin@fooddelivery.com",
+  "password": "AdminPass123!"
+}
 
 ###

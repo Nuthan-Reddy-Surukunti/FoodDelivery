@@ -1,6 +1,173 @@
 @OrderService.API_HostAddress = http://localhost:5181
+@userId = 00000000-0000-0000-0000-000000000001
+@restaurantId = 00000000-0000-0000-0000-000000000002
+@orderId = 00000000-0000-0000-0000-000000000003
+@cartItemId = 00000000-0000-0000-0000-000000000004
+@token = YOUR_JWT_TOKEN_HERE
 
-GET {{OrderService.API_HostAddress}}/weatherforecast/
+### Get or create cart for a user + restaurant
+GET {{OrderService.API_HostAddress}}/gateway/orders/cart?userId={{userId}}&restaurantId={{restaurantId}}
 Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Add item to cart
+POST {{OrderService.API_HostAddress}}/gateway/orders/cart/items
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "restaurantId": "{{restaurantId}}",
+  "menuItemId": "00000000-0000-0000-0000-000000000010",
+  "quantity": 2,
+  "priceSnapshot": 150.00,
+  "customizationNotes": "No onions"
+}
+
+###
+
+### Update cart item quantity
+PUT {{OrderService.API_HostAddress}}/gateway/orders/cart/items/{{cartItemId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "newQuantity": 3
+}
+
+###
+
+### Remove cart item
+DELETE {{OrderService.API_HostAddress}}/gateway/orders/cart/items/{{cartItemId}}?userId={{userId}}&restaurantId={{restaurantId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Clear cart
+DELETE {{OrderService.API_HostAddress}}/gateway/orders/cart?userId={{userId}}&restaurantId={{restaurantId}}
+Authorization: Bearer {{token}}
+
+###
+
+### Apply coupon to cart
+POST {{OrderService.API_HostAddress}}/gateway/orders/cart/apply-coupon
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "restaurantId": "{{restaurantId}}",
+  "couponCode": "SAVE10"
+}
+
+###
+
+### Get checkout context
+GET {{OrderService.API_HostAddress}}/gateway/orders/checkout/context?userId={{userId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Validate checkout
+POST {{OrderService.API_HostAddress}}/gateway/orders/checkout/validate
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "restaurantId": "{{restaurantId}}",
+  "deliveryAddress": {
+    "street": "123 Main St",
+    "city": "Hyderabad",
+    "pincode": "500081",
+    "addressType": 0,
+    "latitude": 17.385,
+    "longitude": 78.4867
+  }
+}
+
+###
+
+### Place order (checkout)
+POST {{OrderService.API_HostAddress}}/gateway/orders/orders
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userId": "{{userId}}",
+  "restaurantId": "{{restaurantId}}",
+  "deliveryStreet": "123 Main St",
+  "deliveryCity": "Hyderabad",
+  "deliveryPincode": "500081",
+  "deliveryAddressType": 0,
+  "deliveryLatitude": 17.385,
+  "deliveryLongitude": 78.4867
+}
+
+###
+
+### Simulate payment
+POST {{OrderService.API_HostAddress}}/gateway/orders/payments/simulate
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "orderId": "{{orderId}}",
+  "paymentMethod": 0,
+  "simulateSuccess": true
+}
+
+###
+
+### Get order by ID
+GET {{OrderService.API_HostAddress}}/gateway/orders/orders/{{orderId}}
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get orders by user
+GET {{OrderService.API_HostAddress}}/gateway/orders/orders?userId={{userId}}&activeOnly=false
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Get order timeline
+GET {{OrderService.API_HostAddress}}/gateway/orders/orders/{{orderId}}/timeline
+Accept: application/json
+Authorization: Bearer {{token}}
+
+###
+
+### Update order status (RestaurantPartner/DeliveryAgent/Admin)
+PUT {{OrderService.API_HostAddress}}/gateway/orders/orders/{{orderId}}/status
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "targetStatus": 4
+}
+
+###
+
+### Cancel order
+POST {{OrderService.API_HostAddress}}/gateway/orders/orders/{{orderId}}/cancel
+Authorization: Bearer {{token}}
+
+###
+
+### Assign delivery agent (Admin)
+PUT {{OrderService.API_HostAddress}}/gateway/orders/orders/{{orderId}}/assign-delivery
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "deliveryAgentId": "00000000-0000-0000-0000-000000000005"
+}
 
 ###
