@@ -1,6 +1,8 @@
 namespace OrderService.Application.Services;
 
+using OrderService.Application.DTOs.Cart;
 using OrderService.Application.DTOs.Checkout;
+using OrderService.Application.DTOs.Common;
 using OrderService.Application.DTOs.Order;
 using OrderService.Application.DTOs.Requests;
 using OrderService.Application.Exceptions;
@@ -56,8 +58,7 @@ public class OrderPlacementService : IOrderPlacementService
         {
             UserId = request.UserId,
             RestaurantId = request.RestaurantId,
-            OrderStatus = OrderStatus.Pending,
-            DeliveryAddressLine1 = request.DeliveryAddressLine1,
+            OrderStatus = OrderStatus.CheckoutStarted,
             TotalAmount = cart.TotalAmount,
             CheckoutStartedAt = DateTime.UtcNow,
             OrderItems = cart.Items.Select(item => new OrderItem

@@ -1,6 +1,7 @@
 namespace OrderService.Application.Interfaces;
 
 using OrderService.Application.DTOs.Cart;
+using OrderService.Application.DTOs.Checkout;
 using OrderService.Application.DTOs.Requests;
 
 public interface ICartService

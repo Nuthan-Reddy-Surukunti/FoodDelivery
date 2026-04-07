@@ -1,6 +1,7 @@
 namespace OrderService.Application.Services;
 
 using OrderService.Application.DTOs.Cart;
+using OrderService.Application.DTOs.Checkout;
 using OrderService.Application.DTOs.Requests;
 using OrderService.Application.Exceptions;
 using OrderService.Application.Helpers;

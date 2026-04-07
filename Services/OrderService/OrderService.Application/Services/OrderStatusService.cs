@@ -31,7 +31,7 @@ public class OrderStatusService : IOrderStatusService
         order.OrderStatus = request.NewStatus;
         order.UpdatedAt = DateTime.UtcNow;
         
-        if (request.NewStatus == OrderStatus.Accepted) order.PreparationStartTime = DateTime.UtcNow;
+        if (request.NewStatus == OrderStatus.RestaurantAccepted) order.PreparationStartTime = DateTime.UtcNow;
         else if (request.NewStatus == OrderStatus.ReadyForPickup) order.PickupTime = DateTime.UtcNow;
         else if (request.NewStatus == OrderStatus.Delivered) order.DeliveryTime = DateTime.UtcNow;
         
@@ -44,10 +44,10 @@ public class OrderStatusService : IOrderStatusService
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", orderId);
         
-        if (!forceByAdmin && order.OrderStatus != OrderStatus.Pending)
+        if (!forceByAdmin && order.OrderStatus != OrderStatus.Paid)
             throw new InvalidOperationException($"Cannot cancel order in {order.OrderStatus} status.");
         
-        order.OrderStatus = OrderStatus.Cancelled;
+        order.OrderStatus = OrderStatus.CancelRequestedByCustomer;
         order.CancelRequestedAt = DateTime.UtcNow;
         order.UpdatedAt = DateTime.UtcNow;
         

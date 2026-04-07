@@ -27,7 +27,7 @@ public class DeliveryService : IDeliveryService
     public async Task<IReadOnlyList<DeliveryAssignmentDto>> GetAssignedDeliveriesAsync(Guid deliveryAgentId, CancellationToken cancellationToken = default)
     {
         var assignments = await _deliveryAssignmentRepository.GetByDeliveryAgentAsync(deliveryAgentId, cancellationToken);
-        var active = assignments.Where(a => a.CurrentStatus != DeliveryStatus.Delivered && a.CurrentStatus != DeliveryStatus.Cancelled).ToList();
+        var active = assignments.Where(a => a.CurrentStatus != DeliveryStatus.Delivered).ToList();
         return active.Select(MapToDto).ToList().AsReadOnly();
     }
 
@@ -61,11 +61,13 @@ public class DeliveryService : IDeliveryService
         
         return new PaymentResponseDto
         {
+            PaymentId = payment.Id,
+            PaymentStatus = PaymentStatus.Completed,
             TransactionId = payment.TransactionId,
-            PaymentStatus = "Success",
             Amount = payment.Amount,
-            ProcessedAt = payment.ProcessedAt,
-            Message = "Payment processed successfully"
+            Currency = "INR",
+            PaymentMethod = payment.PaymentMethod,
+            ProcessedAt = DateTime.UtcNow
         };
     }
 
