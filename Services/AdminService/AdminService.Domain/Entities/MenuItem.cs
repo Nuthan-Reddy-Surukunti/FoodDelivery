@@ -24,4 +24,6 @@ public class MenuItem
     public DateTime? RejectedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? LastSyncedAt { get; set; }
+    public Guid? SyncEventId { get; set; }
 }

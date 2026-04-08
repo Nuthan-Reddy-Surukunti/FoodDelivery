@@ -5,6 +5,7 @@ using AdminService.Application.Services;
 using AdminService.Application.Interfaces;
 using AdminService.Application.Mappings;
 using AdminService.Application.Validators;
+using AdminService.Application.EventHandlers;
 using AdminService.Domain.Interfaces;
 using AdminService.API.Middleware;
 using FluentValidation;

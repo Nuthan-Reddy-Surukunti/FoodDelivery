@@ -16,4 +16,6 @@ public class Order
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public DateTime? DeliveredAt { get; set; }
+    public DateTime? LastSyncedAt { get; set; }
+    public Guid? SyncEventId { get; set; }
 }

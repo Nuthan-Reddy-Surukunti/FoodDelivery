@@ -25,4 +25,6 @@ public class Restaurant
     public DateTime? ApprovedAt { get; set; }
     public DateTime? RejectedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
+    public DateTime? LastSyncedAt { get; set; }
+    public Guid? SyncEventId { get; set; }
 }
