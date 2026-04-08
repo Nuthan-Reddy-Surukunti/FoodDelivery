@@ -1,6 +1,4 @@
 namespace OrderService.Application.Services;
-using FoodDelivery.Shared.Events.Order;
-using MassTransit;
 
 using OrderService.Application.DTOs.Cart;
 using OrderService.Application.DTOs.Checkout;

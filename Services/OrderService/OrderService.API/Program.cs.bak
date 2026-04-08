@@ -1,4 +1,3 @@
-using MassTransit;
 using OrderService.API.Middleware;
 using OrderService.Application;
 using OrderService.Infrastructure;
@@ -17,7 +16,6 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",
             ushort.Parse(builder.Configuration["RabbitMq:Port"] ?? "5672"),
-            "/",
             h =>
             {
                 h.Username(builder.Configuration["RabbitMq:UserName"] ?? "guest");

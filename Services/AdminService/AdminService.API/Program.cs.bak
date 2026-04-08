@@ -1,4 +1,3 @@
-using MassTransit;
 using AdminService.Infrastructure.Persistence;
 using AdminService.Infrastructure.Repositories;
 using AdminService.Application.Services;
@@ -55,7 +54,6 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",
             ushort.Parse(builder.Configuration["RabbitMq:Port"] ?? "5672"),
-            "/",
             h =>
             {
                 h.Username(builder.Configuration["RabbitMq:UserName"] ?? "guest");

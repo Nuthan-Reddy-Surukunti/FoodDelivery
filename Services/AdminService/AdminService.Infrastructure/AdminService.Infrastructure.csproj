@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003" Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -16,6 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AdminService.Domain\AdminService.Domain.csproj" />
-  </ItemGroup>
+  <ProjectReference Include="../../../Shared/FoodDelivery.Shared/FoodDelivery.Shared.csproj" /></ItemGroup>
 
-</Project>
+<ItemGroup><PackageReference Include="MassTransit" Version="8.1.8" /><PackageReference Include="MassTransit.RabbitMQ" Version="8.1.8" /></ItemGroup></Project>

@@ -1,3 +1,4 @@
+using MassTransit;
 using CatalogService.Application;
 using CatalogService.Infrastructure;
 using CatalogService.API.Middleware;
@@ -15,6 +16,21 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 
 // Application services (DTOs, mappings, business logic)
 builder.Services.AddApplicationServices();
+builder.Services.AddMassTransit(x =>
+{
+    x.UsingRabbitMq((context, cfg) =>
+    {
+        cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",
+            ushort.Parse(builder.Configuration["RabbitMq:Port"] ?? "5672"),
+            "/",
+            h =>
+            {
+                h.Username(builder.Configuration["RabbitMq:UserName"] ?? "guest");
+                h.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
+            });
+        cfg.ConfigureEndpoints(context);
+    });
+});
 
 // Middleware services
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();

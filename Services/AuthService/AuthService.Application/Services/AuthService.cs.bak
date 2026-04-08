@@ -331,16 +331,6 @@ public class AuthService : IAuthService
         };
         
         var created = await _userRepository.CreateUserAsync(user,dto.Password);
-        await _publishEndpoint.Publish(new UserRegisteredEvent
-        {
-            EventId = Guid.NewGuid(),
-            OccurredAt = DateTime.UtcNow,
-            EventVersion = 1,
-            UserId =  user.Id,
-            Email = user.Email,
-            FullName = user.FullName,
-            Role = user.Role.ToString()
-        });
         if(!created) return new AuthRequestDto { Success = false, Message = "Registration failed." };
 
         var newUser = await _userRepository.FindByEmailAsync(dto.Email);

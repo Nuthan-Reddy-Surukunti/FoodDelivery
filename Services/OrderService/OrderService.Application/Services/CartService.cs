@@ -14,10 +14,12 @@ using OrderService.Domain.Interfaces;
 public class CartService : ICartService
 {
     private readonly ICartRepository _cartRepository;
+    private readonly IMenuItemValidationService _menuItemValidationService;
 
-    public CartService(ICartRepository cartRepository)
+    public CartService(ICartRepository cartRepository, IMenuItemValidationService menuItemValidationService)
     {
         _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
+        _menuItemValidationService = menuItemValidationService ?? throw new ArgumentNullException(nameof(menuItemValidationService));
     }
 
     public async Task<CartDto> GetOrCreateCartAsync(Guid userId, Guid restaurantId, CancellationToken cancellationToken = default)
@@ -52,6 +54,18 @@ public class CartService : ICartService
         ServiceValidationHelper.ValidateIdentity(request.MenuItemId, nameof(request.MenuItemId));
         ServiceValidationHelper.ValidatePositive(request.Quantity, nameof(request.Quantity));
         ServiceValidationHelper.ValidatePositive(request.PriceSnapshot, nameof(request.PriceSnapshot));
+
+        // Validate menu item exists and is available in CatalogService
+        var validationResult = await _menuItemValidationService.ValidateMenuItemAsync(
+            request.RestaurantId,
+            request.MenuItemId,
+            cancellationToken);
+
+        if (!validationResult.IsValid)
+        {
+            throw new ValidationException(
+                validationResult.ErrorMessage ?? "Invalid menu item");
+        }
 
         var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(request.UserId, request.RestaurantId, cancellationToken);
         var isNewCart = cart is null;

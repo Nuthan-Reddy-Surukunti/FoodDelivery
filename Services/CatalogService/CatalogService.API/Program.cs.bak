@@ -1,7 +1,6 @@
-using MassTransit;
-using OrderService.API.Middleware;
-using OrderService.Application;
-using OrderService.Infrastructure;
+using CatalogService.Application;
+using CatalogService.Infrastructure;
+using CatalogService.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -9,7 +8,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// === 1. Add Services (DI) ===
+
+// Infrastructure services (DbContext, repositories)
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Application services (DTOs, mappings, business logic)
 builder.Services.AddApplicationServices();
 builder.Services.AddMassTransit(x =>
 {
@@ -17,7 +21,6 @@ builder.Services.AddMassTransit(x =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",
             ushort.Parse(builder.Configuration["RabbitMq:Port"] ?? "5672"),
-            "/",
             h =>
             {
                 h.Username(builder.Configuration["RabbitMq:UserName"] ?? "guest");
@@ -26,10 +29,21 @@ builder.Services.AddMassTransit(x =>
         cfg.ConfigureEndpoints(context);
     });
 });
+
+// Middleware services
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
-builder.Services.AddControllers();
+
+// Controllers with JSON naming policy
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
+
+// === 2a. Endpoints API Explorer (required for Swagger in .NET 6+) ===
 builder.Services.AddEndpointsApiExplorer();
 
+// === 2. JWT Authentication ===
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["SecretKey"];
 
@@ -52,10 +66,25 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+// === 3. CORS Configuration (enable when frontend is ready) ===
+// Uncomment when integrating React frontend at http://localhost:3000
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowFrontend", policy =>
+//     {
+//         policy.WithOrigins("http://localhost:3000")
+//             .AllowAnyMethod()
+//             .AllowAnyHeader()
+//             .AllowCredentials();
+//     });
+// });
+
+// === 4. Swagger/OpenAPI ===
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new() { Title = "Order Service", Version = "v1" });
+    options.SwaggerDoc("v1", new() { Title = "Catalog Service", Version = "v1" });
 
+    // Add JWT support in Swagger UI
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -84,8 +113,10 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddAuthorization();
 
+// === 5. Build the app ===
 var app = builder.Build();
 
+// === 6. Configure Middleware Pipeline ===
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -93,9 +124,19 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Register global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
+
+// app.UseCors("AllowFrontend"); // Enable when frontend is integrated
+
+// Authentication & Authorization
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Map controllers
 app.MapControllers();
 
+// === 7. Run app ===
 app.Run();
+
