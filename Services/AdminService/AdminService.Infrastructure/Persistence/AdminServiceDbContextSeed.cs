@@ -1,7 +1,3 @@
-using AdminService.Domain.Entities;
-using AdminService.Domain.Enums;
-using AdminService.Domain.ValueObjects;
-
 namespace AdminService.Infrastructure.Persistence;
 
 public static class AdminServiceDbContextSeed

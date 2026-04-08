@@ -2,7 +2,6 @@ using Microsoft.EntityFrameworkCore;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
-using AdminService.Domain.ValueObjects;
 using AdminService.Infrastructure.Persistence;
 
 namespace AdminService.Infrastructure.Repositories;
@@ -104,16 +103,16 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders.CountAsync(cancellationToken);
     }
 
-    public async Task<Money?> GetTotalRevenueAsync(CancellationToken cancellationToken = default)
+    public async Task<(decimal Amount, string Currency)> GetTotalRevenueAsync(CancellationToken cancellationToken = default)
     {
         var orders = await _context.Orders.ToListAsync(cancellationToken);
         if (!orders.Any())
-            return Money.Zero("USD");
+            return (0m, "USD");
 
-        decimal totalAmount = orders.Sum(o => o.TotalAmount.Amount);
-        var firstCurrency = orders.First().TotalAmount.Currency;
+        decimal totalAmount = orders.Sum(o => o.TotalAmount);
+        var firstCurrency = string.IsNullOrWhiteSpace(orders.First().Currency) ? "USD" : orders.First().Currency;
         
-        return Money.Create(totalAmount, firstCurrency);
+        return (totalAmount, firstCurrency);
     }
 
     public async Task<int> GetOrdersCountByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
@@ -123,18 +122,18 @@ public class OrderRepository : IOrderRepository
             .CountAsync(cancellationToken);
     }
 
-    public async Task<Money?> GetRevenueBetweenDatesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
+    public async Task<(decimal Amount, string Currency)> GetRevenueBetweenDatesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         var orders = await _context.Orders
             .Where(o => o.CreatedAt >= startDate && o.CreatedAt < endDate)
             .ToListAsync(cancellationToken);
             
         if (!orders.Any())
-            return Money.Zero("USD");
+            return (0m, "USD");
 
-        decimal totalAmount = orders.Sum(o => o.TotalAmount.Amount);
-        var firstCurrency = orders.First().TotalAmount.Currency;
+        decimal totalAmount = orders.Sum(o => o.TotalAmount);
+        var firstCurrency = string.IsNullOrWhiteSpace(orders.First().Currency) ? "USD" : orders.First().Currency;
         
-        return Money.Create(totalAmount, firstCurrency);
+        return (totalAmount, firstCurrency);
     }
 }

@@ -141,11 +141,4 @@ public class MenuItemRepository : IMenuItemRepository
 
         return await query.AnyAsync(cancellationToken);
     }
-
-    public async Task<int> GetCountByApprovalStatusAsync(ApprovalStatus status, CancellationToken cancellationToken = default)
-    {
-        return await _context.MenuItems
-            .Where(m => m.ApprovalStatus == status)
-            .CountAsync(cancellationToken);
-    }
 }

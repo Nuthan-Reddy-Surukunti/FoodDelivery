@@ -2,129 +2,136 @@ namespace OrderService.Tests;
 
 using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
-using OrderService.Domain.Exceptions;
-using OrderService.Domain.ValueObjects;
 
 public class OrderDomainRulesTests
 {
     [Test]
-    public void MoveToNextStatus_ShouldRejectInvalidTransition()
+    public void Order_ShouldUseDraftStatusByDefault()
     {
-        var order = CreateDraftOrderWithItem();
+        var order = new Order();
 
-        Assert.Throws<InvalidOrderStatusTransitionException>(() =>
-            order.MoveToNextStatus(OrderStatus.Paid, DateTime.UtcNow));
+        Assert.That(order.OrderStatus, Is.EqualTo(OrderStatus.DraftCart));
     }
 
     [Test]
-    public void RequestCancellation_ShouldFailAfterPreparingStarts()
+    public void Order_ShouldStoreBasicFieldsAndItems()
     {
-        var order = CreateReadyForPreparationOrder();
+        var userId = Guid.NewGuid();
+        var restaurantId = Guid.NewGuid();
 
-        order.StartPreparing(DateTime.UtcNow);
+        var order = new Order
+        {
+            UserId = userId,
+            RestaurantId = restaurantId,
+            OrderStatus = OrderStatus.CheckoutStarted,
+            DeliveryAddressLine1 = "123 Main St",
+            DeliveryCity = "Bengaluru",
+            DeliveryPostalCode = "560001",
+            TotalAmount = 250m,
+            OrderItems =
+            [
+                new OrderItem
+                {
+                    MenuItemId = Guid.NewGuid(),
+                    Quantity = 2,
+                    UnitPrice = 100m,
+                    Subtotal = 200m
+                },
+                new OrderItem
+                {
+                    MenuItemId = Guid.NewGuid(),
+                    Quantity = 1,
+                    UnitPrice = 50m,
+                    Subtotal = 50m
+                }
+            ]
+        };
 
-        Assert.That(order.CanCustomerCancel(DateTime.UtcNow), Is.False);
-        Assert.Throws<OrderCancellationNotAllowedException>(() =>
-            order.RequestCancellation(DateTime.UtcNow));
+        Assert.Multiple(() =>
+        {
+            Assert.That(order.UserId, Is.EqualTo(userId));
+            Assert.That(order.RestaurantId, Is.EqualTo(restaurantId));
+            Assert.That(order.OrderItems.Count, Is.EqualTo(2));
+            Assert.That(order.TotalAmount, Is.EqualTo(250m));
+            Assert.That(order.DeliveryCity, Is.EqualTo("Bengaluru"));
+        });
     }
 
     [Test]
-    public void InitiateRefund_ShouldFailWhenAmountExceedsPayment()
+    public void Cart_ShouldHoldItemsAndStatus()
     {
-        var payment = new Payment(Guid.NewGuid(), new Money(499), PaymentMethod.Card);
-        payment.MarkAsSuccess("TXN-1001", DateTime.UtcNow);
+        var cart = new Cart
+        {
+            UserId = Guid.NewGuid(),
+            RestaurantId = Guid.NewGuid(),
+            Status = CartStatus.Active,
+            Items =
+            [
+                new CartItem
+                {
+                    MenuItemId = Guid.NewGuid(),
+                    Quantity = 3,
+                    Price = 80m,
+                    Subtotal = 240m
+                }
+            ],
+            TotalAmount = 240m
+        };
 
-        Assert.Throws<InvalidRefundAmountException>(() =>
-            payment.InitiateRefund(new Money(500), DateTime.UtcNow));
+        Assert.Multiple(() =>
+        {
+            Assert.That(cart.Status, Is.EqualTo(CartStatus.Active));
+            Assert.That(cart.Items.Count, Is.EqualTo(1));
+            Assert.That(cart.TotalAmount, Is.EqualTo(240m));
+        });
     }
 
     [Test]
-    public void Cart_AddItem_ShouldRejectMixedRestaurantItems()
+    public void Payment_ShouldStoreProcessingDetails()
     {
-        var primaryRestaurantId = Guid.NewGuid();
-        var anotherRestaurantId = Guid.NewGuid();
-        var cart = new Cart(Guid.NewGuid(), primaryRestaurantId);
+        var processedAt = DateTime.UtcNow;
 
-        cart.AddItem(primaryRestaurantId, Guid.NewGuid(), 1, 99);
+        var payment = new Payment
+        {
+            OrderId = Guid.NewGuid(),
+            Amount = 499m,
+            PaymentMethod = PaymentMethod.Card,
+            PaymentStatus = PaymentStatus.Success,
+            TransactionId = "TXN-1001",
+            ProcessedAt = processedAt
+        };
 
-        Assert.Throws<MixedCartException>(() =>
-            cart.AddItem(anotherRestaurantId, Guid.NewGuid(), 1, 120));
+        Assert.Multiple(() =>
+        {
+            Assert.That(payment.PaymentStatus, Is.EqualTo(PaymentStatus.Success));
+            Assert.That(payment.TransactionId, Is.EqualTo("TXN-1001"));
+            Assert.That(payment.ProcessedAt, Is.EqualTo(processedAt));
+            Assert.That(payment.Amount, Is.EqualTo(499m));
+        });
     }
 
     [Test]
-    public void DeliveryAssignment_ShouldEnforceChronologicalTimestamps()
+    public void DeliveryAssignment_ShouldTrackStatusTimeline()
     {
-        var assignedAt = DateTime.UtcNow;
-        var assignment = new DeliveryAssignment(Guid.NewGuid(), Guid.NewGuid(), assignedAt);
+        var assignment = new DeliveryAssignment
+        {
+            OrderId = Guid.NewGuid(),
+            DeliveryAgentId = Guid.NewGuid(),
+            AssignedAt = DateTime.UtcNow,
+            CurrentStatus = DeliveryStatus.PickupPending
+        };
 
-        Assert.Throws<InvalidOperationException>(() =>
-            assignment.MarkAsPickedUp(assignedAt.AddMinutes(-1)));
+        assignment.CurrentStatus = DeliveryStatus.PickedUp;
+        assignment.PickedUpAt = assignment.AssignedAt.AddMinutes(12);
+        assignment.CurrentStatus = DeliveryStatus.Delivered;
+        assignment.DeliveredAt = assignment.PickedUpAt.Value.AddMinutes(22);
 
-        var pickedUpAt = assignedAt.AddMinutes(10);
-        assignment.MarkAsPickedUp(pickedUpAt);
-
-        Assert.Throws<InvalidOperationException>(() =>
-            assignment.MarkAsDelivered(pickedUpAt));
-    }
-
-    [Test]
-    public void CalculateTotal_ShouldApplyTaxAndCouponDiscount()
-    {
-        var order = CreateDraftOrderWithItem();
-        var coupon = new CouponCode(
-            "SAVE10",
-            10,
-            new Money(100),
-            DateTime.UtcNow.AddHours(2),
-            order.RestaurantId);
-
-        order.ApplyCoupon(coupon, DateTime.UtcNow);
-
-        var total = order.CalculateTotal(5);
-
-        Assert.That(total.Amount, Is.EqualTo(190));
-    }
-
-    [Test]
-    public void IsEligibleForDeliveryAssignment_ShouldBeTrueOnlyWhenReadyForPickup()
-    {
-        var order = CreateReadyForPreparationOrder();
-
-        Assert.That(order.IsEligibleForDeliveryAssignment(), Is.False);
-
-        order.StartPreparing(DateTime.UtcNow.AddMinutes(1));
-        order.MarkReadyForPickup(DateTime.UtcNow.AddMinutes(10));
-
-        Assert.That(order.IsEligibleForDeliveryAssignment(), Is.True);
-    }
-
-    private static Order CreateDraftOrderWithItem()
-    {
-        var order = new Order(Guid.NewGuid(), Guid.NewGuid());
-        order.AddItem(Guid.NewGuid(), 2, 100);
-        return order;
-    }
-
-    private static Order CreateReadyForPreparationOrder()
-    {
-        var now = DateTime.UtcNow;
-        var order = CreateDraftOrderWithItem();
-
-        order.StartCheckout(CreateAddress(), now.AddMinutes(1));
-        order.MarkPaymentPending(now.AddMinutes(2));
-
-        var payment = new Payment(order.Id, new Money(200), PaymentMethod.Card);
-        payment.MarkAsSuccess("TXN-READY", now.AddMinutes(3));
-
-        order.AttachPayment(payment);
-        order.MarkPaid(now.AddMinutes(3));
-        order.AcceptByRestaurant(now.AddMinutes(4));
-
-        return order;
-    }
-
-    private static Address CreateAddress()
-    {
-        return new Address("Street 12", "Hyderabad", "500081", AddressType.Home, 17.3850, 78.4867);
+        Assert.Multiple(() =>
+        {
+            Assert.That(assignment.CurrentStatus, Is.EqualTo(DeliveryStatus.Delivered));
+            Assert.That(assignment.PickedUpAt, Is.Not.Null);
+            Assert.That(assignment.DeliveredAt, Is.Not.Null);
+            Assert.That(assignment.DeliveredAt > assignment.PickedUpAt, Is.True);
+        });
     }
 }

@@ -21,46 +21,40 @@ public class RestaurantConfiguration : IEntityTypeConfiguration<Restaurant>
             .IsRequired()
             .HasMaxLength(1000);
 
-        builder.OwnsOne(r => r.Address, address =>
-        {
-            address.Property(a => a.Street)
-                .IsRequired()
-                .HasMaxLength(255)
-                .HasColumnName("Street");
+        builder.Property(r => r.Street)
+            .IsRequired()
+            .HasMaxLength(255)
+            .HasColumnName("Street");
 
-            address.Property(a => a.City)
-                .IsRequired()
-                .HasMaxLength(100)
-                .HasColumnName("City");
+        builder.Property(r => r.City)
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasColumnName("City");
 
-            address.Property(a => a.State)
-                .IsRequired()
-                .HasMaxLength(100)
-                .HasColumnName("State");
+        builder.Property(r => r.State)
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasColumnName("State");
 
-            address.Property(a => a.ZipCode)
-                .IsRequired()
-                .HasMaxLength(20)
-                .HasColumnName("ZipCode");
+        builder.Property(r => r.ZipCode)
+            .IsRequired()
+            .HasMaxLength(20)
+            .HasColumnName("ZipCode");
 
-            address.Property(a => a.Country)
-                .IsRequired()
-                .HasMaxLength(100)
-                .HasColumnName("Country");
-        });
+        builder.Property(r => r.Country)
+            .IsRequired()
+            .HasMaxLength(100)
+            .HasColumnName("Country");
 
-        builder.OwnsOne(r => r.ContactInfo, contact =>
-        {
-            contact.Property(c => c.Email)
-                .IsRequired()
-                .HasMaxLength(255)
-                .HasColumnName("ContactEmail");
+        builder.Property(r => r.Email)
+            .IsRequired()
+            .HasMaxLength(255)
+            .HasColumnName("ContactEmail");
 
-            contact.Property(c => c.Phone)
-                .IsRequired()
-                .HasMaxLength(50)
-                .HasColumnName("ContactPhone");
-        });
+        builder.Property(r => r.Phone)
+            .IsRequired()
+            .HasMaxLength(50)
+            .HasColumnName("ContactPhone");
 
         builder.Property(r => r.Status)
             .IsRequired()
@@ -79,7 +73,5 @@ public class RestaurantConfiguration : IEntityTypeConfiguration<Restaurant>
         builder.Property(r => r.UpdatedAt);
 
         builder.HasIndex(r => r.Status);
-
-        builder.Ignore(r => r.DomainEvents);
     }
 }

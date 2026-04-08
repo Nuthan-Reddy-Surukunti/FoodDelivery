@@ -1,8 +1,6 @@
 using AutoMapper;
-using AdminService.Application.DTOs.Requests;
 using AdminService.Application.DTOs.Responses;
 using AdminService.Application.Interfaces;
-using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
 using System.Security.Claims;
@@ -12,6 +10,17 @@ namespace AdminService.Application.Services;
 
 public class OrderService : IOrderService
 {
+    private static readonly Dictionary<OrderStatus, List<OrderStatus>> AllowedTransitions = new()
+    {
+        { OrderStatus.Pending, new List<OrderStatus> { OrderStatus.Confirmed, OrderStatus.Cancelled } },
+        { OrderStatus.Confirmed, new List<OrderStatus> { OrderStatus.Preparing, OrderStatus.Cancelled } },
+        { OrderStatus.Preparing, new List<OrderStatus> { OrderStatus.Ready, OrderStatus.Cancelled } },
+        { OrderStatus.Ready, new List<OrderStatus> { OrderStatus.OutForDelivery, OrderStatus.Cancelled } },
+        { OrderStatus.OutForDelivery, new List<OrderStatus> { OrderStatus.Delivered, OrderStatus.Cancelled } },
+        { OrderStatus.Delivered, new List<OrderStatus>() },
+        { OrderStatus.Cancelled, new List<OrderStatus>() }
+    };
+
     private readonly IOrderRepository _orderRepository;
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -73,8 +82,22 @@ public class OrderService : IOrderService
 
         var adminUserId = Guid.TryParse(adminUserIdClaim, out var userId) ? userId : Guid.Empty;
 
-        // Update status with admin override
-        order.UpdateStatusWithAdmin(newStatus, reason, adminUserIdClaim ?? "system", refundAmount);
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new ArgumentException("Reason is required for admin status changes", nameof(reason));
+
+        if (refundAmount.HasValue && refundAmount.Value > order.TotalAmount)
+            throw new ArgumentException("Refund amount cannot exceed order total", nameof(refundAmount));
+
+        if (!IsTransitionAllowed(order.Status, newStatus) && reason.Length < 10)
+            throw new ArgumentException("Admin override requires detailed reason (min 10 characters)", nameof(reason));
+
+        order.Status = newStatus;
+        order.UpdatedAt = DateTime.UtcNow;
+
+        if (newStatus == OrderStatus.Delivered)
+        {
+            order.DeliveredAt = DateTime.UtcNow;
+        }
 
         // Save changes
         await _orderRepository.UpdateAsync(order, cancellationToken);
@@ -90,5 +113,10 @@ public class OrderService : IOrderService
         }
 
         return _mapper.Map<OrderDto>(order);
+    }
+
+    private static bool IsTransitionAllowed(OrderStatus fromStatus, OrderStatus toStatus)
+    {
+        return AllowedTransitions.TryGetValue(fromStatus, out var nextStatuses) && nextStatuses.Contains(toStatus);
     }
 }

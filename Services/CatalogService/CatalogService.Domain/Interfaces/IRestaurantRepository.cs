@@ -15,8 +15,6 @@ public interface IRestaurantRepository
 
     Task<(List<Restaurant>, int)> GetByCuisineAsync(CuisineType cuisine, int pageNumber, int pageSize);
 
-    // TODO: Implement GetNearbyAsync in future with geo-distance queries
-
     Task<(List<Restaurant>, int)> GetByStatusAsync(RestaurantStatus status, int pageNumber, int pageSize);
 
     Task<(List<Restaurant>, int)> GetByRatingAsync(decimal minRating, int pageNumber, int pageSize);

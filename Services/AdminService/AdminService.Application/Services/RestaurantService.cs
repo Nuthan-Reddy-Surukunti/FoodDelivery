@@ -61,9 +61,15 @@ public class RestaurantService : IRestaurantService
 
     public async Task<RestaurantDto> ApproveAsync(Guid id, ApproveRestaurantRequest request, CancellationToken cancellationToken = default)
     {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
         var restaurant = await _restaurantRepository.GetByIdAsync(id, cancellationToken);
         if (restaurant == null)
             throw new KeyNotFoundException($"Restaurant with ID {id} not found");
+
+        if (restaurant.Status != RestaurantStatus.Pending)
+            throw new InvalidOperationException($"Cannot approve restaurant with status: {restaurant.Status}");
 
         // Get admin user info from HTTP context
         var httpContext = _httpContextAccessor.HttpContext;
@@ -74,7 +80,11 @@ public class RestaurantService : IRestaurantService
                            httpContext?.User?.Identity?.Name ??
                            "Unknown Admin";
 
-        ((Restaurant)restaurant).Approve(request.ApprovalNotes);
+        restaurant.Status = RestaurantStatus.Approved;
+        restaurant.ApprovedAt = DateTime.UtcNow;
+        restaurant.UpdatedAt = DateTime.UtcNow;
+        restaurant.RejectionReason = null;
+
         await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
 
         // Log audit trail
@@ -92,9 +102,18 @@ public class RestaurantService : IRestaurantService
 
     public async Task<RestaurantDto> RejectAsync(Guid id, RejectRestaurantRequest request, CancellationToken cancellationToken = default)
     {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
         var restaurant = await _restaurantRepository.GetByIdAsync(id, cancellationToken);
         if (restaurant == null)
             throw new KeyNotFoundException($"Restaurant with ID {id} not found");
+
+        if (restaurant.Status != RestaurantStatus.Pending)
+            throw new InvalidOperationException($"Cannot reject restaurant with status: {restaurant.Status}");
+
+        if (string.IsNullOrWhiteSpace(request.RejectionReason))
+            throw new ArgumentException("Rejection reason is required", nameof(request.RejectionReason));
 
         // Get admin user info from HTTP context
         var httpContext = _httpContextAccessor.HttpContext;
@@ -105,7 +124,11 @@ public class RestaurantService : IRestaurantService
                            httpContext?.User?.Identity?.Name ??
                            "Unknown Admin";
 
-        ((Restaurant)restaurant).Reject(request.RejectionReason);
+        restaurant.Status = RestaurantStatus.Rejected;
+        restaurant.RejectedAt = DateTime.UtcNow;
+        restaurant.UpdatedAt = DateTime.UtcNow;
+        restaurant.RejectionReason = request.RejectionReason;
+
         await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
 
         // Log audit trail

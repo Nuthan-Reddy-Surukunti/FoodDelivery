@@ -5,7 +5,6 @@ using AdminService.Application.Interfaces;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
-using AdminService.Domain.ValueObjects;
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
@@ -81,24 +80,30 @@ public class MenuItemService : IMenuItemService
         if (request == null)
             throw new ArgumentNullException(nameof(request));
 
-        // Validate required fields
-        if (string.IsNullOrWhiteSpace(request.Name))
-            throw new ArgumentException("Menu item name is required", nameof(request));
-
-        if (string.IsNullOrWhiteSpace(request.Description))
-            throw new ArgumentException("Menu item description is required", nameof(request));
-
-        if (request.Price <= 0)
-            throw new ArgumentException("Menu item price must be greater than zero", nameof(request));
-
         if (request.RestaurantId == Guid.Empty)
             throw new ArgumentException("Restaurant ID is required", nameof(request));
 
-        // Create Money value object
-        var price = Money.Create(request.Price, request.Currency);
+        ValidateName(request.Name);
+        ValidateDescription(request.Description);
+        ValidatePrice(request.Price, nameof(request.Price));
+        ValidateCategoryId(request.CategoryId);
+
+        var normalizedCurrency = (request.Currency ?? "USD").ToUpperInvariant();
         
         // Create menu item entity
-        var menuItem = MenuItem.Create(request.RestaurantId, request.Name, request.Description, price, request.CategoryId);
+        var menuItem = new MenuItem
+        {
+            Id = Guid.NewGuid(),
+            RestaurantId = request.RestaurantId,
+            Name = request.Name,
+            Description = request.Description,
+            Price = request.Price,
+            Currency = normalizedCurrency,
+            CategoryId = request.CategoryId,
+            Status = MenuItemStatus.Inactive,
+            ApprovalStatus = ApprovalStatus.Pending,
+            CreatedAt = DateTime.UtcNow
+        };
         
         // Save to repository
         await _menuItemRepository.AddAsync(menuItem, cancellationToken);
@@ -115,18 +120,53 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        // Update price if provided
-        Money? newPrice = null;
-        if (request.Price.HasValue && !string.IsNullOrWhiteSpace(request.Currency))
+        if (menuItem.ApprovalStatus == ApprovalStatus.Rejected)
+            throw new InvalidOperationException("Cannot update rejected menu item. Create a new one instead.");
+
+        var hasChanges = false;
+
+        if (!string.IsNullOrWhiteSpace(request.Name) && request.Name != menuItem.Name)
         {
-            if (request.Price.Value <= 0)
-                throw new ArgumentException("Menu item price must be greater than zero", nameof(request.Price));
-            
-            newPrice = Money.Create(request.Price.Value, request.Currency);
+            ValidateName(request.Name);
+            menuItem.Name = request.Name;
+            hasChanges = true;
         }
 
-        // Update menu item details
-        menuItem.UpdateDetails(request.Name, request.Description, newPrice, request.CategoryId);
+        if (!string.IsNullOrWhiteSpace(request.Description) && request.Description != menuItem.Description)
+        {
+            ValidateDescription(request.Description);
+            menuItem.Description = request.Description;
+            hasChanges = true;
+        }
+
+        if (request.Price.HasValue && !string.IsNullOrWhiteSpace(request.Currency))
+        {
+            ValidatePrice(request.Price.Value, nameof(request.Price));
+            var normalizedCurrency = (request.Currency ?? "USD").ToUpperInvariant();
+            if (menuItem.Price != request.Price.Value || !string.Equals(menuItem.Currency, normalizedCurrency, StringComparison.Ordinal))
+            {
+                menuItem.Price = request.Price.Value;
+                menuItem.Currency = normalizedCurrency;
+                hasChanges = true;
+            }
+        }
+
+        if (request.CategoryId != menuItem.CategoryId)
+        {
+            ValidateCategoryId(request.CategoryId);
+            menuItem.CategoryId = request.CategoryId;
+            hasChanges = true;
+        }
+
+        if (hasChanges)
+        {
+            if (menuItem.ApprovalStatus == ApprovalStatus.Approved)
+            {
+                ResetApprovalToPending(menuItem);
+            }
+
+            menuItem.UpdatedAt = DateTime.UtcNow;
+        }
         
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
         
@@ -139,7 +179,15 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Activate();
+        if (menuItem.ApprovalStatus != ApprovalStatus.Approved)
+            throw new InvalidOperationException("Cannot activate menu item that is not approved");
+
+        if (menuItem.Status != MenuItemStatus.Active)
+        {
+            menuItem.Status = MenuItemStatus.Active;
+            menuItem.UpdatedAt = DateTime.UtcNow;
+        }
+
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
         
         return _mapper.Map<MenuItemDto>(menuItem);
@@ -151,7 +199,12 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Deactivate();
+        if (menuItem.Status != MenuItemStatus.Inactive)
+        {
+            menuItem.Status = MenuItemStatus.Inactive;
+            menuItem.UpdatedAt = DateTime.UtcNow;
+        }
+
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
         
         return _mapper.Map<MenuItemDto>(menuItem);
@@ -169,7 +222,18 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Approve(approvedBy, request.ApprovalNotes);
+        if (menuItem.ApprovalStatus != ApprovalStatus.Pending)
+            throw new InvalidOperationException($"Cannot approve menu item with approval status: {menuItem.ApprovalStatus}");
+
+        menuItem.ApprovalStatus = ApprovalStatus.Approved;
+        menuItem.ApprovedBy = approvedBy;
+        menuItem.ApprovedAt = DateTime.UtcNow;
+        menuItem.ApprovalNotes = request.ApprovalNotes;
+        menuItem.RejectionReason = null;
+        menuItem.RejectedBy = null;
+        menuItem.RejectedAt = null;
+        menuItem.UpdatedAt = DateTime.UtcNow;
+
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
 
         // Log audit trail
@@ -208,7 +272,19 @@ public class MenuItemService : IMenuItemService
         if (menuItem == null)
             throw new KeyNotFoundException($"Menu item with ID {id} not found");
 
-        menuItem.Reject(rejectedBy, request.RejectionReason);
+        if (menuItem.ApprovalStatus != ApprovalStatus.Pending)
+            throw new InvalidOperationException($"Cannot reject menu item with approval status: {menuItem.ApprovalStatus}");
+
+        menuItem.ApprovalStatus = ApprovalStatus.Rejected;
+        menuItem.RejectedBy = rejectedBy;
+        menuItem.RejectionReason = request.RejectionReason;
+        menuItem.RejectedAt = DateTime.UtcNow;
+        menuItem.Status = MenuItemStatus.Inactive;
+        menuItem.ApprovalNotes = null;
+        menuItem.ApprovedBy = null;
+        menuItem.ApprovedAt = null;
+        menuItem.UpdatedAt = DateTime.UtcNow;
+
         await _menuItemRepository.UpdateAsync(menuItem, cancellationToken);
 
         // Log audit trail
@@ -248,5 +324,49 @@ public class MenuItemService : IMenuItemService
 
         var items = await _menuItemRepository.GetActiveByRestaurantIdAsync(restaurantId, cancellationToken);
         return _mapper.Map<IEnumerable<MenuItemDto>>(items);
+    }
+
+    private static void ValidateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Menu item name is required", nameof(name));
+
+        if (name.Length > 255)
+            throw new ArgumentException("Menu item name cannot exceed 255 characters", nameof(name));
+
+        if (name.Trim() != name)
+            throw new ArgumentException("Menu item name cannot have leading or trailing whitespace", nameof(name));
+    }
+
+    private static void ValidateDescription(string description)
+    {
+        if (string.IsNullOrWhiteSpace(description))
+            throw new ArgumentException("Menu item description is required", nameof(description));
+
+        if (description.Length > 1000)
+            throw new ArgumentException("Menu item description cannot exceed 1000 characters", nameof(description));
+    }
+
+    private static void ValidatePrice(decimal price, string parameterName)
+    {
+        if (price <= 0)
+            throw new ArgumentException("Menu item price must be greater than zero", parameterName);
+
+        if (price > 10000)
+            throw new ArgumentException("Menu item price cannot exceed 10,000", parameterName);
+    }
+
+    private static void ValidateCategoryId(string? categoryId)
+    {
+        if (!string.IsNullOrWhiteSpace(categoryId) && categoryId.Length > 100)
+            throw new ArgumentException("Category ID cannot exceed 100 characters", nameof(categoryId));
+    }
+
+    private static void ResetApprovalToPending(MenuItem menuItem)
+    {
+        menuItem.ApprovalStatus = ApprovalStatus.Pending;
+        menuItem.ApprovedBy = null;
+        menuItem.ApprovedAt = null;
+        menuItem.ApprovalNotes = null;
     }
 }

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.API.Utilities;
-using OrderService.Application.DTOs.Order;
 using OrderService.Application.DTOs.Requests;
 using OrderService.Application.Interfaces;
 
@@ -12,11 +11,18 @@ namespace OrderService.API.Controllers;
 [Authorize]
 public class OrdersController : ControllerBase
 {
-    private readonly IOrderWorkflowService _orderWorkflowService;
+    private readonly IOrderPlacementService _orderPlacementService;
+    private readonly IOrderStatusService _orderStatusService;
+    private readonly IDeliveryService _deliveryService;
 
-    public OrdersController(IOrderWorkflowService orderWorkflowService)
+    public OrdersController(
+        IOrderPlacementService orderPlacementService,
+        IOrderStatusService orderStatusService,
+        IDeliveryService deliveryService)
     {
-        _orderWorkflowService = orderWorkflowService;
+        _orderPlacementService = orderPlacementService;
+        _orderStatusService = orderStatusService;
+        _deliveryService = deliveryService;
     }
 
     [HttpPost]
@@ -30,7 +36,7 @@ public class OrdersController : ControllerBase
             return Forbid();
         }
 
-        var order = await _orderWorkflowService.PlaceOrderAsync(request, cancellationToken);
+        var order = await _orderPlacementService.PlaceOrderAsync(request, cancellationToken);
         return CreatedAtAction(nameof(GetOrderById), new { orderId = order.OrderId }, order);
     }
 
@@ -40,13 +46,13 @@ public class OrdersController : ControllerBase
         [FromRoute] Guid orderId,
         CancellationToken cancellationToken)
     {
-        var order = await _orderWorkflowService.GetOrderByIdAsync(orderId, cancellationToken);
+        var order = await _orderPlacementService.GetOrderByIdAsync(orderId, cancellationToken);
         if (!this.CanAccessOrder(order))
         {
             return Forbid();
         }
 
-        var timeline = await _orderWorkflowService.GetOrderTimelineAsync(orderId, cancellationToken);
+        var timeline = await _orderStatusService.GetOrderTimelineAsync(orderId, cancellationToken);
 
         return Ok(new
         {
@@ -68,7 +74,7 @@ public class OrdersController : ControllerBase
             return Forbid();
         }
 
-        var orders = await _orderWorkflowService.GetOrdersByUserAsync(userId, activeOnly, cancellationToken);
+        var orders = await _orderPlacementService.GetOrdersByUserAsync(userId, activeOnly, cancellationToken);
         return Ok(orders);
     }
 
@@ -87,13 +93,13 @@ public class OrdersController : ControllerBase
             return Forbid();
         }
 
-        var order = await _orderWorkflowService.GetOrderByIdAsync(orderId, cancellationToken);
+        var order = await _orderPlacementService.GetOrderByIdAsync(orderId, cancellationToken);
         if (!this.CanAccessOrder(order))
         {
             return Forbid();
         }
 
-        var updated = await _orderWorkflowService.UpdateOrderStatusAsync(request, cancellationToken);
+        var updated = await _orderStatusService.UpdateOrderStatusAsync(request, cancellationToken);
         return Ok(updated);
     }
 
@@ -106,14 +112,14 @@ public class OrdersController : ControllerBase
         var role = this.GetCurrentUserRole();
         if (role == "Customer")
         {
-            var order = await _orderWorkflowService.GetOrderByIdAsync(orderId, cancellationToken);
+            var order = await _orderPlacementService.GetOrderByIdAsync(orderId, cancellationToken);
             if (!this.CanAccessOrder(order))
             {
                 return Forbid();
             }
         }
 
-        var canceled = await _orderWorkflowService.CancelOrderAsync(
+        var canceled = await _orderStatusService.CancelOrderAsync(
             orderId,
             forceByAdmin: role == "Admin",
             cancellationToken);
@@ -127,13 +133,13 @@ public class OrdersController : ControllerBase
         [FromRoute] Guid orderId,
         CancellationToken cancellationToken)
     {
-        var originalOrder = await _orderWorkflowService.GetOrderByIdAsync(orderId, cancellationToken);
+        var originalOrder = await _orderPlacementService.GetOrderByIdAsync(orderId, cancellationToken);
         if (!this.CanAccessOrder(originalOrder))
         {
             return Forbid();
         }
 
-        var newOrder = await _orderWorkflowService.ReorderFromHistoryAsync(orderId, cancellationToken);
+        var newOrder = await _orderPlacementService.ReorderFromHistoryAsync(orderId, cancellationToken);
         return CreatedAtAction(nameof(GetOrderById), new { orderId = newOrder.OrderId }, newOrder);
     }
 
@@ -141,7 +147,7 @@ public class OrdersController : ControllerBase
     [Authorize(Roles = "Admin,RestaurantPartner")]
     public async Task<IActionResult> GetOrderQueue(CancellationToken cancellationToken)
     {
-        var orders = await _orderWorkflowService.GetOrderQueueAsync(cancellationToken);
+        var orders = await _orderPlacementService.GetOrderQueueAsync(cancellationToken);
         return Ok(orders);
     }
 
@@ -157,7 +163,7 @@ public class OrdersController : ControllerBase
             return Forbid();
         }
 
-        var deliveries = await _orderWorkflowService.GetAssignedDeliveriesAsync(deliveryAgentId, cancellationToken);
+        var deliveries = await _deliveryService.GetAssignedDeliveriesAsync(deliveryAgentId, cancellationToken);
         return Ok(deliveries);
     }
 }

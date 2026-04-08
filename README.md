@@ -20,7 +20,6 @@ FoodDelivery.sln
 │   ├── AuthService/                  ← JWT authentication & user management
 │   ├── CatalogService/               ← Restaurants, menus & food items
 │   ├── OrderService/                 ← Order lifecycle management
-│   ├── PaymentService/               ← Payment processing & transactions
 │   └── AdminService/                 ← Back-office administration
 │
 ├── docs/                             ← Architecture diagrams & documentation
@@ -74,7 +73,6 @@ docker compose up --build
 | Catalog API | http://localhost:5002 |
 | Order API | http://localhost:5003 |
 | Admin API | http://localhost:5004 |
-| Payment API | http://localhost:5005 |
 | RabbitMQ UI | http://localhost:15672 |
 
 > Default RabbitMQ credentials: `guest / guest`  
@@ -110,10 +108,7 @@ Handles user registration, login, JWT token issuance, and refresh token manageme
 Manages restaurants, categories, menu items, and pricing. Read-heavy service with caching support.
 
 ### 📦 OrderService
-Orchestrates the full order lifecycle — creation, confirmation, preparation, and delivery tracking.
-
-### 💳 PaymentService
-Processes payments, manages transaction records, and publishes payment events to RabbitMQ.
+Orchestrates the full order lifecycle — cart, checkout, payment simulation/processing, placement, and delivery tracking.
 
 ### 🛡️ AdminService
 Provides back-office functionality for managing users, restaurants, and platform configuration.
@@ -126,9 +121,7 @@ Events are defined in `FoodDelivery.Shared` and consumed across services:
 
 | Event | Publisher | Consumer(s) |
 |---|---|---|
-| `OrderPlacedEvent` | OrderService | PaymentService, CatalogService |
-| `PaymentCompletedEvent` | PaymentService | OrderService |
-| `PaymentFailedEvent` | PaymentService | OrderService |
+| `OrderPlacedEvent` | OrderService | AdminService, CatalogService |
 | `UserRegisteredEvent` | AuthService | AdminService |
 
 ---

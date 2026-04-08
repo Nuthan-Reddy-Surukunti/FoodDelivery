@@ -11,11 +11,18 @@ namespace OrderService.API.Controllers;
 [Authorize(Roles = "Customer")]
 public class PaymentsController : ControllerBase
 {
-    private readonly IOrderWorkflowService _orderWorkflowService;
+    private readonly IOrderPlacementService _orderPlacementService;
+    private readonly IOrderStatusService _orderStatusService;
+    private readonly IDeliveryService _deliveryService;
 
-    public PaymentsController(IOrderWorkflowService orderWorkflowService)
+    public PaymentsController(
+        IOrderPlacementService orderPlacementService,
+        IOrderStatusService orderStatusService,
+        IDeliveryService deliveryService)
     {
-        _orderWorkflowService = orderWorkflowService;
+        _orderPlacementService = orderPlacementService;
+        _orderStatusService = orderStatusService;
+        _deliveryService = deliveryService;
     }
 
     [HttpPost("simulate")]
@@ -29,13 +36,13 @@ public class PaymentsController : ControllerBase
             return Unauthorized();
         }
 
-        var orderToPay = await _orderWorkflowService.GetOrderByIdAsync(request.OrderId, cancellationToken);
+        var orderToPay = await _orderPlacementService.GetOrderByIdAsync(request.OrderId, cancellationToken);
         if (orderToPay.UserId != currentUserId)
         {
             return Forbid();
         }
 
-        var order = await _orderWorkflowService.SimulatePaymentAsync(request, cancellationToken);
+        var order = await _orderStatusService.SimulatePaymentAsync(request, cancellationToken);
         return Ok(order);
     }
 
@@ -50,14 +57,14 @@ public class PaymentsController : ControllerBase
             return BadRequest("OrderId is required");
         }
 
-        var order = await _orderWorkflowService.GetOrderByIdAsync(orderId, cancellationToken);
+        var order = await _orderPlacementService.GetOrderByIdAsync(orderId, cancellationToken);
         var currentUserId = this.GetCurrentUserId();
         if (currentUserId == Guid.Empty || order.UserId != currentUserId)
         {
             return Forbid();
         }
 
-        var paymentResponse = await _orderWorkflowService.ProcessPaymentAsync(orderId, request, cancellationToken);
+        var paymentResponse = await _deliveryService.ProcessPaymentAsync(orderId, request, cancellationToken);
         return Ok(paymentResponse);
     }
 }

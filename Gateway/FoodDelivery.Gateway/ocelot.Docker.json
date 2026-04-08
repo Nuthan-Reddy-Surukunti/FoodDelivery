@@ -1,0 +1,101 @@
+{
+  "Routes": [
+    {
+      "UpstreamPathTemplate": "/gateway/auth/{everything}",
+      "DownstreamPathTemplate": "/api/auth/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "auth-api",
+          "Port": 80
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "AuthService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/catalog/{everything}",
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "catalog-api",
+          "Port": 80
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "CatalogService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/orders/{everything}",
+      "DownstreamPathTemplate": "/gateway/orders/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "order-api",
+          "Port": 80
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/admin/{everything}",
+      "DownstreamPathTemplate": "/api/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "admin-api",
+          "Port": 80
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "AdminService"
+    }
+  ],
+  "SwaggerEndPoints": [
+    {
+      "Key": "AuthService",
+      "Config": [
+        {
+          "Name": "Auth Service",
+          "Version": "v1",
+          "Url": "http://auth-api/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "CatalogService",
+      "Config": [
+        {
+          "Name": "Catalog Service",
+          "Version": "v1",
+          "Url": "http://catalog-api/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "OrderService",
+      "Config": [
+        {
+          "Name": "Order Service",
+          "Version": "v1",
+          "Url": "http://order-api/swagger/v1/swagger.json"
+        }
+      ]
+    },
+    {
+      "Key": "AdminService",
+      "Config": [
+        {
+          "Name": "Admin Service",
+          "Version": "v1",
+          "Url": "http://admin-api/swagger/v1/swagger.json"
+        }
+      ]
+    }
+  ],
+  "GlobalConfiguration": {
+    "BaseUrl": "http://localhost:5000"
+  }
+}

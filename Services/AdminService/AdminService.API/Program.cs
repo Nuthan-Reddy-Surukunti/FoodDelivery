@@ -31,7 +31,7 @@ try
 // Add DbContext
 builder.Services.AddDbContext<AdminServiceDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") 
-        ?? "Server=localhost;Database=AdminServiceDb;Trusted_Connection=True;TrustServerCertificate=True;",
+        ?? "Server=localhost,1433;Database=AdminServiceDb;User Id=sa;Password=SqlServer123@;TrustServerCertificate=True;",
         sqlOptions => sqlOptions.EnableRetryOnFailure()));
 // Add Repositories
 builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();

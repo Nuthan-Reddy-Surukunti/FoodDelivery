@@ -27,19 +27,14 @@ public class MenuItemConfiguration : IEntityTypeConfiguration<MenuItem>
         builder.Property(m => m.CategoryId)
             .HasMaxLength(100);
 
-        // Configure Money value object
-        builder.OwnsOne(m => m.Price, price =>
-        {
-            price.Property(p => p.Amount)
-                .IsRequired()
-                .HasColumnType("decimal(18,2)")
-                .HasColumnName("Price");
+        builder.Property(m => m.Price)
+            .IsRequired()
+            .HasColumnType("decimal(18,2)");
 
-            price.Property(p => p.Currency)
-                .IsRequired()
-                .HasMaxLength(3)
-                .HasColumnName("Currency");
-        });
+        builder.Property(m => m.Currency)
+            .IsRequired()
+            .HasMaxLength(3)
+            .HasColumnName("Currency");
 
         builder.Property(m => m.Status)
             .IsRequired()
@@ -76,8 +71,5 @@ public class MenuItemConfiguration : IEntityTypeConfiguration<MenuItem>
         builder.HasIndex(m => m.ApprovalStatus);
         builder.HasIndex(m => new { m.RestaurantId, m.Name })
             .IsUnique();
-
-        // Ignore domain events (they are not persisted)
-        builder.Ignore(m => m.DomainEvents);
     }
 }

@@ -18,7 +18,7 @@ public class CartRepository : ICartRepository
     public async Task<Cart?> GetCartByUserAndRestaurantAsync(Guid userId, Guid restaurantId, CancellationToken cancellationToken = default)
     {
         return await _context.Carts
-            .Include("_items")
+            .Include(cart => cart.Items)
             .FirstOrDefaultAsync(
                 cart => cart.UserId == userId &&
                         cart.RestaurantId == restaurantId &&
@@ -29,7 +29,7 @@ public class CartRepository : ICartRepository
     public async Task<Cart?> GetByIdAsync(Guid cartId, CancellationToken cancellationToken = default)
     {
         return await _context.Carts
-            .Include("_items")
+            .Include(cart => cart.Items)
             .FirstOrDefaultAsync(cart => cart.Id == cartId, cancellationToken);
     }
 

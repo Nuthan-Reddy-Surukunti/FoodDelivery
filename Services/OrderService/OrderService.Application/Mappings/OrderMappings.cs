@@ -59,8 +59,8 @@ public static class OrderMappings
         return new AddressDto
         {
             Street = order.DeliveryAddressLine1,
-            City = order.DeliveryCity,
-            Pincode = order.DeliveryPostalCode,
+            City = order.DeliveryCity ?? string.Empty,
+            Pincode = order.DeliveryPostalCode ?? string.Empty,
             Latitude = order.DeliveryLatitude ?? 0,
             Longitude = order.DeliveryLongitude ?? 0,
             AddressType = 0

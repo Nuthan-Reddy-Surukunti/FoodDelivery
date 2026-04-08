@@ -5,7 +5,6 @@ using AdminService.Application.Interfaces;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
-using AdminService.Domain.ValueObjects;
 
 namespace AdminService.Application.Services;
 
@@ -38,7 +37,22 @@ public class ReportService : IReportService
     public async Task<ReportDto> GenerateSalesReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         var metrics = await _reportRepository.GetSalesMetricsAsync(startDate, endDate, cancellationToken);
-        var report = Report.Create(ReportType.Sales, metrics, startDate, endDate);
+        var report = new Report
+        {
+            Id = Guid.NewGuid(),
+            Type = ReportType.Sales,
+            TotalOrders = metrics.TotalOrders,
+            TotalRevenue = metrics.TotalRevenue,
+            Currency = metrics.Currency,
+            TotalCustomers = metrics.TotalCustomers,
+            TotalRestaurants = metrics.TotalRestaurants,
+            AverageOrderValue = metrics.AverageOrderValue,
+            MetricsStartDate = startDate,
+            MetricsEndDate = endDate,
+            StartDate = startDate,
+            EndDate = endDate,
+            GeneratedAt = DateTime.UtcNow
+        };
         
         var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
         return _mapper.Map<ReportDto>(savedReport);
@@ -102,7 +116,22 @@ public class ReportService : IReportService
     public async Task<ReportDto> GeneratePartnerPerformanceReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
         var metrics = await _reportRepository.GetSalesMetricsAsync(startDate, endDate, cancellationToken);
-        var report = Report.Create(ReportType.RestaurantPerformance, metrics, startDate, endDate);
+        var report = new Report
+        {
+            Id = Guid.NewGuid(),
+            Type = ReportType.RestaurantPerformance,
+            TotalOrders = metrics.TotalOrders,
+            TotalRevenue = metrics.TotalRevenue,
+            Currency = metrics.Currency,
+            TotalCustomers = metrics.TotalCustomers,
+            TotalRestaurants = metrics.TotalRestaurants,
+            AverageOrderValue = metrics.AverageOrderValue,
+            MetricsStartDate = startDate,
+            MetricsEndDate = endDate,
+            StartDate = startDate,
+            EndDate = endDate,
+            GeneratedAt = DateTime.UtcNow
+        };
         
         var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
         return _mapper.Map<ReportDto>(savedReport);

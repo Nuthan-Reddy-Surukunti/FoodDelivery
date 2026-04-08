@@ -1,6 +1,7 @@
 using AdminService.Domain.Entities;
 using AdminService.Domain.Interfaces;
 using System;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,8 +20,35 @@ namespace AdminService.Application.Services
             Guid entityId, object? oldValues = null, object? newValues = null, 
             string? ipAddress = null, string? userAgent = null, CancellationToken cancellationToken = default)
         {
-            var auditLog = AuditLog.Create(userId, userName, action, entityType, entityId, 
-                oldValues, newValues, ipAddress, userAgent);
+            if (userId == Guid.Empty)
+                throw new ArgumentException("UserId cannot be empty", nameof(userId));
+
+            if (string.IsNullOrWhiteSpace(userName))
+                throw new ArgumentException("UserName is required", nameof(userName));
+
+            if (string.IsNullOrWhiteSpace(action))
+                throw new ArgumentException("Action is required", nameof(action));
+
+            if (string.IsNullOrWhiteSpace(entityType))
+                throw new ArgumentException("EntityType is required", nameof(entityType));
+
+            if (entityId == Guid.Empty)
+                throw new ArgumentException("EntityId cannot be empty", nameof(entityId));
+
+            var auditLog = new AuditLog
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                UserName = userName,
+                Action = action,
+                EntityType = entityType,
+                EntityId = entityId,
+                OldValues = oldValues != null ? JsonSerializer.Serialize(oldValues) : null,
+                NewValues = newValues != null ? JsonSerializer.Serialize(newValues) : null,
+                Timestamp = DateTime.UtcNow,
+                IPAddress = ipAddress,
+                UserAgent = userAgent
+            };
 
             await _auditLogRepository.AddAsync(auditLog, cancellationToken);
         }

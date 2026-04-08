@@ -72,7 +72,7 @@ public class CartService : ICartService
         {
             CartId = cart.Id,
             MenuItemId = request.MenuItemId,
-            Quantity = (int)request.Quantity,
+            Quantity = request.Quantity,
             Price = request.PriceSnapshot,
             CustomizationNotes = request.CustomizationNotes,
             Subtotal = request.Quantity * request.PriceSnapshot,
@@ -149,20 +149,26 @@ public class CartService : ICartService
         ServiceValidationHelper.ValidateIdentity(request.CartItemId, nameof(request.CartItemId));
         ServiceValidationHelper.ValidatePositive(request.NewQuantity, nameof(request.NewQuantity));
 
-        var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(request.UserId, request.RestaurantId, cancellationToken);
-        if (cart is null)
+        var cartItem = await _cartRepository.GetCartItemAsync(request.CartItemId, cancellationToken);
+        if (cartItem is null)
         {
-            throw new ResourceNotFoundException("Cart", request.RestaurantId);
+            throw new ResourceNotFoundException("CartItem", request.CartItemId);
         }
 
-        var cartItem = cart.Items.FirstOrDefault(i => i.Id == request.CartItemId);
+        var cart = await _cartRepository.GetByIdAsync(cartItem.CartId, cancellationToken);
+        if (cart is null || cart.UserId != request.UserId)
+        {
+            throw new ResourceNotFoundException("Cart", cartItem.CartId);
+        }
+
+        cartItem = cart.Items.FirstOrDefault(i => i.Id == request.CartItemId);
         if (cartItem is null)
         {
             throw new ResourceNotFoundException("CartItem", request.CartItemId);
         }
 
         var oldSubtotal = cartItem.Subtotal;
-        cartItem.Quantity = (int)request.NewQuantity;
+        cartItem.Quantity = request.NewQuantity;
         cartItem.Subtotal = request.NewQuantity * cartItem.Price;
         cartItem.UpdatedAt = DateTime.UtcNow;
 
@@ -231,11 +237,11 @@ public class CartService : ICartService
         return new PricingBreakdownDto
         {
             Subtotal = subtotal,
-            TaxAmount = taxAmount,
+            Tax = taxAmount,
             TaxPercentage = taxPercentage,
-            DiscountAmount = 0,
+            Discount = 0,
             Total = total,
-            Currency = "USD"
+            Currency = "INR"
         };
     }
 }

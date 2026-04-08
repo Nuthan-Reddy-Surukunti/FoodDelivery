@@ -116,7 +116,36 @@ public class AuthService : IAuthService
             // If approved but not yet verified by OTP
             if (user.AccountStatus == AccountStatus.Active)
             {
-                // Generate and send OTP for first-time verification after admin approval.
+                // Check if 2FA is enabled for this RestaurantPartner
+                if (user.IsTwoFactorVerified)
+                {
+                    // Generate and send 2FA OTP
+                    var otp = GenerateOtp();
+                    var tempToken = GenerateSecureToken();
+                    var twoFactorToken = new TwoFactorToken()
+                    {
+                        UserId = user.Id,
+                        OTP = otp,
+                        TempToken = tempToken,
+                        ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                        IsUsed = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+
+                    return new AuthRequestDto()
+                    {
+                        Success = true,
+                        Message = "OTP sent to your email.",
+                        IsTwoFactorRequired = true,
+                        TempToken = tempToken,
+                        UserId = user.Id.ToString()
+                    };
+                }
+
+                // 2FA not enabled - send email verification OTP for first-time verification after admin approval
                 var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(user.Id);
                 if (!otpGenerated)
                     return new AuthRequestDto { Success = false, Message = "Unable to send verification OTP. Please try again." };

@@ -17,37 +17,32 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
             .IsRequired()
             .HasConversion<string>();
 
-        builder.OwnsOne(r => r.Metrics, metrics =>
-        {
-            metrics.Property(m => m.TotalOrders)
-                .HasColumnName("TotalOrders");
+        builder.Property(r => r.TotalOrders)
+            .HasColumnName("TotalOrders");
 
-            metrics.OwnsOne(m => m.TotalRevenue, revenue =>
-            {
-                revenue.Property(rv => rv.Amount)
-                    .HasPrecision(18, 2)
-                    .HasColumnName("TotalRevenue");
+        builder.Property(r => r.TotalRevenue)
+            .HasPrecision(18, 2)
+            .HasColumnName("TotalRevenue");
 
-                revenue.Property(rv => rv.Currency)
-                    .HasMaxLength(3)
-                    .HasColumnName("Currency");
-            });
+        builder.Property(r => r.Currency)
+            .IsRequired()
+            .HasMaxLength(3)
+            .HasColumnName("Currency");
 
-            metrics.Property(m => m.TotalCustomers)
-                .HasColumnName("TotalCustomers");
+        builder.Property(r => r.TotalCustomers)
+            .HasColumnName("TotalCustomers");
 
-            metrics.Property(m => m.TotalRestaurants)
-                .HasColumnName("TotalRestaurants");
+        builder.Property(r => r.TotalRestaurants)
+            .HasColumnName("TotalRestaurants");
 
-            metrics.Property(m => m.AverageOrderValue)
-                .HasColumnName("AverageOrderValue");
+        builder.Property(r => r.AverageOrderValue)
+            .HasColumnName("AverageOrderValue");
 
-            metrics.Property(m => m.StartDate)
-                .HasColumnName("MetricsStartDate");
+        builder.Property(r => r.MetricsStartDate)
+            .HasColumnName("MetricsStartDate");
 
-            metrics.Property(m => m.EndDate)
-                .HasColumnName("MetricsEndDate");
-        });
+        builder.Property(r => r.MetricsEndDate)
+            .HasColumnName("MetricsEndDate");
 
         builder.Property(r => r.StartDate)
             .IsRequired();
@@ -63,7 +58,5 @@ public class ReportConfiguration : IEntityTypeConfiguration<Report>
 
         builder.HasIndex(r => r.Type);
         builder.HasIndex(r => r.GeneratedAt);
-
-        builder.Ignore(r => r.DomainEvents);
     }
 }

@@ -11,11 +11,11 @@ namespace OrderService.API.Controllers;
 [Authorize(Roles = "Customer")]
 public class CheckoutController : ControllerBase
 {
-    private readonly IOrderWorkflowService _orderWorkflowService;
+    private readonly IOrderPlacementService _orderPlacementService;
 
-    public CheckoutController(IOrderWorkflowService orderWorkflowService)
+    public CheckoutController(IOrderPlacementService orderPlacementService)
     {
-        _orderWorkflowService = orderWorkflowService;
+        _orderPlacementService = orderPlacementService;
     }
 
     [HttpGet("context")]
@@ -28,7 +28,7 @@ public class CheckoutController : ControllerBase
             return Forbid();
         }
 
-        var context = await _orderWorkflowService.GetCheckoutContextAsync(userId, cancellationToken);
+        var context = await _orderPlacementService.GetCheckoutContextAsync(userId, cancellationToken);
         return Ok(context);
     }
 
@@ -42,7 +42,7 @@ public class CheckoutController : ControllerBase
             return Forbid();
         }
 
-        var isValid = await _orderWorkflowService.ValidateCheckoutAsync(request, cancellationToken);
+        var isValid = await _orderPlacementService.ValidateCheckoutAsync(request, cancellationToken);
         return Ok(new { isValid });
     }
 }

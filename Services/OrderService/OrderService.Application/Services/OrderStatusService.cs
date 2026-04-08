@@ -3,7 +3,6 @@ namespace OrderService.Application.Services;
 using OrderService.Application.DTOs.Order;
 using OrderService.Application.DTOs.Requests;
 using OrderService.Application.Exceptions;
-using OrderService.Application.Helpers;
 using OrderService.Application.Interfaces;
 using OrderService.Application.Mappings;
 using OrderService.Domain.Entities;
@@ -14,13 +13,11 @@ public class OrderStatusService : IOrderStatusService
 {
     private readonly IOrderRepository _orderRepository;
     private readonly IPaymentRepository _paymentRepository;
-    private readonly IDeliveryAssignmentRepository _deliveryAssignmentRepository;
 
-    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IDeliveryAssignmentRepository deliveryAssignmentRepository)
+    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _paymentRepository = paymentRepository ?? throw new ArgumentNullException(nameof(paymentRepository));
-        _deliveryAssignmentRepository = deliveryAssignmentRepository ?? throw new ArgumentNullException(nameof(deliveryAssignmentRepository));
     }
 
     public async Task<OrderDetailDto> UpdateOrderStatusAsync(UpdateOrderStatusRequestDto request, CancellationToken cancellationToken = default)
@@ -28,12 +25,15 @@ public class OrderStatusService : IOrderStatusService
         var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", request.OrderId);
         
-        order.OrderStatus = request.NewStatus;
+        order.OrderStatus = request.TargetStatus;
         order.UpdatedAt = DateTime.UtcNow;
         
-        if (request.NewStatus == OrderStatus.RestaurantAccepted) order.PreparationStartTime = DateTime.UtcNow;
-        else if (request.NewStatus == OrderStatus.ReadyForPickup) order.PickupTime = DateTime.UtcNow;
-        else if (request.NewStatus == OrderStatus.Delivered) order.DeliveryTime = DateTime.UtcNow;
+        if (request.TargetStatus == OrderStatus.RestaurantAccepted) 
+            order.PreparationStartTime = DateTime.UtcNow;
+        else if (request.TargetStatus == OrderStatus.ReadyForPickup) 
+            order.PickupTime = DateTime.UtcNow;
+        else if (request.TargetStatus == OrderStatus.Delivered) 
+            order.DeliveryTime = DateTime.UtcNow;
         
         await _orderRepository.UpdateAsync(order, cancellationToken);
         return OrderMappings.MapToDto(order);
@@ -50,10 +50,17 @@ public class OrderStatusService : IOrderStatusService
         order.OrderStatus = OrderStatus.CancelRequestedByCustomer;
         order.CancelRequestedAt = DateTime.UtcNow;
         order.UpdatedAt = DateTime.UtcNow;
-        
-        if (order.Payment is not null && order.Payment.PaymentStatus == PaymentStatus.Success)
-            await InitiateRefundAsync(order, order.TotalAmount, cancellationToken);
-        
+
+        if (order.PaymentId.HasValue)
+        {
+            var payment = await _paymentRepository.GetByIdAsync(order.PaymentId.Value, cancellationToken);
+            if (payment != null && payment.PaymentStatus == PaymentStatus.Success)
+            {
+                payment.PaymentStatus = PaymentStatus.RefundInitiated;
+                await _paymentRepository.UpdateAsync(payment, cancellationToken);
+            }
+        }
+
         await _orderRepository.UpdateAsync(order, cancellationToken);
         return OrderMappings.MapToDto(order);
     }
@@ -62,14 +69,30 @@ public class OrderStatusService : IOrderStatusService
     {
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", orderId);
-        
-        var timeline = new List<OrderTimelineEntryDto>();
-        AddEntry(timeline, "Order Created", order.CreatedAt);
-        AddEntry(timeline, "Checkout Started", order.CheckoutStartedAt);
-        AddEntry(timeline, "Payment Completed", order.PaymentCompletedAt);
-        AddEntry(timeline, "Preparation Started", order.PreparationStartTime);
-        AddEntry(timeline, "Ready for Pickup", order.PickupTime);
-        AddEntry(timeline, "Delivered", order.DeliveryTime);
+
+        var timeline = new List<OrderTimelineEntryDto>
+        {
+            new() { Status = OrderStatus.DraftCart, OccurredAt = order.CreatedAt, Label = "Order Created" }
+        };
+
+        if (order.CheckoutStartedAt.HasValue)
+            timeline.Add(new() { Status = OrderStatus.CheckoutStarted, OccurredAt = order.CheckoutStartedAt.Value, Label = "Checkout Started" });
+
+        if (order.PaymentCompletedAt.HasValue)
+            timeline.Add(new() { Status = OrderStatus.Paid, OccurredAt = order.PaymentCompletedAt.Value, Label = "Payment Completed" });
+
+        if (order.PreparationStartTime.HasValue)
+            timeline.Add(new() { Status = OrderStatus.Preparing, OccurredAt = order.PreparationStartTime.Value, Label = "Preparing" });
+
+        if (order.PickupTime.HasValue)
+            timeline.Add(new() { Status = OrderStatus.PickedUp, OccurredAt = order.PickupTime.Value, Label = "Picked Up" });
+
+        if (order.DeliveryTime.HasValue)
+            timeline.Add(new() { Status = OrderStatus.Delivered, OccurredAt = order.DeliveryTime.Value, Label = "Delivered" });
+
+        if (order.CancelRequestedAt.HasValue)
+            timeline.Add(new() { Status = OrderStatus.CancelRequestedByCustomer, OccurredAt = order.CancelRequestedAt.Value, Label = "Cancel Requested" });
+
         return timeline.AsReadOnly();
     }
 
@@ -77,47 +100,45 @@ public class OrderStatusService : IOrderStatusService
     {
         var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", request.OrderId);
-        
-        var payment = order.Payment ?? new Payment { OrderId = order.Id, CreatedAt = DateTime.UtcNow };
-        
+
+        var payment = await _paymentRepository.GetByOrderIdAsync(request.OrderId, cancellationToken) ?? new Payment
+        {
+            OrderId = request.OrderId,
+            CreatedAt = DateTime.UtcNow
+        };
+
         payment.PaymentMethod = request.PaymentMethod;
-        payment.PaymentStatus = request.IsSuccess ? PaymentStatus.Success : PaymentStatus.Failed;
-        payment.Amount = request.Amount;
-        payment.TransactionId = Guid.NewGuid().ToString();
+        payment.Amount = request.Amount ?? order.TotalAmount;
+        payment.PaymentStatus = request.IsSuccessful ? PaymentStatus.Success : PaymentStatus.Failed;
+        payment.TransactionId = request.TransactionId ?? Guid.NewGuid().ToString();
         payment.ProcessedAt = DateTime.UtcNow;
         payment.UpdatedAt = DateTime.UtcNow;
-        
-        if (order.Payment is null)
+        payment.FailureReason = request.IsSuccessful ? null : request.FailureReason;
+
+        if (payment.Id == Guid.Empty)
         {
             await _paymentRepository.AddAsync(payment, cancellationToken);
-            order.Payment = payment;
-            order.PaymentId = payment.Id;
         }
         else
         {
             await _paymentRepository.UpdateAsync(payment, cancellationToken);
         }
-        
-        order.OrderStatus = request.IsSuccess ? OrderStatus.Accepted : OrderStatus.PaymentFailed;
-        order.PaymentCompletedAt = request.IsSuccess ? DateTime.UtcNow : null;
+
+        if (request.IsSuccessful)
+        {
+            order.PaymentId = payment.Id;
+            order.Payment = payment;
+            order.PaymentCompletedAt = DateTime.UtcNow;
+            order.OrderStatus = request.AutoAcceptByRestaurant ? OrderStatus.RestaurantAccepted : OrderStatus.Paid;
+        }
+        else
+        {
+            order.OrderStatus = OrderStatus.PaymentFailed;
+        }
+
         order.UpdatedAt = DateTime.UtcNow;
         await _orderRepository.UpdateAsync(order, cancellationToken);
-        
+
         return OrderMappings.MapToDto(order);
-    }
-
-    private async Task InitiateRefundAsync(Order order, decimal refundAmount, CancellationToken cancellationToken)
-    {
-        if (order.Payment is null) return;
-        order.Payment.RefundedAmount = refundAmount;
-        order.Payment.PaymentStatus = PaymentStatus.Refunded;
-        order.Payment.UpdatedAt = DateTime.UtcNow;
-        await _paymentRepository.UpdateAsync(order.Payment, cancellationToken);
-    }
-
-    private static void AddEntry(List<OrderTimelineEntryDto> timeline, string @event, DateTime? timestamp)
-    {
-        if (timestamp.HasValue)
-            timeline.Add(new OrderTimelineEntryDto { Event = @event, Timestamp = timestamp.Value, Details = @event });
     }
 }

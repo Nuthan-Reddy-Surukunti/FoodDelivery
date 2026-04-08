@@ -38,9 +38,4 @@ public interface IMenuItemRepository : IRepository<MenuItem>
     /// Checks if a menu item name already exists for a restaurant (case-insensitive)
     /// </summary>
     Task<bool> ExistsWithNameAsync(Guid restaurantId, string name, Guid? excludeId = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets count by approval status
-    /// </summary>
-    Task<int> GetCountByApprovalStatusAsync(ApprovalStatus status, CancellationToken cancellationToken = default);
 }

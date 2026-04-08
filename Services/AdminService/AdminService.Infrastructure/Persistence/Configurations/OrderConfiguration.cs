@@ -23,18 +23,15 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .IsRequired()
             .HasConversion<string>();
 
-        builder.OwnsOne(o => o.TotalAmount, money =>
-        {
-            money.Property(m => m.Amount)
-                .IsRequired()
-                .HasPrecision(18, 2)
-                .HasColumnName("TotalAmount");
+        builder.Property(o => o.TotalAmount)
+            .IsRequired()
+            .HasPrecision(18, 2)
+            .HasColumnName("TotalAmount");
 
-            money.Property(m => m.Currency)
-                .IsRequired()
-                .HasMaxLength(3)
-                .HasColumnName("Currency");
-        });
+        builder.Property(o => o.Currency)
+            .IsRequired()
+            .HasMaxLength(3)
+            .HasColumnName("Currency");
 
         builder.Property(o => o.CreatedAt)
             .IsRequired();
@@ -46,7 +43,5 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.HasIndex(o => o.CustomerId);
         builder.HasIndex(o => o.RestaurantId);
         builder.HasIndex(o => o.Status);
-
-        builder.Ignore(o => o.DomainEvents);
     }
 }

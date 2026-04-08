@@ -11,11 +11,11 @@ namespace OrderService.API.Controllers;
 [Authorize(Roles = "Customer")]
 public class CartsController : ControllerBase
 {
-    private readonly IOrderWorkflowService _orderWorkflowService;
+    private readonly ICartService _cartService;
 
-    public CartsController(IOrderWorkflowService orderWorkflowService)
+    public CartsController(ICartService cartService)
     {
-        _orderWorkflowService = orderWorkflowService;
+        _cartService = cartService;
     }
 
     [HttpGet]
@@ -29,7 +29,7 @@ public class CartsController : ControllerBase
             return Forbid();
         }
 
-        var cart = await _orderWorkflowService.GetOrCreateCartAsync(userId, restaurantId, cancellationToken);
+        var cart = await _cartService.GetOrCreateCartAsync(userId, restaurantId, cancellationToken);
         return Ok(cart);
     }
 
@@ -43,7 +43,7 @@ public class CartsController : ControllerBase
             return Forbid();
         }
 
-        var cart = await _orderWorkflowService.AddCartItemAsync(request, cancellationToken);
+        var cart = await _cartService.AddCartItemAsync(request, cancellationToken);
         return Ok(cart);
     }
 
@@ -59,7 +59,7 @@ public class CartsController : ControllerBase
         }
 
         request.CartItemId = cartItemId;
-        var cart = await _orderWorkflowService.UpdateCartItemAsync(request, cancellationToken);
+        var cart = await _cartService.UpdateCartItemAsync(request, cancellationToken);
         return Ok(cart);
     }
 
@@ -82,7 +82,7 @@ public class CartsController : ControllerBase
             RestaurantId = restaurantId
         };
 
-        var cart = await _orderWorkflowService.RemoveCartItemAsync(request, cancellationToken);
+        var cart = await _cartService.RemoveCartItemAsync(request, cancellationToken);
         return Ok(cart);
     }
 
@@ -97,7 +97,7 @@ public class CartsController : ControllerBase
             return Forbid();
         }
 
-        var cart = await _orderWorkflowService.ClearCartAsync(userId, restaurantId, cancellationToken);
+        var cart = await _cartService.ClearCartAsync(userId, restaurantId, cancellationToken);
         return Ok(cart);
     }
 
@@ -111,7 +111,7 @@ public class CartsController : ControllerBase
             return Forbid();
         }
 
-        var cart = await _orderWorkflowService.ApplyCouponAsync(request, cancellationToken);
+        var cart = await _cartService.ApplyCouponAsync(request, cancellationToken);
         return Ok(cart);
     }
 
@@ -126,7 +126,7 @@ public class CartsController : ControllerBase
             return Forbid();
         }
 
-        var isValid = await _orderWorkflowService.ValidateCartItemsAsync(userId, restaurantId, cancellationToken);
+        var isValid = await _cartService.ValidateCartItemsAsync(userId, restaurantId, cancellationToken);
         return Ok(new { isValid });
     }
 
@@ -142,7 +142,7 @@ public class CartsController : ControllerBase
             return Forbid();
         }
 
-        var pricing = await _orderWorkflowService.CalculateTotalsAsync(userId, restaurantId, taxPercentage, cancellationToken);
+        var pricing = await _cartService.CalculateTotalsAsync(userId, restaurantId, taxPercentage, cancellationToken);
         return Ok(pricing);
     }
 }

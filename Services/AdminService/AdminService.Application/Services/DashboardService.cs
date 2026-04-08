@@ -3,7 +3,6 @@ using AdminService.Application.DTOs.Responses;
 using AdminService.Application.Interfaces;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
-using AdminService.Domain.ValueObjects;
 
 namespace AdminService.Application.Services;
 
@@ -49,11 +48,13 @@ public class DashboardService : IDashboardService
         return new DashboardKpisDto
         {
             TotalOrders = totalOrders,
-            TotalRevenue = totalRevenue ?? Money.Zero("USD"),
+            TotalRevenue = totalRevenue.Amount,
+            TotalRevenueCurrency = totalRevenue.Currency,
             ActivePartners = activePartners,
             PendingApprovals = pendingApprovals,
             OrdersToday = ordersToday,
-            RevenueToday = revenueToday ?? Money.Zero("USD")
+            RevenueToday = revenueToday.Amount,
+            RevenueTodayCurrency = revenueToday.Currency
         };
     }
 

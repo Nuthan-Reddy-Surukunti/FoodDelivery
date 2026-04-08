@@ -1,5 +1,4 @@
 using AdminService.Domain.Enums;
-using AdminService.Domain.ValueObjects;
 using AdminService.Domain.Entities;
 
 namespace AdminService.Domain.Interfaces;
@@ -16,7 +15,7 @@ public interface IOrderRepository : IRepository<Order>
     Task<IEnumerable<Order>> GetOrdersByRestaurantAsync(Guid restaurantId, CancellationToken cancellationToken = default);
     Task<int> GetCountByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default);
     Task<int> GetTotalOrdersCountAsync(CancellationToken cancellationToken = default);
-    Task<Money?> GetTotalRevenueAsync(CancellationToken cancellationToken = default);
+    Task<(decimal Amount, string Currency)> GetTotalRevenueAsync(CancellationToken cancellationToken = default);
     Task<int> GetOrdersCountByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
-    Task<Money?> GetRevenueBetweenDatesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    Task<(decimal Amount, string Currency)> GetRevenueBetweenDatesAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
 }

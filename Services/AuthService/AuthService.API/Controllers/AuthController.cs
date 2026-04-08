@@ -117,7 +117,24 @@ namespace AuthService.API.Controllers
         }
 
         /// <summary>
-        /// Verify OTP for RestaurantPartner first-login verification
+        /// Request OTP explicitly for email verification or 2FA challenge.
+        /// Used when login returns IsTwoFactorRequired and the client needs to explicitly request the OTP.
+        /// </summary>
+        [HttpPost("request-otp")]
+        public async Task<IActionResult> RequestOtp([FromBody] OtpVerificationDto dto)
+        {
+            if (dto.UserId == Guid.Empty)
+                return BadRequest(new { Success = false, Message = "userId is required." });
+
+            var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(dto.UserId);
+            if (!otpGenerated)
+                return BadRequest(new { Success = false, Message = "Unable to generate and send OTP. Please try again." });
+
+            return Ok(new { Success = true, Message = "OTP sent to your registered email." });
+        }
+
+        /// <summary>
+        /// Verify OTP for RestaurantPartner first-login verification or 2FA challenge
         /// </summary>
         [HttpPost("verify-otp")]
         public async Task<IActionResult> VerifyOtp([FromBody] OtpVerificationDto dto)

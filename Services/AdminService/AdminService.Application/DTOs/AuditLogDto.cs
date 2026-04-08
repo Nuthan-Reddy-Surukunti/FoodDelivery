@@ -16,15 +16,4 @@ namespace AdminService.Application.DTOs
         public string? IPAddress { get; set; }
         public string? UserAgent { get; set; }
     }
-
-    public class AuditLogFilterRequest
-    {
-        public string? EntityType { get; set; }
-        public Guid? EntityId { get; set; }
-        public Guid? UserId { get; set; }
-        public DateTime? StartDate { get; set; }
-        public DateTime? EndDate { get; set; }
-        public int PageNumber { get; set; } = 1;
-        public int PageSize { get; set; } = 50;
-    }
 }

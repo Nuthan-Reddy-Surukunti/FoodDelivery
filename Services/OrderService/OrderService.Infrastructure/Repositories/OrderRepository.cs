@@ -24,7 +24,7 @@ public class OrderRepository : IOrderRepository
     public async Task<Order?> GetByIdAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
         return await _context.Orders
-            .Include("_orderItems")
+            .Include(order => order.OrderItems)
             .Include(order => order.Payment)
             .Include(order => order.DeliveryAssignment)
             .FirstOrDefaultAsync(order => order.Id == orderId, cancellationToken);
@@ -33,7 +33,7 @@ public class OrderRepository : IOrderRepository
     public async Task<IReadOnlyList<Order>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await _context.Orders
-            .Include("_orderItems")
+            .Include(order => order.OrderItems)
             .Include(order => order.Payment)
             .Include(order => order.DeliveryAssignment)
             .Where(order => order.UserId == userId)
@@ -50,7 +50,7 @@ public class OrderRepository : IOrderRepository
     public async Task<Order?> GetOrderByIdWithItemsAsync(Guid orderId, CancellationToken cancellationToken = default)
     {
         return await _context.Orders
-            .Include("_orderItems")
+            .Include(order => order.OrderItems)
             .Include(order => order.Payment)
             .Include(order => order.DeliveryAssignment)
             .FirstOrDefaultAsync(order => order.Id == orderId, cancellationToken);
@@ -59,7 +59,7 @@ public class OrderRepository : IOrderRepository
     public async Task<IReadOnlyList<Order>> GetActiveOrdersAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Orders
-            .Include("_orderItems")
+            .Include(order => order.OrderItems)
             .Include(order => order.Payment)
             .Include(order => order.DeliveryAssignment)
             .Where(order => order.OrderStatus != OrderStatus.Delivered &&

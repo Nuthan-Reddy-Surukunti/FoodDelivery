@@ -1,41 +1,93 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Ocelot.DependencyInjection;
+using Ocelot.Middleware;
+using System.Text;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+var ocelotConfigFile = builder.Environment.IsEnvironment("Docker")
+    ? "ocelot.Docker.json"
+    : "ocelot.json";
+
+builder.Configuration.AddJsonFile(ocelotConfigFile, optional: false, reloadOnChange: true);
+
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+var secretKey = jwtSettings["SecretKey"]
+    ?? throw new InvalidOperationException("JwtSettings:SecretKey is missing in gateway configuration.");
+
+builder.Services
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer("Bearer", options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings["Issuer"],
+            ValidAudience = jwtSettings["Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+builder.Services.AddOcelot(builder.Configuration);
+
+// Add endpoints explorer (required by SwaggerForOcelot)
+builder.Services.AddEndpointsApiExplorer();
+
+// Configure SwaggerForOcelot ONLY
+builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-}
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.UseHttpsRedirection();
-
-var summaries = new[]
+app.MapWhen(context => context.Request.Path == "/", rootApp =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+    rootApp.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            message = "FoodDelivery Gateway is running",
+            hint = "Use /gateway/auth, /gateway/catalog, /gateway/orders, /gateway/admin or visit /swagger"
+        });
+    });
+});
 
-app.MapGet("/weatherforecast", () =>
+app.MapWhen(context => context.Request.Path == "/health", healthApp =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    healthApp.Run(async context =>
+    {
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new { status = "Healthy" });
+    });
+});
+
+app.MapWhen(context => context.Request.Path == "/favicon.ico", faviconApp =>
+{
+    faviconApp.Run(context =>
+    {
+        context.Response.StatusCode = StatusCodes.Status204NoContent;
+        return Task.CompletedTask;
+    });
+});
+
+// Configure SwaggerForOcelot UI
+app.UseSwaggerForOcelotUI(opt =>
+{
+    opt.PathToSwaggerGenerator = "/swagger/docs";
+});
+
+await app.UseOcelot();
+
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
