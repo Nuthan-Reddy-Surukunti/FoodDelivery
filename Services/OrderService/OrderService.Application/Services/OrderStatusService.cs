@@ -14,12 +14,14 @@ using OrderService.Domain.Interfaces;
 public class OrderStatusService : IOrderStatusService
 {
     private readonly IOrderRepository _orderRepository;
+    private readonly IPublishEndpoint _publishEndpoint;
     private readonly IPaymentRepository _paymentRepository;
 
-    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository)
+    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IPublishEndpoint publishEndpoint)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _paymentRepository = paymentRepository ?? throw new ArgumentNullException(nameof(paymentRepository));
+        _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
     }
 
     public async Task<OrderDetailDto> UpdateOrderStatusAsync(UpdateOrderStatusRequestDto request, CancellationToken cancellationToken = default)
@@ -38,6 +40,21 @@ public class OrderStatusService : IOrderStatusService
             order.DeliveryTime = DateTime.UtcNow;
         
         await _orderRepository.UpdateAsync(order, cancellationToken);
+
+        // Publish order status changed event
+        var oldStatus = order.OrderStatus.ToString();
+        await _publishEndpoint.Publish(new OrderStatusChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            OrderId = order.Id,
+            UserId = order.UserId,
+            RestaurantId = order.RestaurantId,
+            OldStatus = oldStatus,
+            NewStatus = request.TargetStatus.ToString()
+        }, cancellationToken);
+
         return OrderMappings.MapToDto(order);
     }
 
@@ -64,6 +81,20 @@ public class OrderStatusService : IOrderStatusService
         }
 
         await _orderRepository.UpdateAsync(order, cancellationToken);
+
+        // Publish order cancelled event
+        await _publishEndpoint.Publish(new OrderCancelledEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            OrderId = order.Id,
+            UserId = order.UserId,
+            RestaurantId = order.RestaurantId,
+            CancellationReason = "Customer requested cancellation",
+            RefundAmount = order.TotalAmount
+        }, cancellationToken);
+
         return OrderMappings.MapToDto(order);
     }
 

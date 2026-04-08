@@ -19,11 +19,13 @@ public class OrderPlacementService : IOrderPlacementService
 {
     private readonly ICartRepository _cartRepository;
     private readonly IOrderRepository _orderRepository;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public OrderPlacementService(ICartRepository cartRepository, IOrderRepository orderRepository)
+    public OrderPlacementService(ICartRepository cartRepository, IOrderRepository orderRepository, IPublishEndpoint publishEndpoint)
     {
         _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+        _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
     }
 
     public Task<CheckoutContextDto> GetCheckoutContextAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -103,6 +105,27 @@ public class OrderPlacementService : IOrderPlacementService
         cart.Status = CartStatus.Abandoned;
         cart.UpdatedAt = DateTime.UtcNow;
         await _cartRepository.UpdateAsync(cart, cancellationToken);
+
+        // Publish order placed event
+        await _publishEndpoint.Publish(new OrderPlacedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            OrderId = order.Id,
+            UserId = order.UserId,
+            RestaurantId = order.RestaurantId,
+            RestaurantName = "", // Will be populated by handler if needed
+            TotalAmount = order.TotalAmount,
+            DeliveryAddress = "", // From request if available
+            Items = order.OrderItems.Select(oi => new OrderItemSnapshot
+            {
+                MenuItemId = oi.MenuItemId,
+                MenuItemName = "",
+                Quantity = oi.Quantity,
+                PriceAtPurchase = oi.UnitPrice
+            }).ToList()
+        }, cancellationToken);
 
         return OrderMappings.MapToDto(order);
     }

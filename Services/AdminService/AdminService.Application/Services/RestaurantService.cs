@@ -2,6 +2,8 @@ using AutoMapper;
 using AdminService.Application.DTOs.Requests;
 using AdminService.Application.DTOs.Responses;
 using AdminService.Application.Interfaces;
+using FoodDelivery.Shared.Events.Catalog;
+using MassTransit;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
@@ -16,13 +18,15 @@ public class RestaurantService : IRestaurantService
     private readonly IMapper _mapper;
     private readonly IAuditService _auditService;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public RestaurantService(IRestaurantRepository restaurantRepository, IMapper mapper, IAuditService auditService, IHttpContextAccessor httpContextAccessor)
+    public RestaurantService(IRestaurantRepository restaurantRepository, IMapper mapper, IAuditService auditService, IHttpContextAccessor httpContextAccessor, IPublishEndpoint publishEndpoint)
     {
         _restaurantRepository = restaurantRepository;
         _mapper = mapper;
         _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+            _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
     }
 
     public async Task<RestaurantDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -97,6 +101,17 @@ public class RestaurantService : IRestaurantService
                 request.ApprovalNotes, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
         }
 
+        // Publish restaurant approved event
+        await _publishEndpoint.Publish(new RestaurantApprovedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            RestaurantId = restaurant.Id,
+            Name = restaurant.Name,
+            ApprovedBy = adminUserName
+        }, cancellationToken);
+
         return _mapper.Map<RestaurantDto>(restaurant);
     }
 
@@ -130,6 +145,17 @@ public class RestaurantService : IRestaurantService
         restaurant.RejectionReason = request.RejectionReason;
 
         await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
+
+        // Publish restaurant rejected event
+        await _publishEndpoint.Publish(new RestaurantRejectedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            RestaurantId = restaurant.Id,
+            Name = restaurant.Name,
+            RejectionReason = request.RejectionReason
+        }, cancellationToken);
 
         // Log audit trail
         if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
