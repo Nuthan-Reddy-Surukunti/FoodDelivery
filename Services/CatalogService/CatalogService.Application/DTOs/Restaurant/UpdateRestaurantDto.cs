@@ -41,4 +41,7 @@ public class UpdateRestaurantDto
     public int? DeliveryTime { get; set; }
 
     public RestaurantStatus? Status { get; set; }
+
+    // Optional: Admin can reassign ownership via OwnerId field
+    public Guid? OwnerId { get; set; }
 }

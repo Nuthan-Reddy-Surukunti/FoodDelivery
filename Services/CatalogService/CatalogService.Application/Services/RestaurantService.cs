@@ -59,12 +59,31 @@ public class RestaurantService : IRestaurantService
         if (string.IsNullOrWhiteSpace(dto.Name))
             throw new InvalidRestaurantDataException("Restaurant name is required.");
         
-        // Only Admin can create restaurants
-        if (userRole != "Admin")
-            throw new UnauthorizedAccessException("Only administrators can create restaurants.");
+        // Allow both Admin and RestaurantPartner to create restaurants
+        if (userRole != "Admin" && userRole != "RestaurantPartner")
+            throw new UnauthorizedAccessException("Only administrators and restaurant partners can create restaurants.");
 
         var restaurant = _mapper.Map<Restaurant>(dto);
-        restaurant.OwnerId = null; // Admin creates, but doesn't own
+
+        // Set ownership and status based on role
+        if (userRole == "RestaurantPartner")
+        {
+            // RestaurantPartner creates their own restaurant (requires admin approval)
+            restaurant.OwnerId = userId;
+            restaurant.Status = Domain.Enums.RestaurantStatus.Pending;
+        }
+        else if (userRole == "Admin")
+        {
+            // Admin can create and optionally assign to a RestaurantPartner
+            // If OwnerId is specified in DTO, use it; otherwise leave as null/unowned
+            if (dto.OwnerId.HasValue)
+            {
+                restaurant.OwnerId = dto.OwnerId.Value;
+            }
+            // Admin-created restaurants default to Active (no approval needed)
+            restaurant.Status = Domain.Enums.RestaurantStatus.Active;
+        }
+
         var createdRestaurant = await _repository.CreateAsync(restaurant);
         
         return _mapper.Map<RestaurantDetailDto>(createdRestaurant);
@@ -79,9 +98,23 @@ public class RestaurantService : IRestaurantService
         if (restaurant == null)
             throw new RestaurantNotFoundException(id);
         
-        // Ownership validation: RestaurantPartner can only update own restaurant
-        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
-            throw new UnauthorizedAccessException("You can only update your own restaurant.");
+        // Authorization checks
+        if (userRole == "RestaurantPartner")
+        {
+            // RestaurantPartner can only update their own restaurant
+            if (restaurant.OwnerId != userId)
+                throw new UnauthorizedAccessException("You can only update your own restaurant.");
+            
+            // RestaurantPartner cannot change ownership (OwnerId must be null in their request)
+            if (dto.OwnerId.HasValue)
+                throw new UnauthorizedAccessException("You cannot change restaurant ownership.");
+        }
+        else if (userRole != "Admin")
+        {
+            // Only Admin and RestaurantPartner can update
+            throw new UnauthorizedAccessException("You do not have permission to update restaurants.");
+        }
+        // Admin can update any field including OwnerId (for reassignment)
 
         _mapper.Map(dto, restaurant);
         var updatedRestaurant = await _repository.UpdateAsync(restaurant);

@@ -61,10 +61,10 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
-    /// Create a new restaurant (Admin only)
+    /// Create a new restaurant (Admin or RestaurantPartner)
     /// </summary>
     [HttpPost]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,RestaurantPartner")]
     public async Task<ActionResult<RestaurantDetailDto>> Create([FromBody] CreateRestaurantDto dto)
     {
         if (!ModelState.IsValid)
@@ -84,10 +84,10 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
-    /// Update an existing restaurant (Admin only)
+    /// Update an existing restaurant (Admin or RestaurantPartner - own restaurant only)
     /// </summary>
     [HttpPut("{id}")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,RestaurantPartner")]
     public async Task<ActionResult<RestaurantDetailDto>> Update(
         [FromRoute] Guid id,
         [FromBody] UpdateRestaurantDto dto)
