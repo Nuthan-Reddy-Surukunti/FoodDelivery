@@ -22,6 +22,8 @@ public class OrderDbContext : DbContext
 
     public DbSet<DeliveryAssignment> DeliveryAssignments => Set<DeliveryAssignment>();
 
+    public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
