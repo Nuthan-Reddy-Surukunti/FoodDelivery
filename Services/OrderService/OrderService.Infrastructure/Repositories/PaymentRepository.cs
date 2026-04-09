@@ -34,7 +34,21 @@ public class PaymentRepository : IPaymentRepository
 
     public async Task UpdateAsync(Payment payment, CancellationToken cancellationToken = default)
     {
-        _context.Payments.Update(payment);
+        // Check if payment exists in database
+        var existingPayment = await _context.Payments
+            .FirstOrDefaultAsync(p => p.Id == payment.Id, cancellationToken);
+        
+        if (existingPayment == null)
+        {
+            // If payment was deleted or doesn't exist, add it as new
+            _context.Payments.Add(payment);
+        }
+        else
+        {
+            // Update existing payment
+            _context.Entry(existingPayment).CurrentValues.SetValues(payment);
+        }
+        
         await _context.SaveChangesAsync(cancellationToken);
     }
 }

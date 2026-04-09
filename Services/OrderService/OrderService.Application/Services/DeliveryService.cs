@@ -97,7 +97,11 @@ public class DeliveryService : IDeliveryService
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", orderId);
 
-        var payment = await _paymentRepository.GetByOrderIdAsync(orderId, cancellationToken) ?? new Payment
+        // Fetch or create payment
+        var existingPayment = await _paymentRepository.GetByOrderIdAsync(orderId, cancellationToken);
+        var isNewPayment = existingPayment == null;
+        
+        var payment = existingPayment ?? new Payment
         {
             OrderId = orderId,
             CreatedAt = DateTime.UtcNow
@@ -110,7 +114,8 @@ public class DeliveryService : IDeliveryService
         payment.UpdatedAt = DateTime.UtcNow;
         payment.TransactionId ??= Guid.NewGuid().ToString();
 
-        if (payment.Id == Guid.Empty)
+        // Add or update based on whether it's new
+        if (isNewPayment)
         {
             await _paymentRepository.AddAsync(payment, cancellationToken);
         }
