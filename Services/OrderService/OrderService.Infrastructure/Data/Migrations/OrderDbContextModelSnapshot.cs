@@ -453,7 +453,7 @@ namespace OrderService.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("OrderService.Domain.Entities.DeliveryAssignment", b =>
                 {
-                    b.HasOne("OrderService.Domain.Entities.DeliveryAgent", null)
+                    b.HasOne("OrderService.Domain.Entities.DeliveryAgent", "DeliveryAgent")
                         .WithMany("DeliveryAssignments")
                         .HasForeignKey("DeliveryAgentId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -464,6 +464,8 @@ namespace OrderService.Infrastructure.Data.Migrations
                         .HasForeignKey("OrderService.Domain.Entities.DeliveryAssignment", "OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("DeliveryAgent");
 
                     b.Navigation("Order");
                 });
