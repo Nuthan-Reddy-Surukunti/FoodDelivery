@@ -7,6 +7,8 @@ using OrderService.Application.DTOs.Requests;
 
 public interface IDeliveryService
 {
+    Task<DeliveryAssignmentDto> AssignDeliveryAsync(Guid orderId, CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<DeliveryAssignmentDto>> GetAssignedDeliveriesAsync(Guid deliveryAgentId, CancellationToken cancellationToken = default);
 
     Task<PaymentResponseDto> ProcessPaymentAsync(Guid orderId, ProcessPaymentRequestDto request, CancellationToken cancellationToken = default);

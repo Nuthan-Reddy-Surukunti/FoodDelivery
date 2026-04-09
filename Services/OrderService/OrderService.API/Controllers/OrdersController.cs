@@ -166,5 +166,15 @@ public class OrdersController : ControllerBase
         var deliveries = await _deliveryService.GetAssignedDeliveriesAsync(deliveryAgentId, cancellationToken);
         return Ok(deliveries);
     }
+
+    [HttpPost("{orderId:guid}/assign-delivery")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AssignDeliveryAgent(
+        [FromRoute] Guid orderId,
+        CancellationToken cancellationToken)
+    {
+        var assignment = await _deliveryService.AssignDeliveryAsync(orderId, cancellationToken);
+        return Ok(assignment);
+    }
 }
 
