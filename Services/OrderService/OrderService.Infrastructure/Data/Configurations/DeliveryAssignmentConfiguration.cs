@@ -40,6 +40,11 @@ public class DeliveryAssignmentConfiguration : IEntityTypeConfiguration<Delivery
             .HasForeignKey<DeliveryAssignment>(assignment => assignment.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
+        builder.HasOne(assignment => assignment.DeliveryAgent)
+            .WithMany(agent => agent.DeliveryAssignments)
+            .HasForeignKey(assignment => assignment.DeliveryAgentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasIndex(assignment => assignment.OrderId)
             .IsUnique();
 

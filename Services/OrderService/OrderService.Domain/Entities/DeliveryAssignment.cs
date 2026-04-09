@@ -18,4 +18,6 @@ public class DeliveryAssignment : BaseEntity
     public DeliveryStatus CurrentStatus { get; set; } = DeliveryStatus.PickupPending;
 
     public Order? Order { get; set; }
+
+    public DeliveryAgent? DeliveryAgent { get; set; }
 }
