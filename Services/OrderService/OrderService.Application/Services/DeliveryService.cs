@@ -32,6 +32,11 @@ public class DeliveryService : IDeliveryService
 
     public async Task<PaymentResponseDto> ProcessPaymentAsync(Guid orderId, ProcessPaymentRequestDto request, CancellationToken cancellationToken = default)
     {
+        if (request.PaymentMethod != PaymentMethod.CashOnDelivery)
+        {
+            throw new ValidationException("Only CashOnDelivery is currently supported.");
+        }
+
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", orderId);
 
@@ -41,7 +46,7 @@ public class DeliveryService : IDeliveryService
             CreatedAt = DateTime.UtcNow
         };
 
-        payment.PaymentMethod = request.PaymentMethod;
+        payment.PaymentMethod = PaymentMethod.CashOnDelivery;
         payment.Amount = request.Amount > 0 ? request.Amount : order.TotalAmount;
         payment.PaymentStatus = PaymentStatus.Success;
         payment.ProcessedAt = DateTime.UtcNow;
