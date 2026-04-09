@@ -30,7 +30,7 @@ public static class DependecyInjection
         .AddDefaultTokenProviders();
 
         services.AddScoped<IAuthService, AuthService.Application.Services.AuthService>();
-        services.AddScoped<IEmailService, FakeEmailService>();
+        services.AddScoped<IEmailService, SmtpEmailService>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
         services.AddScoped<IEmailVerificationTokenRepository, EmailVerificationTokenRepository>();
