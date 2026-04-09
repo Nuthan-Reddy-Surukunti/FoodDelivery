@@ -65,10 +65,13 @@ public class AdminApprovalService : IAdminApprovalService
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                await _emailService.SendEmailAsync(
-                    user.Email,
-                    "Your Account Has Been Approved",
-                    $"Congratulations! Your {user.Role} account has been approved. On your first login, a verification OTP will be sent to your email. Verify that OTP to complete activation and log in.");
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    await _emailService.SendEmailAsync(
+                        user.Email,
+                        "Your Account Has Been Approved",
+                        $"Congratulations! Your {user.Role} account has been approved. On your first login, a verification OTP will be sent to your email. Verify that OTP to complete activation and log in.");
+                }
 
                 // Publish UserApprovedEvent to notify other services
                 await _publishEndpoint.Publish(new UserApprovedEvent
@@ -77,7 +80,7 @@ public class AdminApprovalService : IAdminApprovalService
                     OccurredAt = DateTime.UtcNow,
                     EventVersion = 1,
                     UserId = Guid.Parse(user.Id),
-                    Email = user.Email,
+                    Email = user.Email ?? string.Empty,
                     FullName = user.FullName,
                     Role = user.Role
                 });
@@ -114,10 +117,13 @@ public class AdminApprovalService : IAdminApprovalService
             var result = await _userManager.UpdateAsync(user);
             if (result.Succeeded)
             {
-                await _emailService.SendEmailAsync(
-                    user.Email,
-                    "Your Account Application Status",
-                    $"Your {user.Role} account application has been rejected. Reason: {reason}");
+                if (!string.IsNullOrEmpty(user.Email))
+                {
+                    await _emailService.SendEmailAsync(
+                        user.Email,
+                        "Your Account Application Status",
+                        $"Your {user.Role} account application has been rejected. Reason: {reason}");
+                }
 
                 return true;
             }
