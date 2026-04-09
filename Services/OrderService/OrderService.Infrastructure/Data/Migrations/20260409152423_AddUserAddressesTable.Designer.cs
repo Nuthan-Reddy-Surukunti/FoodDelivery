@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using OrderService.Infrastructure.Data;
 
@@ -11,9 +12,11 @@ using OrderService.Infrastructure.Data;
 namespace OrderService.Infrastructure.Data.Migrations
 {
     [DbContext(typeof(OrderDbContext))]
-    partial class OrderDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260409152423_AddUserAddressesTable")]
+    partial class AddUserAddressesTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -107,57 +110,6 @@ namespace OrderService.Infrastructure.Data.Migrations
                     b.HasIndex("MenuItemId");
 
                     b.ToTable("CartItems", (string)null);
-                });
-
-            modelBuilder.Entity("OrderService.Domain.Entities.DeliveryAgent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("AuthUserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<string>("FullName")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
-                    b.Property<bool>("IsEmailVerified")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<DateTime>("UpdatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AuthUserId")
-                        .IsUnique();
-
-                    b.HasIndex("IsActive", "IsEmailVerified");
-
-                    b.ToTable("DeliveryAgents", (string)null);
                 });
 
             modelBuilder.Entity("OrderService.Domain.Entities.DeliveryAssignment", b =>
@@ -453,19 +405,11 @@ namespace OrderService.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("OrderService.Domain.Entities.DeliveryAssignment", b =>
                 {
-                    b.HasOne("OrderService.Domain.Entities.DeliveryAgent", "DeliveryAgent")
-                        .WithMany("DeliveryAssignments")
-                        .HasForeignKey("DeliveryAgentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("OrderService.Domain.Entities.Order", "Order")
                         .WithOne("DeliveryAssignment")
                         .HasForeignKey("OrderService.Domain.Entities.DeliveryAssignment", "OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("DeliveryAgent");
 
                     b.Navigation("Order");
                 });
@@ -495,11 +439,6 @@ namespace OrderService.Infrastructure.Data.Migrations
             modelBuilder.Entity("OrderService.Domain.Entities.Cart", b =>
                 {
                     b.Navigation("Items");
-                });
-
-            modelBuilder.Entity("OrderService.Domain.Entities.DeliveryAgent", b =>
-                {
-                    b.Navigation("DeliveryAssignments");
                 });
 
             modelBuilder.Entity("OrderService.Domain.Entities.Order", b =>

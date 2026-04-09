@@ -21,6 +21,8 @@ public static class ServiceRegistration
         services.AddScoped<IOrderRepository, OrderRepository>();
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IDeliveryAssignmentRepository, DeliveryAssignmentRepository>();
+        services.AddScoped<IUserAddressRepository, UserAddressRepository>();
+        services.AddScoped<IDeliveryAgentRepository, DeliveryAgentRepository>();
 
         // Add HttpClient for CatalogService validation
         services.AddHttpClient<IMenuItemValidationService, MenuItemValidationService>((sp, client) =>

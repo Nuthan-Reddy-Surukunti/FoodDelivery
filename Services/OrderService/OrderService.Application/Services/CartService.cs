@@ -53,7 +53,6 @@ public class CartService : ICartService
         ServiceValidationHelper.ValidateIdentity(request.RestaurantId, nameof(request.RestaurantId));
         ServiceValidationHelper.ValidateIdentity(request.MenuItemId, nameof(request.MenuItemId));
         ServiceValidationHelper.ValidatePositive(request.Quantity, nameof(request.Quantity));
-        ServiceValidationHelper.ValidatePositive(request.PriceSnapshot, nameof(request.PriceSnapshot));
 
         // Validate menu item exists and is available in CatalogService
         var validationResult = await _menuItemValidationService.ValidateMenuItemAsync(
@@ -87,9 +86,9 @@ public class CartService : ICartService
             CartId = cart.Id,
             MenuItemId = request.MenuItemId,
             Quantity = request.Quantity,
-            Price = request.PriceSnapshot,
+            Price = validationResult.CurrentPrice,
             CustomizationNotes = request.CustomizationNotes,
-            Subtotal = request.Quantity * request.PriceSnapshot,
+            Subtotal = request.Quantity * validationResult.CurrentPrice,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };

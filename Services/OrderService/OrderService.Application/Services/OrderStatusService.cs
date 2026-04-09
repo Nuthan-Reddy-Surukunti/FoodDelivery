@@ -131,6 +131,11 @@ public class OrderStatusService : IOrderStatusService
 
     public async Task<OrderDetailDto> SimulatePaymentAsync(SimulatePaymentRequestDto request, CancellationToken cancellationToken = default)
     {
+        if (request.PaymentMethod != PaymentMethod.CashOnDelivery)
+        {
+            throw new ValidationException("Only CashOnDelivery is currently supported.");
+        }
+
         var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", request.OrderId);
 
@@ -140,7 +145,7 @@ public class OrderStatusService : IOrderStatusService
             CreatedAt = DateTime.UtcNow
         };
 
-        payment.PaymentMethod = request.PaymentMethod;
+        payment.PaymentMethod = PaymentMethod.CashOnDelivery;
         payment.Amount = request.Amount ?? order.TotalAmount;
         payment.PaymentStatus = request.IsSuccessful ? PaymentStatus.Success : PaymentStatus.Failed;
         payment.TransactionId = request.TransactionId ?? Guid.NewGuid().ToString();

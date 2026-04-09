@@ -27,6 +27,7 @@ public class MenuItemsController : ControllerBase
     /// Get menu item by ID - active restaurant and available item only
     /// </summary>
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<ActionResult<MenuItemDto>> GetById([FromRoute] Guid id)
     {
         try

@@ -3,8 +3,6 @@ using FoodDelivery.Shared.Events.Order;
 using MassTransit;
 
 using OrderService.Application.DTOs.Cart;
-using OrderService.Application.DTOs.Checkout;
-using OrderService.Application.DTOs.Common;
 using OrderService.Application.DTOs.Order;
 using OrderService.Application.DTOs.Requests;
 using OrderService.Application.Exceptions;
@@ -19,54 +17,19 @@ public class OrderPlacementService : IOrderPlacementService
 {
     private readonly ICartRepository _cartRepository;
     private readonly IOrderRepository _orderRepository;
+    private readonly IUserAddressRepository _userAddressRepository;
     private readonly IPublishEndpoint _publishEndpoint;
 
-    public OrderPlacementService(ICartRepository cartRepository, IOrderRepository orderRepository, IPublishEndpoint publishEndpoint)
+    public OrderPlacementService(
+        ICartRepository cartRepository,
+        IOrderRepository orderRepository,
+        IUserAddressRepository userAddressRepository,
+        IPublishEndpoint publishEndpoint)
     {
         _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+        _userAddressRepository = userAddressRepository ?? throw new ArgumentNullException(nameof(userAddressRepository));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
-    }
-
-    public Task<CheckoutContextDto> GetCheckoutContextAsync(Guid userId, CancellationToken cancellationToken = default)
-    {
-        ServiceValidationHelper.ValidateIdentity(userId, nameof(userId));
-
-        var context = new CheckoutContextDto
-        {
-            Cart = new CartDto
-            {
-                CartId = Guid.Empty,
-                UserId = userId,
-                RestaurantId = Guid.Empty,
-                Status = CartStatus.Active,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
-                Items = [],
-                TotalAmount = 0,
-                Currency = "INR"
-            },
-            SavedAddresses = GetDefaultAddresses(),
-            AvailableSlots = GetAvailableTimeSlots(),
-            EstimatedDeliveryCharge = 50m,
-            EstimatedDeliveryMinutes = 30
-        };
-
-        return Task.FromResult(context);
-    }
-
-    public async Task<bool> ValidateCheckoutAsync(CheckoutValidationRequestDto request, CancellationToken cancellationToken = default)
-    {
-        ServiceValidationHelper.ValidateIdentity(request.UserId, nameof(request.UserId));
-        ServiceValidationHelper.ValidateIdentity(request.RestaurantId, nameof(request.RestaurantId));
-        ServiceValidationHelper.ValidateIdentity(request.SelectedAddressId, nameof(request.SelectedAddressId));
-        ServiceValidationHelper.ValidateIdentity(request.SelectedTimeSlotId, nameof(request.SelectedTimeSlotId));
-
-        var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(request.UserId, request.RestaurantId, cancellationToken);
-        if (cart is null || !cart.Items.Any())
-            throw new ValidationException("Cart is empty or not found");
-
-        return true;
     }
 
     public async Task<OrderDetailDto> PlaceOrderAsync(PlaceOrderRequestDto request, CancellationToken cancellationToken = default)
@@ -74,7 +37,14 @@ public class OrderPlacementService : IOrderPlacementService
         ServiceValidationHelper.ValidateIdentity(request.UserId, nameof(request.UserId));
         ServiceValidationHelper.ValidateIdentity(request.RestaurantId, nameof(request.RestaurantId));
         ServiceValidationHelper.ValidateIdentity(request.SelectedAddressId, nameof(request.SelectedAddressId));
-        ServiceValidationHelper.ValidateIdentity(request.SelectedTimeSlotId, nameof(request.SelectedTimeSlotId));
+
+        var selectedAddress = await _userAddressRepository.GetByIdAsync(request.SelectedAddressId, cancellationToken)
+            ?? throw new ValidationException("Selected delivery address was not found");
+
+        if (selectedAddress.UserId != request.UserId)
+        {
+            throw new ValidationException("Selected delivery address does not belong to the user");
+        }
 
         var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(request.UserId, request.RestaurantId, cancellationToken)
             ?? throw new ValidationException("Cart not found");
@@ -88,6 +58,12 @@ public class OrderPlacementService : IOrderPlacementService
             RestaurantId = request.RestaurantId,
             OrderStatus = OrderStatus.CheckoutStarted,
             TotalAmount = cart.TotalAmount,
+            DeliveryAddressLine1 = selectedAddress.AddressLine1,
+            DeliveryAddressLine2 = selectedAddress.AddressLine2,
+            DeliveryCity = selectedAddress.City,
+            DeliveryPostalCode = selectedAddress.PostalCode,
+            DeliveryLatitude = selectedAddress.Latitude,
+            DeliveryLongitude = selectedAddress.Longitude,
             CheckoutStartedAt = DateTime.UtcNow,
             OrderItems = cart.Items.Select(item => new OrderItem
             {
@@ -160,17 +136,4 @@ public class OrderPlacementService : IOrderPlacementService
 
         return OrderMappings.MapToDto(original);
     }
-
-    private static List<AddressDto> GetDefaultAddresses() => new()
-    {
-        new() { Street = "123 Main St", City = "Bengaluru", Pincode = "560001", Latitude = 37.7749, Longitude = -122.4194, AddressType = AddressType.Home },
-        new() { Street = "456 Work Ave", City = "Bengaluru", Pincode = "560002", Latitude = 37.7900, Longitude = -122.4000, AddressType = AddressType.Work }
-    };
-
-    private static List<TimeSlotDto> GetAvailableTimeSlots() => new()
-    {
-        new() { Id = Guid.NewGuid(), Label = "ASAP", StartMinutesFromNow = 0, EndMinutesFromNow = 30, IsAvailable = true },
-        new() { Id = Guid.NewGuid(), Label = "Afternoon", StartMinutesFromNow = 60, EndMinutesFromNow = 120, IsAvailable = true },
-        new() { Id = Guid.NewGuid(), Label = "Evening", StartMinutesFromNow = 180, EndMinutesFromNow = 240, IsAvailable = true }
-    };
 }

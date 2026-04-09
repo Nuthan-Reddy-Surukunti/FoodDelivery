@@ -13,6 +13,7 @@ public static class ServiceRegistration
         services.AddScoped<IOrderPlacementService, OrderPlacementService>();
         services.AddScoped<IOrderStatusService, OrderStatusService>();
         services.AddScoped<IDeliveryService, DeliveryService>();
+        services.AddScoped<IUserAddressService, UserAddressService>();
 
         return services;
     }

@@ -8,7 +8,5 @@ public class PlaceOrderRequestDto
     
     public Guid SelectedAddressId { get; set; }
     
-    public Guid SelectedTimeSlotId { get; set; }
-    
     public string? SpecialInstructions { get; set; }
 }
