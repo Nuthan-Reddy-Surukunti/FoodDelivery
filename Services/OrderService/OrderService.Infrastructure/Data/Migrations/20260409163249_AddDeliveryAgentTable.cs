@@ -41,6 +41,19 @@ namespace OrderService.Infrastructure.Data.Migrations
                 table: "DeliveryAgents",
                 columns: new[] { "IsActive", "IsEmailVerified" });
 
+            // Make DeliveryAgentId nullable on existing DeliveryAssignments, clear any values
+            // that would violate the foreign key constraint, then add the FK.
+            migrationBuilder.AlterColumn<Guid>(
+                name: "DeliveryAgentId",
+                table: "DeliveryAssignments",
+                type: "uniqueidentifier",
+                nullable: true,
+                oldClrType: typeof(Guid),
+                oldType: "uniqueidentifier");
+
+            // Clear any existing DeliveryAgentId values that do not have a matching DeliveryAgents row.
+            migrationBuilder.Sql("UPDATE [DeliveryAssignments] SET [DeliveryAgentId] = NULL WHERE [DeliveryAgentId] IS NOT NULL");
+
             migrationBuilder.AddForeignKey(
                 name: "FK_DeliveryAssignments_DeliveryAgents_DeliveryAgentId",
                 table: "DeliveryAssignments",
