@@ -27,6 +27,45 @@
       "SwaggerKey": "CatalogService"
     },
     {
+      "UpstreamPathTemplate": "/gateway/carts/{everything}",
+      "DownstreamPathTemplate": "/gateway/carts/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5003
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/checkout/{everything}",
+      "DownstreamPathTemplate": "/gateway/checkout/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5003
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/payments/{everything}",
+      "DownstreamPathTemplate": "/gateway/payments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5003
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
       "UpstreamPathTemplate": "/gateway/orders/{everything}",
       "DownstreamPathTemplate": "/gateway/orders/{everything}",
       "DownstreamScheme": "http",
