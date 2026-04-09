@@ -143,8 +143,6 @@ namespace AdminService.API.Middleware
             string? entityType = null;
             if (pathValue.Contains("/restaurants"))
                 entityType = "Restaurant";
-            else if (pathValue.Contains("/menu-items"))
-                entityType = "MenuItem";
             else if (pathValue.Contains("/orders"))
                 entityType = "Order";
             else if (pathValue.Contains("/reports"))

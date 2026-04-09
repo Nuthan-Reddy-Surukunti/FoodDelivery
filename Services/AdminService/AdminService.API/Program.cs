@@ -39,7 +39,6 @@ builder.Services.AddDbContext<AdminServiceDbContext>(options =>
 builder.Services.AddScoped<IRestaurantRepository, RestaurantRepository>();
 builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
-builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 
 // Add Application Services
@@ -47,7 +46,6 @@ builder.Services.AddScoped<IRestaurantService, RestaurantService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
-builder.Services.AddScoped<IMenuItemService, MenuItemService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 
 builder.Services.AddMassTransit(x =>
@@ -73,7 +71,7 @@ builder.Services.AddAutoMapper(cfg =>
 
 // Add FluentValidation
 builder.Services.AddFluentValidationAutoValidation();
-builder.Services.AddValidatorsFromAssemblyContaining<CreateMenuItemRequestValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<RejectRestaurantRequestValidator>();
 
 // Add HTTP Context Accessor for audit logging
 builder.Services.AddHttpContextAccessor();
