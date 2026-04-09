@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using OrderService.Application.Interfaces;
 using System.Net.Http.Json;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace OrderService.Infrastructure.Services;
 
@@ -52,33 +53,26 @@ public class MenuItemValidationService : IMenuItemValidationService
                     };
                 }
 
-                // Verify restaurant matches
-                if (menuItem.RestaurantId != restaurantId)
+                // Check availability - CatalogService returns availability status enum (Available = 1)
+                bool isAvailable = menuItem.AvailabilityStatus == 1; // 1 = Available
+                if (!isAvailable)
                 {
-                    _logger.LogWarning(
-                        "Menu item {MenuItemId} belongs to different restaurant {ActualRestaurant} vs requested {RequestedRestaurant}",
-                        menuItemId, menuItem.RestaurantId, restaurantId);
-                    return new MenuItemValidationResult
+                    string statusName = menuItem.AvailabilityStatus switch
                     {
-                        IsValid = false,
-                        MenuItemId = menuItemId,
-                        ErrorMessage = "Menu item does not belong to this restaurant"
+                        2 => "Out of Stock",
+                        3 => "Discontinued",
+                        _ => "Unavailable"
                     };
-                }
-
-                // Check availability
-                if (!menuItem.IsAvailable)
-                {
                     _logger.LogInformation(
-                        "Menu item {MenuItemId} is currently unavailable",
-                        menuItemId);
+                        "Menu item {MenuItemId} is currently {Status}",
+                        menuItemId, statusName);
                     return new MenuItemValidationResult
                     {
                         IsValid = false,
                         MenuItemId = menuItemId,
                         ItemName = menuItem.Name,
                         IsAvailable = false,
-                        ErrorMessage = "This item is currently unavailable"
+                        ErrorMessage = $"This item is currently {statusName}"
                     };
                 }
 
@@ -155,8 +149,12 @@ public class MenuItemValidationService : IMenuItemValidationService
 internal class MenuItemResponseDto
 {
     public Guid Id { get; set; }
-    public Guid RestaurantId { get; set; }
     public string Name { get; set; } = string.Empty;
+    public string? Description { get; set; }
     public decimal Price { get; set; }
-    public bool IsAvailable { get; set; }
+    public int? PrepTime { get; set; }
+    public bool IsVeg { get; set; }
+    public string? ImageUrl { get; set; }
+    public int AvailabilityStatus { get; set; } = 1; // 1 = Available, 2 = OutOfStock, 3 = Discontinued
+    public string? CategoryName { get; set; }
 }

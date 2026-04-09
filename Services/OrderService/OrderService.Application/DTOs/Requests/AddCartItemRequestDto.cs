@@ -10,7 +10,5 @@ public class AddCartItemRequestDto
 
     public int Quantity { get; set; }
 
-    public decimal PriceSnapshot { get; set; }
-
     public string? CustomizationNotes { get; set; }
 }
