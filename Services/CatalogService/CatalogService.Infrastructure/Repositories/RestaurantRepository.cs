@@ -43,12 +43,14 @@ public class RestaurantRepository : IRestaurantRepository
 
     public async Task<(List<Restaurant>, int)> SearchByNameAsync(string query, int pageNumber, int pageSize)
     {
+        var lowerQuery = query.ToLower();
+        
         var totalCount = await _context.Restaurants
-            .Where(r => EF.Functions.Like(r.Name, $"%{query}%"))
+            .Where(r => r.Name.ToLower().Contains(lowerQuery))
             .CountAsync();
 
         var restaurants = await _context.Restaurants
-            .Where(r => EF.Functions.Like(r.Name, $"%{query}%"))
+            .Where(r => r.Name.ToLower().Contains(lowerQuery))
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync();

@@ -76,7 +76,6 @@ public class SearchController : ControllerBase
     [HttpGet("restaurantsByName")]
     public async Task<ActionResult> SearchRestaurantsByName(
         [FromQuery] string? query,
-        [FromQuery] Guid restaurantId,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10)
     {
