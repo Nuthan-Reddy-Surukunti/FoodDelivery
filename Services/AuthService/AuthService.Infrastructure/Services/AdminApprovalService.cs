@@ -3,6 +3,8 @@ using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
 using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Identity;
+using FoodDelivery.Shared.Events.Auth;
+using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,15 +15,18 @@ public class AdminApprovalService : IAdminApprovalService
     private readonly AuthDbContext _dbContext;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailService _emailService;
+    private readonly IPublishEndpoint _publishEndpoint;
 
     public AdminApprovalService(
         AuthDbContext dbContext,
         UserManager<ApplicationUser> userManager,
-        IEmailService emailService)
+        IEmailService emailService,
+        IPublishEndpoint publishEndpoint)
     {
         _dbContext = dbContext;
         _userManager = userManager;
         _emailService = emailService;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<IEnumerable<dynamic>> GetPendingApprovalsAsync()
@@ -64,6 +69,18 @@ public class AdminApprovalService : IAdminApprovalService
                     user.Email,
                     "Your Account Has Been Approved",
                     $"Congratulations! Your {user.Role} account has been approved. On your first login, a verification OTP will be sent to your email. Verify that OTP to complete activation and log in.");
+
+                // Publish UserApprovedEvent to notify other services
+                await _publishEndpoint.Publish(new UserApprovedEvent
+                {
+                    EventId = Guid.NewGuid(),
+                    OccurredAt = DateTime.UtcNow,
+                    EventVersion = 1,
+                    UserId = Guid.Parse(user.Id),
+                    Email = user.Email,
+                    FullName = user.FullName,
+                    Role = user.Role
+                });
 
                 return true;
             }
