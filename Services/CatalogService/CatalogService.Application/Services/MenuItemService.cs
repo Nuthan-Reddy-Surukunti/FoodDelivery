@@ -42,20 +42,28 @@ public class MenuItemService : IMenuItemService
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10, string? userRole = null)
+    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10, string? userRole = null, Guid? userId = null)
     {
         var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
         if (restaurant == null)
             throw new RestaurantNotFoundException(restaurantId);
 
-        // Check if restaurant is active unless user is Admin
-        if (userRole != "Admin" && restaurant.Status != RestaurantStatus.Active)
+        // Allow RestaurantPartner to see items for their own restaurant (any status)
+        // Allow Admin to see all items. Other users only see items for Active restaurants
+        if (userRole == "RestaurantPartner" && userId.HasValue && restaurant.OwnerId == userId)
+        {
+            // RestaurantPartner can access their own restaurant even if Pending
+        }
+        else if (userRole != "Admin" && restaurant.Status != RestaurantStatus.Active)
+        {
+            // Non-owners and non-admins cannot access non-active restaurants
             throw new RestaurantNotFoundException(restaurantId);
+        }
 
         var (items, totalCount) = await _repository.GetByRestaurantAsync(restaurantId, pageNumber, pageSize);
         
-        // Filter by available status unless user is Admin
-        if (userRole != "Admin")
+        // Filter by available status unless user is Admin or restaurant owner
+        if (userRole != "Admin" && !(userRole == "RestaurantPartner" && userId.HasValue && restaurant.OwnerId == userId))
         {
             items = items.Where(i => i.AvailabilityStatus == ItemAvailabilityStatus.Available).ToList();
             totalCount = items.Count;

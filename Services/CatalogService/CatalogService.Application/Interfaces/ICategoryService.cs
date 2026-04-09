@@ -4,7 +4,7 @@ using CatalogService.Application.DTOs.Category;
 
 public interface ICategoryService
 {
-    Task<List<CategoryDto>> GetCategoriesByRestaurantAsync(Guid restaurantId, string? userRole = null);
+    Task<List<CategoryDto>> GetCategoriesByRestaurantAsync(Guid restaurantId, string? userRole = null, Guid? userId = null);
 
     Task<CategoryDto> GetCategoryByIdAsync(Guid id, string? userRole = null);
 

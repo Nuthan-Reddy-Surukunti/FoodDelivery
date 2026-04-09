@@ -30,8 +30,9 @@ public class CategoriesController : ControllerBase
     {
         try
         {
+            var userId = this.GetCurrentUserId();
             var userRole = this.GetCurrentUserRole();
-            var result = await _categoryService.GetCategoriesByRestaurantAsync(restaurantId, userRole);
+            var result = await _categoryService.GetCategoriesByRestaurantAsync(restaurantId, userRole, userId);
             return Ok(result);
         }
         catch (RestaurantNotFoundException)

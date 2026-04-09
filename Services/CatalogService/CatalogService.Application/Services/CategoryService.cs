@@ -20,15 +20,23 @@ public class CategoryService : ICategoryService
         _mapper = mapper;
     }
 
-    public async Task<List<CategoryDto>> GetCategoriesByRestaurantAsync(Guid restaurantId, string? userRole = null)
+    public async Task<List<CategoryDto>> GetCategoriesByRestaurantAsync(Guid restaurantId, string? userRole = null, Guid? userId = null)
     {
         var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
         if (restaurant == null)
             throw new RestaurantNotFoundException(restaurantId);
 
-        // Check if restaurant is active unless user is Admin
-        if (userRole != "Admin" && restaurant.Status != CatalogService.Domain.Enums.RestaurantStatus.Active)
+        // Allow RestaurantPartner to manage categories for their own restaurant (any status)
+        // Allow Admin to manage all. Other users only see categories for Active restaurants
+        if (userRole == "RestaurantPartner" && userId.HasValue && restaurant.OwnerId == userId)
+        {
+            // RestaurantPartner can access their own restaurant even if Pending
+        }
+        else if (userRole != "Admin" && restaurant.Status != CatalogService.Domain.Enums.RestaurantStatus.Active)
+        {
+            // Non-owners and non-admins cannot access non-active restaurants
             throw new RestaurantNotFoundException(restaurantId);
+        }
 
         var categories = await _repository.GetByRestaurantAsync(restaurantId);
         return _mapper.Map<List<CategoryDto>>(categories);

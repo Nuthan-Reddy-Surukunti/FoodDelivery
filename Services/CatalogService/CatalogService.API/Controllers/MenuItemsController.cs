@@ -52,8 +52,9 @@ public class MenuItemsController : ControllerBase
     {
         try
         {
+            var userId = this.GetCurrentUserId();
             var userRole = this.GetCurrentUserRole();
-            var result = await _menuItemService.GetMenuItemsByRestaurantAsync(restaurantId, pageNumber, pageSize, userRole);
+            var result = await _menuItemService.GetMenuItemsByRestaurantAsync(restaurantId, pageNumber, pageSize, userRole, userId);
             return Ok(result);
         }
         catch (RestaurantNotFoundException)
