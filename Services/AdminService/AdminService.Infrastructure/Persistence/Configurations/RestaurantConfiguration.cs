@@ -72,6 +72,11 @@ public class RestaurantConfiguration : IEntityTypeConfiguration<Restaurant>
 
         builder.Property(r => r.UpdatedAt);
 
+        builder.Property(r => r.LastSyncedAt)
+            .HasColumnType("datetime2");
+
+        builder.Property(r => r.SyncEventId);
+
         builder.HasIndex(r => r.Status);
     }
 }

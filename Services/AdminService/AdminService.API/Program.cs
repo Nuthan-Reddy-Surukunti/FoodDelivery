@@ -145,6 +145,22 @@ builder.Services.AddHealthChecks()
 
 var app = builder.Build();
 
+// Apply migrations automatically
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AdminServiceDbContext>();
+    try
+    {
+        db.Database.Migrate();
+        Log.Information("Database migrations applied successfully");
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "An error occurred while applying migrations");
+        throw;
+    }
+}
+
 // Seed database
 using (var scope = app.Services.CreateScope())
 {

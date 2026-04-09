@@ -40,6 +40,11 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
 
         builder.Property(o => o.DeliveredAt);
 
+        builder.Property(o => o.LastSyncedAt)
+            .HasColumnType("datetime2");
+
+        builder.Property(o => o.SyncEventId);
+
         builder.HasIndex(o => o.CustomerId);
         builder.HasIndex(o => o.RestaurantId);
         builder.HasIndex(o => o.Status);

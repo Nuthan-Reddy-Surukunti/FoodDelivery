@@ -3,6 +3,9 @@ using FoodDelivery.Shared.Events.Auth;
 using FoodDelivery.Shared.Events.Catalog;
 using FoodDelivery.Shared.Events.Order;
 using MassTransit;
+using AdminService.Domain.Entities;
+using AdminService.Domain.Enums;
+using AdminService.Domain.Interfaces;
 
 namespace AdminService.Application.EventHandlers;
 
@@ -49,12 +52,43 @@ public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
 public class OrderPlacedEventHandler : IConsumer<OrderPlacedEvent>
 {
     private readonly ILogger<OrderPlacedEventHandler> _logger;
-    public OrderPlacedEventHandler(ILogger<OrderPlacedEventHandler> logger) => _logger = logger;
+    private readonly IOrderRepository _orderRepository;
+
+    public OrderPlacedEventHandler(ILogger<OrderPlacedEventHandler> logger, IOrderRepository orderRepository)
+    {
+        _logger = logger;
+        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+    }
+
     public async Task Consume(ConsumeContext<OrderPlacedEvent> context)
     {
         var @event = context.Message;
-        _logger.LogInformation("Processing OrderPlacedEvent: OrderId={OrderId}", @event.OrderId);
-        await Task.CompletedTask;
+        _logger.LogInformation("Processing OrderPlacedEvent: OrderId={OrderId}, UserId={UserId}", @event.OrderId, @event.UserId);
+
+        try
+        {
+            var order = new Order
+            {
+                Id = @event.OrderId,
+                CustomerId = @event.UserId,
+                RestaurantId = @event.RestaurantId,
+                Status = OrderStatus.Pending,
+                TotalAmount = @event.TotalAmount,
+                Currency = "USD",
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                LastSyncedAt = @event.OccurredAt,
+                SyncEventId = @event.EventId
+            };
+
+            await _orderRepository.AddAsync(order, context.CancellationToken);
+            _logger.LogInformation("Order persisted successfully: OrderId={OrderId}", @event.OrderId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing OrderPlacedEvent: OrderId={OrderId}", @event.OrderId);
+            throw;
+        }
     }
 }
 
@@ -62,12 +96,49 @@ public class OrderPlacedEventHandler : IConsumer<OrderPlacedEvent>
 public class OrderStatusChangedEventHandler : IConsumer<OrderStatusChangedEvent>
 {
     private readonly ILogger<OrderStatusChangedEventHandler> _logger;
-    public OrderStatusChangedEventHandler(ILogger<OrderStatusChangedEventHandler> logger) => _logger = logger;
+    private readonly IOrderRepository _orderRepository;
+
+    public OrderStatusChangedEventHandler(ILogger<OrderStatusChangedEventHandler> logger, IOrderRepository orderRepository)
+    {
+        _logger = logger;
+        _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
+    }
+
     public async Task Consume(ConsumeContext<OrderStatusChangedEvent> context)
     {
         var @event = context.Message;
         _logger.LogInformation("Processing OrderStatusChangedEvent: OrderId={OrderId}, NewStatus={NewStatus}", @event.OrderId, @event.NewStatus);
-        await Task.CompletedTask;
+
+        try
+        {
+            var order = await _orderRepository.GetByIdAsync(@event.OrderId, context.CancellationToken);
+            if (order == null)
+            {
+                _logger.LogWarning("Order not found: OrderId={OrderId}", @event.OrderId);
+                return;
+            }
+
+            // Map event status string to OrderStatus enum
+            if (Enum.TryParse<OrderStatus>(@event.NewStatus, ignoreCase: true, out var newStatus))
+            {
+                order.Status = newStatus;
+                order.UpdatedAt = DateTime.UtcNow;
+                order.LastSyncedAt = @event.OccurredAt;
+                order.SyncEventId = @event.EventId;
+
+                await _orderRepository.UpdateAsync(order, context.CancellationToken);
+                _logger.LogInformation("Order status updated successfully: OrderId={OrderId}, Status={Status}", @event.OrderId, @event.NewStatus);
+            }
+            else
+            {
+                _logger.LogWarning("Invalid status value in event: OrderId={OrderId}, Status={Status}", @event.OrderId, @event.NewStatus);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing OrderStatusChangedEvent: OrderId={OrderId}", @event.OrderId);
+            throw;
+        }
     }
 }
 
