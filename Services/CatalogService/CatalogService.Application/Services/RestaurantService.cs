@@ -90,20 +90,23 @@ public class RestaurantService : IRestaurantService
 
         var createdRestaurant = await _repository.CreateAsync(restaurant);
         
-        // Publish RestaurantCreatedEvent for AdminService to sync
-        var restaurantCreatedEvent = new RestaurantCreatedEvent
+        // Publish RestaurantCreatedEvent for AdminService to sync (only if restaurant has an owner)
+        if (createdRestaurant.OwnerId.HasValue)
         {
-            EventId = Guid.NewGuid(),
-            OccurredAt = DateTime.UtcNow,
-            EventVersion = 1,
-            RestaurantId = createdRestaurant.Id,
-            OwnerId = createdRestaurant.OwnerId,
-            Name = createdRestaurant.Name,
-            City = createdRestaurant.City,
-            CuisineType = createdRestaurant.CuisineType
-        };
-        
-        await _publishEndpoint.Publish(restaurantCreatedEvent);
+            var restaurantCreatedEvent = new RestaurantCreatedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                EventVersion = 1,
+                RestaurantId = createdRestaurant.Id,
+                OwnerId = createdRestaurant.OwnerId.Value,
+                Name = createdRestaurant.Name,
+                City = createdRestaurant.City,
+                CuisineType = createdRestaurant.CuisineType.ToString()
+            };
+            
+            await _publishEndpoint.Publish(restaurantCreatedEvent);
+        }
         
         return _mapper.Map<RestaurantDetailDto>(createdRestaurant);
     }
