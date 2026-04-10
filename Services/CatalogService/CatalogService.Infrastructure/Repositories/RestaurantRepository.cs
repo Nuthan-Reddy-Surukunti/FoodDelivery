@@ -91,11 +91,11 @@ public class RestaurantRepository : IRestaurantRepository
     public async Task<(List<Restaurant>, int)> GetByRatingAsync(decimal minRating, int pageNumber, int pageSize)
     {
         var totalCount = await _context.Restaurants
-            .Where(r => r.Rating >= minRating)
+            .Where(r => r.Status == RestaurantStatus.Active && r.Rating >= minRating)
             .CountAsync();
 
         var restaurants = await _context.Restaurants
-            .Where(r => r.Rating >= minRating)
+            .Where(r => r.Status == RestaurantStatus.Active && r.Rating >= minRating)
             .OrderByDescending(r => r.Rating)
             .Skip((pageNumber - 1) * pageSize)
             .Take(pageSize)

@@ -16,12 +16,14 @@ public class OrderStatusService : IOrderStatusService
     private readonly IOrderRepository _orderRepository;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IPaymentRepository _paymentRepository;
+    private readonly IDeliveryService _deliveryService;
 
-    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IPublishEndpoint publishEndpoint)
+    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IPublishEndpoint publishEndpoint, IDeliveryService deliveryService)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _paymentRepository = paymentRepository ?? throw new ArgumentNullException(nameof(paymentRepository));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _deliveryService = deliveryService ?? throw new ArgumentNullException(nameof(deliveryService));
     }
 
     public async Task<OrderDetailDto> UpdateOrderStatusAsync(UpdateOrderStatusRequestDto request, CancellationToken cancellationToken = default)
@@ -176,6 +178,20 @@ public class OrderStatusService : IOrderStatusService
 
         order.UpdatedAt = DateTime.UtcNow;
         await _orderRepository.UpdateAsync(order, cancellationToken);
+
+        // Attempt to auto-assign delivery agent after successful payment (non-blocking)
+        if (request.IsSuccessful && order.OrderStatus == OrderStatus.Paid)
+        {
+            try
+            {
+                await _deliveryService.AssignDeliveryAsync(order.Id, cancellationToken);
+            }
+            catch (Exception)
+            {
+                // Silently fail - delivery assignment is non-blocking
+                // Order remains in Paid status; assignment will be retried later or by admin
+            }
+        }
 
         return OrderMappings.MapToDto(order);
     }

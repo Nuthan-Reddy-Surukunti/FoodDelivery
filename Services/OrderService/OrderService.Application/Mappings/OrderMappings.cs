@@ -13,6 +13,20 @@ public static class OrderMappings
         var subtotal = CalculateOrderSubtotal(order);
         var total = CalculateOrderTotal(order);
 
+        // Determine delivery assignment status and message
+        string? deliveryAssignmentStatus = null;
+        string? deliveryAssignmentMessage = null;
+
+        if (order.DeliveryAssignment is not null)
+        {
+            deliveryAssignmentStatus = "assigned";
+        }
+        else
+        {
+            deliveryAssignmentStatus = "pending_agents";
+            deliveryAssignmentMessage = "No delivery agents available at this time. Please try again after some time.";
+        }
+
         return new OrderDetailDto
         {
             OrderId = order.Id,
@@ -35,7 +49,9 @@ public static class OrderMappings
                 Subtotal = item.Quantity * item.UnitPrice
             }).ToList(),
             Payment = order.Payment is null ? null : MapPayment(order.Payment),
-            DeliveryAssignment = order.DeliveryAssignment is null ? null : MapDeliveryAssignment(order.DeliveryAssignment)
+            DeliveryAssignment = order.DeliveryAssignment is null ? null : MapDeliveryAssignment(order.DeliveryAssignment),
+            DeliveryAssignmentStatus = deliveryAssignmentStatus,
+            DeliveryAssignmentMessage = deliveryAssignmentMessage
         };
     }
 

@@ -23,6 +23,10 @@ public class OrderDetailDto
 
     public DeliveryAssignmentDto? DeliveryAssignment { get; set; }
 
+    public string? DeliveryAssignmentStatus { get; set; }
+
+    public string? DeliveryAssignmentMessage { get; set; }
+
     public decimal Subtotal { get; set; }
 
     public decimal Total { get; set; }
