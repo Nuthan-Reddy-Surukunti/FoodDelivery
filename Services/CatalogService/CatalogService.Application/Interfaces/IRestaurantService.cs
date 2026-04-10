@@ -14,8 +14,6 @@ public interface IRestaurantService
 
     Task<RestaurantDetailDto> UpdateRestaurantAsync(Guid id, UpdateRestaurantDto dto, Guid userId, string userRole);
 
-    Task<bool> DeleteRestaurantAsync(Guid id, Guid userId, string userRole);
-
     Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber, int pageSize, string? userRole = null);
 
     Task<RestaurantDetailDto> ToggleRestaurantStatusAsync(Guid id);

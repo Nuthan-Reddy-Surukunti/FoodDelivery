@@ -144,23 +144,6 @@ public class RestaurantService : IRestaurantService
         return _mapper.Map<RestaurantDetailDto>(updatedRestaurant);
     }
 
-    public async Task<bool> DeleteRestaurantAsync(Guid id, Guid userId, string userRole)
-    {
-        var restaurant = await _repository.GetByIdAsync(id);
-        if (restaurant == null)
-            throw new RestaurantNotFoundException(id);
-        
-        // Only Admin can delete
-        if (userRole != "Admin")
-            throw new UnauthorizedAccessException("Only administrators can delete restaurants.");
-        
-        // Ownership validation for RestaurantPartner
-        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
-            throw new UnauthorizedAccessException("You can only delete your own restaurant.");
-
-        return await _repository.DeleteAsync(id);
-    }
-
     public async Task<PaginatedResultDto<RestaurantDto>> GetRestaurantsByCityAsync(string city, int pageNumber = 1, int pageSize = 10, string? userRole = null)
     {
         var (restaurants, totalCount) = await _repository.GetAllAsync(pageNumber, pageSize);

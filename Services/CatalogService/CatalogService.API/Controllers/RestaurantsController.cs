@@ -114,24 +114,5 @@ public class RestaurantsController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-
-    /// <summary>
-    /// Delete a restaurant (Admin only)
-    /// </summary>
-    [HttpDelete("{id}")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> Delete([FromRoute] Guid id)
-    {
-        try
-        {
-            var userId = this.GetCurrentUserId();
-            var userRole = this.GetCurrentUserRole();
-            await _restaurantService.DeleteRestaurantAsync(id, userId, userRole);
-            return NoContent();
-        }
-        catch (RestaurantNotFoundException)
-        {
-            return NotFound();
-        }
-    }
 }
+
