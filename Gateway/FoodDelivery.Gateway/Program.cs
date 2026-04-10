@@ -42,7 +42,7 @@ builder.Services.AddOcelot(builder.Configuration);
 // Add endpoints explorer (required by SwaggerForOcelot)
 builder.Services.AddEndpointsApiExplorer();
 
-// Configure SwaggerForOcelot ONLY
+// Configure SwaggerForOcelot
 builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
 var app = builder.Build();
@@ -81,11 +81,14 @@ app.MapWhen(context => context.Request.Path == "/favicon.ico", faviconApp =>
     });
 });
 
-// Configure SwaggerForOcelot UI
-app.UseSwaggerForOcelotUI(opt =>
+// Configure SwaggerForOcelot UI  
+if (app.Environment.IsDevelopment())
 {
-    opt.PathToSwaggerGenerator = "/swagger/docs";
-});
+    app.UseSwaggerForOcelotUI(opt =>
+    {
+        opt.PathToSwaggerGenerator = "/swagger/docs";
+    });
+}
 
 await app.UseOcelot();
 
