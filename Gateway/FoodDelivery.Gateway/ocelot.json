@@ -92,6 +92,90 @@
       "SwaggerKey": "OrderService"
     },
     {
+      "UpstreamPathTemplate": "/gateway/admin/restaurants/{id}/approve",
+      "UpstreamHttpMethod": ["POST"],
+      "DownstreamPathTemplate": "/api/restaurants/{id}/approve",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5004
+        }
+      ],
+      "Priority": 1,
+      "SwaggerKey": "AdminService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/admin/restaurants/{id}/reject",
+      "UpstreamHttpMethod": ["POST"],
+      "DownstreamPathTemplate": "/api/restaurants/{id}/reject",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5004
+        }
+      ],
+      "Priority": 1,
+      "SwaggerKey": "AdminService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/admin/reports/all-users",
+      "UpstreamHttpMethod": ["GET"],
+      "DownstreamPathTemplate": "/api/reports/all-users",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5004
+        }
+      ],
+      "Priority": 1,
+      "SwaggerKey": "AdminService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/admin/reports/all-restaurants",
+      "UpstreamHttpMethod": ["GET"],
+      "DownstreamPathTemplate": "/api/reports/all-restaurants",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5004
+        }
+      ],
+      "Priority": 1,
+      "SwaggerKey": "AdminService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/admin/reports/all-sales",
+      "UpstreamHttpMethod": ["GET"],
+      "DownstreamPathTemplate": "/api/reports/all-sales",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5004
+        }
+      ],
+      "Priority": 1,
+      "SwaggerKey": "AdminService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/admin/reports/all-partners",
+      "UpstreamHttpMethod": ["GET"],
+      "DownstreamPathTemplate": "/api/reports/all-partners",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5004
+        }
+      ],
+      "Priority": 1,
+      "SwaggerKey": "AdminService"
+    },
+    {
       "UpstreamPathTemplate": "/gateway/admin/{everything}",
       "DownstreamPathTemplate": "/api/{everything}",
       "DownstreamScheme": "http",
