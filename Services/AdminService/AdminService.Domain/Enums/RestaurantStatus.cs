@@ -1,32 +1,29 @@
 namespace AdminService.Domain.Enums;
 
 /// <summary>
-/// Represents the approval status of a restaurant
+/// Represents the approval status of a restaurant.
+/// Values must match FoodDelivery.Shared.Enums.RestaurantStatus for consistency
+/// in event-driven architecture across all services.
 /// </summary>
 public enum RestaurantStatus
 {
     /// <summary>
     /// Restaurant registration is pending admin approval
     /// </summary>
-    Pending = 1,
+    Pending = 0,
 
     /// <summary>
-    /// Restaurant has been approved and is active
+    /// Restaurant has been approved by admin and is active
     /// </summary>
-    Approved = 2,
-
-    /// <summary>
-    /// Restaurant registration was rejected
-    /// </summary>
-    Rejected = 3,
+    Active = 1,
 
     /// <summary>
     /// Restaurant has been suspended by admin
     /// </summary>
-    Suspended = 4,
+    Suspended = 2,
 
     /// <summary>
-    /// Restaurant is temporarily inactive
+    /// Restaurant registration was rejected or permanently inactive
     /// </summary>
-    Inactive = 5
+    Inactive = 3
 }

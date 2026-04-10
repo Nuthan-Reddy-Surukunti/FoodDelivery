@@ -33,8 +33,10 @@ public class RestaurantApprovedEventHandler : IConsumer<RestaurantApprovedEvent>
             var restaurant = await _restaurantRepository.GetByIdAsync(@event.RestaurantId);
             if (restaurant == null)
             {
-                _logger.LogWarning("Restaurant not found: RestaurantId={RestaurantId}", @event.RestaurantId);
-                return;
+                // Throw exception to trigger retry (handles race condition where approval arrives before creation event)
+                throw new InvalidOperationException(
+                    $"Restaurant not found: RestaurantId={@event.RestaurantId}. " +
+                    $"This may occur if approval event arrives before creation event. Retrying...");
             }
 
             // Update restaurant status to Active (approved)
@@ -79,8 +81,10 @@ public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
             var restaurant = await _restaurantRepository.GetByIdAsync(@event.RestaurantId);
             if (restaurant == null)
             {
-                _logger.LogWarning("Restaurant not found: RestaurantId={RestaurantId}", @event.RestaurantId);
-                return;
+                // Throw exception to trigger retry (handles race condition where rejection arrives before creation event)
+                throw new InvalidOperationException(
+                    $"Restaurant not found: RestaurantId={@event.RestaurantId}. " +
+                    $"This may occur if rejection event arrives before creation event. Retrying...");
             }
 
             // Update restaurant status to Inactive (rejected)

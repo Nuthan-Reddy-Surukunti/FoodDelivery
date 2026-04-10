@@ -3,6 +3,8 @@ using CatalogService.Application;
 using CatalogService.Application.EventHandlers;
 using CatalogService.Infrastructure;
 using CatalogService.API.Middleware;
+using FoodDelivery.Shared.Events.Catalog;
+using FoodDelivery.Shared.Events.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -21,6 +23,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<RestaurantApprovedEventHandler>();
     x.AddConsumer<RestaurantRejectedEventHandler>();
+    
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",
@@ -31,7 +34,15 @@ builder.Services.AddMassTransit(x =>
                 h.Username(builder.Configuration["RabbitMq:UserName"] ?? "guest");
                 h.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
             });
-        cfg.ConfigureEndpoints(context);
+        
+        // Configure consumer endpoints with retry policy
+        cfg.UseMessageRetry(r =>
+        {
+            r.Exponential(5, TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(100));
+        });
+        
+        // Configure endpoints
+        cfg.ConfigureEndpoints(context, new DefaultEndpointNameFormatter("CatalogService", false));
     });
 });
 
@@ -128,7 +139,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 // Register global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();

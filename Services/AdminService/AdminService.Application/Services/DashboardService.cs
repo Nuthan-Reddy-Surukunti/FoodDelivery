@@ -34,7 +34,7 @@ public class DashboardService : IDashboardService
         var totalRevenue = await _orderRepository.GetTotalRevenueAsync(cancellationToken);
 
         // Get active partners count
-        var activePartners = await _restaurantRepository.GetCountByStatusAsync(RestaurantStatus.Approved, cancellationToken);
+        var activePartners = await _restaurantRepository.GetCountByStatusAsync(RestaurantStatus.Active, cancellationToken);
 
         // Get pending approvals count
         var pendingApprovals = await _restaurantRepository.GetCountByStatusAsync(RestaurantStatus.Pending, cancellationToken);

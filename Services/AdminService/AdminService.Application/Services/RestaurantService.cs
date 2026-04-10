@@ -84,7 +84,7 @@ public class RestaurantService : IRestaurantService
                            httpContext?.User?.Identity?.Name ??
                            "Unknown Admin";
 
-        restaurant.Status = RestaurantStatus.Approved;
+        restaurant.Status = RestaurantStatus.Active;
         restaurant.ApprovedAt = DateTime.UtcNow;
         restaurant.UpdatedAt = DateTime.UtcNow;
         restaurant.RejectionReason = null;
@@ -139,7 +139,7 @@ public class RestaurantService : IRestaurantService
                            httpContext?.User?.Identity?.Name ??
                            "Unknown Admin";
 
-        restaurant.Status = RestaurantStatus.Rejected;
+        restaurant.Status = RestaurantStatus.Inactive;
         restaurant.RejectedAt = DateTime.UtcNow;
         restaurant.UpdatedAt = DateTime.UtcNow;
         restaurant.RejectionReason = request.RejectionReason;

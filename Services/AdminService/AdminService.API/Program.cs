@@ -8,6 +8,9 @@ using AdminService.Application.Validators;
 using AdminService.Application.EventHandlers;
 using AdminService.Domain.Interfaces;
 using AdminService.API.Middleware;
+using FoodDelivery.Shared.Events.Auth;
+using FoodDelivery.Shared.Events.Catalog;
+using FoodDelivery.Shared.Events.Order;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.EntityFrameworkCore;
@@ -57,6 +60,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<OrderPlacedEventHandler>();
     x.AddConsumer<OrderStatusChangedEventHandler>();
     x.AddConsumer<OrderCancelledEventHandler>();
+    
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",
@@ -67,7 +71,15 @@ builder.Services.AddMassTransit(x =>
                 h.Username(builder.Configuration["RabbitMq:UserName"] ?? "guest");
                 h.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
             });
-        cfg.ConfigureEndpoints(context);
+        
+        // Configure consumer endpoints with retry policy
+        cfg.UseMessageRetry(r =>
+        {
+            r.Exponential(5, TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(10), TimeSpan.FromMilliseconds(100));
+        });
+        
+        // Configure endpoints
+        cfg.ConfigureEndpoints(context, new DefaultEndpointNameFormatter("AdminService", false));
     });
 });
 // Add AutoMapper
@@ -194,7 +206,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
