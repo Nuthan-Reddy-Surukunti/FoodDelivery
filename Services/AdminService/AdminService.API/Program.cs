@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MassTransit;
 using AdminService.Infrastructure.Persistence;
 using AdminService.Infrastructure.Repositories;

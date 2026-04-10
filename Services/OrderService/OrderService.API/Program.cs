@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MassTransit;
 using OrderService.API.Middleware;
 using OrderService.Application;
@@ -31,7 +32,11 @@ builder.Services.AddMassTransit(x =>
     });
 });
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: true));
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");

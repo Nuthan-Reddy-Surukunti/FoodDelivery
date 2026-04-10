@@ -17,6 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../AdminService.Domain/AdminService.Domain.csproj" />
+    <ProjectReference Include="../AdminService.Application/AdminService.Application.csproj" />
+    <ProjectReference Include="../../OrderService/OrderService.Domain/OrderService.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="NUnit.Framework" />
   </ItemGroup>
 

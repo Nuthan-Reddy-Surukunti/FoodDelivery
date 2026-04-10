@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using OrderService.Application.Interfaces;
+using OrderService.Domain.Enums;
 using System.Net.Http.Json;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
@@ -38,7 +39,13 @@ public class MenuItemValidationService : IMenuItemValidationService
             if (response.IsSuccessStatusCode)
             {
                 var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                var menuItem = JsonConvert.DeserializeObject<MenuItemResponseDto>(jsonContent);
+                
+                // Deserialize with StringEnumConverter to handle both text and numeric enum values
+                var settings = new JsonSerializerSettings
+                {
+                    Converters = new List<JsonConverter> { new StringEnumConverter() }
+                };
+                var menuItem = JsonConvert.DeserializeObject<MenuItemResponseDto>(jsonContent, settings);
 
                 if (menuItem == null)
                 {
@@ -53,14 +60,14 @@ public class MenuItemValidationService : IMenuItemValidationService
                     };
                 }
 
-                // Check availability - CatalogService returns availability status enum (Available = 1)
-                bool isAvailable = menuItem.AvailabilityStatus == 1; // 1 = Available
+                // Check availability - CatalogService returns availability status enum
+                bool isAvailable = menuItem.AvailabilityStatus == ItemAvailabilityStatus.Available;
                 if (!isAvailable)
                 {
                     string statusName = menuItem.AvailabilityStatus switch
                     {
-                        2 => "Out of Stock",
-                        3 => "Discontinued",
+                        ItemAvailabilityStatus.OutOfStock => "Out of Stock",
+                        ItemAvailabilityStatus.Discontinued => "Discontinued",
                         _ => "Unavailable"
                     };
                     _logger.LogInformation(
@@ -155,6 +162,6 @@ internal class MenuItemResponseDto
     public int? PrepTime { get; set; }
     public bool IsVeg { get; set; }
     public string? ImageUrl { get; set; }
-    public int AvailabilityStatus { get; set; } = 1; // 1 = Available, 2 = OutOfStock, 3 = Discontinued
+    public ItemAvailabilityStatus AvailabilityStatus { get; set; } = ItemAvailabilityStatus.Available;
     public string? CategoryName { get; set; }
 }

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using MassTransit;
 using CatalogService.Application;
 using CatalogService.Application.EventHandlers;
@@ -54,6 +55,7 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: true));
     });
 
 // === 2a. Endpoints API Explorer (required for Swagger in .NET 6+) ===
