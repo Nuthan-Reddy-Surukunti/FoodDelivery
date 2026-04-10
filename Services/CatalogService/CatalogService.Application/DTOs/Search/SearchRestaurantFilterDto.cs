@@ -23,13 +23,7 @@ public class SearchRestaurantFilterDto
 
     public string? City { get; set; }
 
-    [Range(-90, 90)]
-    public double? Latitude { get; set; }
-
-    [Range(-180, 180)]
-    public double? Longitude { get; set; }
-
-    public double? RadiusInKm { get; set; }
+    public string? ServiceZoneId { get; set; }
 
     [Range(1, int.MaxValue)]
     public int PageNumber { get; set; } = 1;

@@ -35,9 +35,7 @@ public class SearchController : ControllerBase
         [FromQuery] decimal? minPrice,
         [FromQuery] decimal? maxPrice,
         [FromQuery] string? city,
-        [FromQuery] double? latitude,
-        [FromQuery] double? longitude,
-        [FromQuery] double? radiusInKm,
+        [FromQuery] string? serviceZoneId,
         [FromQuery] int pageNumber = 1,
         [FromQuery] int pageSize = 10,
         [FromQuery] string? sortBy = "rating")
@@ -53,9 +51,7 @@ public class SearchController : ControllerBase
                 MinPrice = minPrice,
                 MaxPrice = maxPrice,
                 City = city,
-                Latitude = latitude,
-                Longitude = longitude,
-                RadiusInKm = radiusInKm,
+                ServiceZoneId = serviceZoneId,
                 PageNumber = pageNumber,
                 PageSize = pageSize,
                 SortBy = sortBy
@@ -94,16 +90,15 @@ public class SearchController : ControllerBase
     }
 
     /// <summary>
-    /// Get homepage data (featured restaurants, popular cuisines, nearby)
+    /// Get homepage data (featured restaurants, popular cuisines, by service zone)
     /// </summary>
     [HttpGet("home")]
     public async Task<ActionResult> GetHomepageData(
-        [FromQuery] double? latitude,
-        [FromQuery] double? longitude)
+        [FromQuery] string? serviceZoneId)
     {
         try
         {
-            var result = await _searchService.GetHomepageDataAsync(latitude, longitude);
+            var result = await _searchService.GetHomepageDataAsync(serviceZoneId);
             return Ok(result);
         }
         catch (Exception ex)

@@ -202,11 +202,10 @@ namespace CatalogService.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
-                    b.Property<double>("Latitude")
-                        .HasColumnType("float");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("float");
+                    b.Property<string>("ServiceZoneId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal?>("MinOrderValue")
                         .HasPrecision(10, 2)
@@ -244,7 +243,7 @@ namespace CatalogService.Infrastructure.Migrations
 
                     b.HasIndex("Status");
 
-                    b.HasIndex("Latitude", "Longitude");
+                    b.HasIndex("ServiceZoneId");
 
                     b.ToTable("Restaurants");
                 });

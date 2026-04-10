@@ -39,11 +39,9 @@ public class CatalogDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(100);
 
-            entity.Property(r => r.Latitude)
-                .IsRequired();
-
-            entity.Property(r => r.Longitude)
-                .IsRequired();
+            entity.Property(r => r.ServiceZoneId)
+                .IsRequired()
+                .HasMaxLength(100);
 
             entity.Property(r => r.CuisineType)
                 .IsRequired()
@@ -78,7 +76,7 @@ public class CatalogDbContext : DbContext
             entity.HasIndex(r => r.Name);
             entity.HasIndex(r => r.CuisineType);
             entity.HasIndex(r => r.Status);
-            entity.HasIndex(r => new { r.Latitude, r.Longitude });
+            entity.HasIndex(r => r.ServiceZoneId);
             entity.HasIndex(r => r.CreatedAt);
 
             // Relationships

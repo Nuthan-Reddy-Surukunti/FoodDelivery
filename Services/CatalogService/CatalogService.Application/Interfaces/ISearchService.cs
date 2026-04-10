@@ -11,5 +11,5 @@ public interface ISearchService
 
     Task<PaginatedResultDto<RestaurantDto>> AdvancedSearchAsync(SearchRestaurantFilterDto filters);
 
-    Task<HomePageDto> GetHomepageDataAsync(double? userLatitude, double? userLongitude);
+    Task<HomePageDto> GetHomepageDataAsync(string? serviceZoneId);
 }

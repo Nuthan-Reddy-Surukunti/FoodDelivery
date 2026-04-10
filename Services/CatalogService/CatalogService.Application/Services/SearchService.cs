@@ -72,20 +72,18 @@ public class SearchService : ISearchService
         };
     }
 
-    public async Task<HomePageDto> GetHomepageDataAsync(double? userLatitude = null, double? userLongitude = null)
+    public async Task<HomePageDto> GetHomepageDataAsync(string? serviceZoneId = null)
     {
         // Get featured restaurants (top rated, up to 10)
         var (featuredRestaurants, _) = await _repository.GetByRatingAsync(4.0m, 1, 10);
+        
+        // Filter by service zone if provided
+        if (!string.IsNullOrEmpty(serviceZoneId))
+        {
+            featuredRestaurants = featuredRestaurants.Where(r => r.ServiceZoneId == serviceZoneId).ToList();
+        }
+        
         var featuredDtos = _mapper.Map<List<RestaurantDto>>(featuredRestaurants);
-
-        // Get nearby restaurants if coordinates provided
-        // TODO: Implement nearby restaurants in future with GetNearbyAsync
-        var nearbyDtos = new List<RestaurantDto>();
-        // if (userLatitude.HasValue && userLongitude.HasValue)
-        // {
-        //     var (nearbyRestaurants, _) = await _repository.GetNearbyAsync(userLatitude.Value, userLongitude.Value, 5, 1, 10);
-        //     nearbyDtos = _mapper.Map<List<RestaurantDto>>(nearbyRestaurants);
-        // }
 
         // Get popular cuisines
         var popularCuisines = new List<Domain.Enums.CuisineType>
@@ -100,7 +98,7 @@ public class SearchService : ISearchService
         return new HomePageDto
         {
             FeaturedRestaurants = featuredDtos,
-            NearbyRestaurants = nearbyDtos,
+            NearbyRestaurants = new List<RestaurantDto>(), // Service zone replaces location-based nearby
             PopularCuisines = popularCuisines,
             BannerMessage = "Welcome to Food Delivery - Order from your favorite restaurants!",
             PromoMessage = "Get 20% off on your first order with code WELCOME20"

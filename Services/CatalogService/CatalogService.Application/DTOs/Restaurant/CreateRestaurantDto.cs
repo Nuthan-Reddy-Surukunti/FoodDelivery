@@ -21,12 +21,8 @@ public class CreateRestaurantDto
     public string City { get; set; } = string.Empty;
 
     [Required]
-    [Range(-90, 90)]
-    public double Latitude { get; set; }
-
-    [Required]
-    [Range(-180, 180)]
-    public double Longitude { get; set; }
+    [StringLength(100)]
+    public string ServiceZoneId { get; set; } = string.Empty;
 
     [Required]
     public CuisineType CuisineType { get; set; }
