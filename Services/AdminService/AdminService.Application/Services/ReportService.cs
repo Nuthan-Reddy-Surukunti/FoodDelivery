@@ -136,4 +136,105 @@ public class ReportService : IReportService
         var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
         return _mapper.Map<ReportDto>(savedReport);
     }
+
+    // GetAll methods - no date filters, returns all data
+    public async Task<UserAnalyticsDto> GetAllUsersAnalyticsAsync(CancellationToken cancellationToken = default)
+    {
+        var analytics = await _reportRepository.GetUserRegistrationAnalyticsAsync(DateTime.MinValue, DateTime.UtcNow, cancellationToken);
+        
+        var totalRegistrations = (int)(analytics.ContainsKey("TotalRegistrations") ? analytics["TotalRegistrations"] : 0);
+        var activeUsers = (int)(analytics.ContainsKey("ActiveUsers") ? analytics["ActiveUsers"] : 0);
+        var usersByRole = analytics.ContainsKey("UsersByRole") 
+            ? (Dictionary<string, int>)analytics["UsersByRole"] 
+            : new Dictionary<string, int> { { "Customer", totalRegistrations } };
+
+        var dto = new UserAnalyticsDto
+        {
+            TotalUsersRegistered = totalRegistrations,
+            ActiveUsers = activeUsers,
+            UsersByRole = usersByRole,
+            RegistrationTrend = new List<RegistrationTrendDto>(),
+            StartDate = DateTime.MinValue,
+            EndDate = DateTime.UtcNow,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        return dto;
+    }
+
+    public async Task<RestaurantAnalyticsDto> GetAllRestaurantsAnalyticsAsync(CancellationToken cancellationToken = default)
+    {
+        var analytics = await _reportRepository.GetRestaurantAnalyticsAsync(DateTime.MinValue, DateTime.UtcNow, cancellationToken);
+        
+        var totalRestaurants = (int)(analytics.ContainsKey("TotalRestaurants") ? analytics["TotalRestaurants"] : 0);
+        var pendingApprovals = (int)(analytics.ContainsKey("PendingApprovals") ? analytics["PendingApprovals"] : 0);
+        var approvedCount = (int)(analytics.ContainsKey("ApprovedCount") ? analytics["ApprovedCount"] : 0);
+        var totalRevenue = (decimal)(analytics.ContainsKey("TotalRevenue") ? analytics["TotalRevenue"] : 0m);
+        var revenueByRestaurant = analytics.ContainsKey("RevenueByRestaurant") 
+            ? (Dictionary<Guid, decimal>)analytics["RevenueByRestaurant"] 
+            : new Dictionary<Guid, decimal>();
+
+        var dto = new RestaurantAnalyticsDto
+        {
+            TotalRestaurants = totalRestaurants,
+            PendingApprovals = pendingApprovals,
+            ApprovedCount = approvedCount,
+            TotalRevenue = totalRevenue,
+            Currency = "USD",
+            RevenueByRestaurant = revenueByRestaurant,
+            StartDate = DateTime.MinValue,
+            EndDate = DateTime.UtcNow,
+            GeneratedAt = DateTime.UtcNow
+        };
+
+        return dto;
+    }
+
+    public async Task<ReportDto> GetAllSalesAsync(CancellationToken cancellationToken = default)
+    {
+        var metrics = await _reportRepository.GetSalesMetricsAsync(DateTime.MinValue, DateTime.UtcNow, cancellationToken);
+        var report = new Report
+        {
+            Id = Guid.NewGuid(),
+            Type = ReportType.Sales,
+            TotalOrders = metrics.TotalOrders,
+            TotalRevenue = metrics.TotalRevenue,
+            Currency = metrics.Currency,
+            TotalCustomers = metrics.TotalCustomers,
+            TotalRestaurants = metrics.TotalRestaurants,
+            AverageOrderValue = metrics.AverageOrderValue,
+            MetricsStartDate = DateTime.MinValue,
+            MetricsEndDate = DateTime.UtcNow,
+            StartDate = DateTime.MinValue,
+            EndDate = DateTime.UtcNow,
+            GeneratedAt = DateTime.UtcNow
+        };
+        
+        var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
+        return _mapper.Map<ReportDto>(savedReport);
+    }
+
+    public async Task<ReportDto> GetAllPartnersAsync(CancellationToken cancellationToken = default)
+    {
+        var metrics = await _reportRepository.GetSalesMetricsAsync(DateTime.MinValue, DateTime.UtcNow, cancellationToken);
+        var report = new Report
+        {
+            Id = Guid.NewGuid(),
+            Type = ReportType.RestaurantPerformance,
+            TotalOrders = metrics.TotalOrders,
+            TotalRevenue = metrics.TotalRevenue,
+            Currency = metrics.Currency,
+            TotalCustomers = metrics.TotalCustomers,
+            TotalRestaurants = metrics.TotalRestaurants,
+            AverageOrderValue = metrics.AverageOrderValue,
+            MetricsStartDate = DateTime.MinValue,
+            MetricsEndDate = DateTime.UtcNow,
+            StartDate = DateTime.MinValue,
+            EndDate = DateTime.UtcNow,
+            GeneratedAt = DateTime.UtcNow
+        };
+        
+        var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
+        return _mapper.Map<ReportDto>(savedReport);
+    }
 }

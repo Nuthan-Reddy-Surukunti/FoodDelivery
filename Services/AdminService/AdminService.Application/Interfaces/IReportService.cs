@@ -11,4 +11,10 @@ public interface IReportService
     Task<UserAnalyticsDto> GetUserAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
     Task<RestaurantAnalyticsDto> GetRestaurantAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
     Task<ReportDto> GeneratePartnerPerformanceReportAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default);
+    
+    // GetAll endpoints - no date filters, returns all data
+    Task<UserAnalyticsDto> GetAllUsersAnalyticsAsync(CancellationToken cancellationToken = default);
+    Task<RestaurantAnalyticsDto> GetAllRestaurantsAnalyticsAsync(CancellationToken cancellationToken = default);
+    Task<ReportDto> GetAllSalesAsync(CancellationToken cancellationToken = default);
+    Task<ReportDto> GetAllPartnersAsync(CancellationToken cancellationToken = default);
 }
