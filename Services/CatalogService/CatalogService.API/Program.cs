@@ -1,5 +1,6 @@
 using MassTransit;
 using CatalogService.Application;
+using CatalogService.Application.EventHandlers;
 using CatalogService.Infrastructure;
 using CatalogService.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,6 +19,8 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<RestaurantApprovedEventHandler>();
+    x.AddConsumer<RestaurantRejectedEventHandler>();
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",

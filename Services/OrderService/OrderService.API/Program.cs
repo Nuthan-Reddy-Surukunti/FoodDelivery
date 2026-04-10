@@ -2,6 +2,7 @@ using MassTransit;
 using OrderService.API.Middleware;
 using OrderService.Application;
 using OrderService.Application.Options;
+using OrderService.Application.EventHandlers;
 using OrderService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -15,6 +16,7 @@ builder.Services.AddApplicationServices();
 builder.Services.Configure<DeliveryEmailOptions>(builder.Configuration.GetSection(DeliveryEmailOptions.SectionName));
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<DeliveryAgentRegisteredEventHandler>();
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",

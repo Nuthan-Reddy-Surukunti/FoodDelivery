@@ -50,6 +50,13 @@ builder.Services.AddScoped<IAuditService, AuditService>();
 
 builder.Services.AddMassTransit(x =>
 {
+    x.AddConsumer<UserRegisteredEventHandler>();
+    x.AddConsumer<RestaurantCreatedEventHandler>();
+    x.AddConsumer<RestaurantApprovedEventHandler>();
+    x.AddConsumer<RestaurantRejectedEventHandler>();
+    x.AddConsumer<OrderPlacedEventHandler>();
+    x.AddConsumer<OrderStatusChangedEventHandler>();
+    x.AddConsumer<OrderCancelledEventHandler>();
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",

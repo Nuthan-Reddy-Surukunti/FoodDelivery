@@ -5,6 +5,8 @@ using CatalogService.Application.Exceptions;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using CatalogService.Domain.Interfaces;
+using FoodDelivery.Shared.Events.Catalog;
+using MassTransit;
 
 namespace CatalogService.Application.Services;
 
@@ -12,11 +14,13 @@ public class RestaurantService : IRestaurantService
 {
     private readonly IRestaurantRepository _repository;
     private readonly IMapper _mapper;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public RestaurantService(IRestaurantRepository repository, IMapper mapper)
+    public RestaurantService(IRestaurantRepository repository, IMapper mapper, IPublishEndpoint publishEndpoint)
     {
         _repository = repository;
         _mapper = mapper;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<PaginatedResultDto<RestaurantDto>> GetAllRestaurantsAsync(int pageNumber = 1, int pageSize = 10, string? userRole = null)
@@ -85,6 +89,21 @@ public class RestaurantService : IRestaurantService
         }
 
         var createdRestaurant = await _repository.CreateAsync(restaurant);
+        
+        // Publish RestaurantCreatedEvent for AdminService to sync
+        var restaurantCreatedEvent = new RestaurantCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            RestaurantId = createdRestaurant.Id,
+            OwnerId = createdRestaurant.OwnerId,
+            Name = createdRestaurant.Name,
+            City = createdRestaurant.City,
+            CuisineType = createdRestaurant.CuisineType
+        };
+        
+        await _publishEndpoint.Publish(restaurantCreatedEvent);
         
         return _mapper.Map<RestaurantDetailDto>(createdRestaurant);
     }

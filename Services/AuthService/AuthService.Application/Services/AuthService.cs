@@ -5,9 +5,9 @@ using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
-
-using FoodDelivery.Shared.Events.Auth;
 using MassTransit;
+using FoodDelivery.Shared.Events.Auth;
+
 namespace AuthService.Application.Services;
 
 public class AuthService : IAuthService
@@ -331,19 +331,21 @@ public class AuthService : IAuthService
         };
         
         var created = await _userRepository.CreateUserAsync(user,dto.Password);
+        if(!created) return new AuthRequestDto { Success = false, Message = "Registration failed." };
+
+        var newUser = await _userRepository.FindByEmailAsync(dto.Email);
+
+        // Publish UserRegisteredEvent to notify other services
         await _publishEndpoint.Publish(new UserRegisteredEvent
         {
             EventId = Guid.NewGuid(),
             OccurredAt = DateTime.UtcNow,
             EventVersion = 1,
-            UserId =  user.Id,
-            Email = user.Email,
-            FullName = user.FullName,
-            Role = user.Role.ToString()
+            UserId = newUser!.Id,
+            Email = newUser.Email,
+            FullName = newUser.FullName,
+            Role = parsedRole.ToString()
         });
-        if(!created) return new AuthRequestDto { Success = false, Message = "Registration failed." };
-
-        var newUser = await _userRepository.FindByEmailAsync(dto.Email);
 
         // For Customer/DeliveryAgent: send email verification OTP
         // For RestaurantPartner/Admin: send admin notification (not OTP yet)

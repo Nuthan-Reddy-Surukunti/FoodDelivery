@@ -22,28 +22,94 @@ public class UserRegisteredEventHandler : IConsumer<UserRegisteredEvent>
     }
 }
 
-// RestaurantApprovedEventHandler
+// RestaurantCreatedEventHandler - Syncs restaurants created by partners into AdminService
+public class RestaurantCreatedEventHandler : IConsumer<RestaurantCreatedEvent>
+{
+    private readonly ILogger<RestaurantCreatedEventHandler> _logger;
+    private readonly IRestaurantRepository _restaurantRepository;
+
+    public RestaurantCreatedEventHandler(ILogger<RestaurantCreatedEventHandler> logger, IRestaurantRepository restaurantRepository)
+    {
+        _logger = logger;
+        _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
+    }
+
+    public async Task Consume(ConsumeContext<RestaurantCreatedEvent> context)
+    {
+        var @event = context.Message;
+        _logger.LogInformation("Processing RestaurantCreatedEvent: RestaurantId={RestaurantId}, Name={Name}, OwnerId={OwnerId}", 
+            @event.RestaurantId, @event.Name, @event.OwnerId);
+
+        try
+        {
+            // Check if restaurant already exists (idempotent)
+            var existingRestaurant = await _restaurantRepository.GetByIdAsync(@event.RestaurantId, context.CancellationToken);
+            if (existingRestaurant != null)
+            {
+                _logger.LogWarning("Restaurant already exists in AdminService: RestaurantId={RestaurantId}", @event.RestaurantId);
+                return;
+            }
+
+            // Create restaurant record in AdminService with Pending status (awaiting approval)
+            var restaurant = new Restaurant
+            {
+                Id = @event.RestaurantId,
+                OwnerId = @event.OwnerId,
+                Name = @event.Name,
+                City = @event.City,
+                Description = string.Empty,
+                Street = string.Empty,
+                State = string.Empty,
+                ZipCode = string.Empty,
+                Country = string.Empty,
+                Email = string.Empty,
+                Phone = string.Empty,
+                Status = RestaurantStatus.Pending, // Requires admin approval
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow,
+                LastSyncedAt = @event.OccurredAt,
+                SyncEventId = @event.EventId
+            };
+
+            await _restaurantRepository.AddAsync(restaurant, context.CancellationToken);
+            _logger.LogInformation("Restaurant synced successfully to AdminService: RestaurantId={RestaurantId}", @event.RestaurantId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing RestaurantCreatedEvent: RestaurantId={RestaurantId}", @event.RestaurantId);
+            throw;
+        }
+    }
+}
+
+// RestaurantApprovedEventHandler - Logs approval events (approval happens in AdminService endpoint, just audit here)
 public class RestaurantApprovedEventHandler : IConsumer<RestaurantApprovedEvent>
 {
     private readonly ILogger<RestaurantApprovedEventHandler> _logger;
+    
     public RestaurantApprovedEventHandler(ILogger<RestaurantApprovedEventHandler> logger) => _logger = logger;
+    
     public async Task Consume(ConsumeContext<RestaurantApprovedEvent> context)
     {
         var @event = context.Message;
-        _logger.LogInformation("Processing RestaurantApprovedEvent: RestaurantId={RestaurantId}", @event.RestaurantId);
+        _logger.LogInformation("Restaurant approved successfully: RestaurantId={RestaurantId}, Name={Name}, ApprovedBy={ApprovedBy}", 
+            @event.RestaurantId, @event.Name, @event.ApprovedBy);
         await Task.CompletedTask;
     }
 }
 
-// RestaurantRejectedEventHandler
+// RestaurantRejectedEventHandler - Logs rejection events (rejection happens in AdminService endpoint, just audit here)
 public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
 {
     private readonly ILogger<RestaurantRejectedEventHandler> _logger;
+    
     public RestaurantRejectedEventHandler(ILogger<RestaurantRejectedEventHandler> logger) => _logger = logger;
+    
     public async Task Consume(ConsumeContext<RestaurantRejectedEvent> context)
     {
         var @event = context.Message;
-        _logger.LogInformation("Processing RestaurantRejectedEvent: RestaurantId={RestaurantId}", @event.RestaurantId);
+        _logger.LogInformation("Restaurant rejected: RestaurantId={RestaurantId}, Name={Name}, Reason={Reason}", 
+            @event.RestaurantId, @event.Name, @event.RejectionReason);
         await Task.CompletedTask;
     }
 }
