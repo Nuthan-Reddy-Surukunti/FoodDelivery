@@ -101,3 +101,49 @@ public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
         }
     }
 }
+
+/// <summary>
+/// Handles RestaurantDeletedEvent from AdminService to sync restaurant deletion status
+/// </summary>
+public class RestaurantDeletedEventHandler : IConsumer<RestaurantDeletedEvent>
+{
+    private readonly ILogger<RestaurantDeletedEventHandler> _logger;
+    private readonly IRestaurantRepository _restaurantRepository;
+
+    public RestaurantDeletedEventHandler(
+        ILogger<RestaurantDeletedEventHandler> logger,
+        IRestaurantRepository restaurantRepository)
+    {
+        _logger = logger;
+        _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
+    }
+
+    public async Task Consume(ConsumeContext<RestaurantDeletedEvent> context)
+    {
+        var @event = context.Message;
+        _logger.LogInformation("Processing RestaurantDeletedEvent: RestaurantId={RestaurantId}, Name={Name}", 
+            @event.RestaurantId, @event.Name);
+
+        try
+        {
+            var restaurant = await _restaurantRepository.GetByIdAsync(@event.RestaurantId);
+            if (restaurant == null)
+            {
+                _logger.LogWarning("Restaurant not found for deletion: RestaurantId={RestaurantId}", @event.RestaurantId);
+                return; // Restaurant may have already been deleted or doesn't exist
+            }
+
+            // Update restaurant status to Inactive (deleted)
+            restaurant.Status = RestaurantStatus.Inactive;
+            restaurant.UpdatedAt = DateTime.UtcNow;
+
+            await _restaurantRepository.UpdateAsync(restaurant);
+            _logger.LogInformation("Restaurant marked as Inactive (deleted): RestaurantId={RestaurantId}", @event.RestaurantId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing RestaurantDeletedEvent: RestaurantId={RestaurantId}", @event.RestaurantId);
+            throw;
+        }
+    }
+}

@@ -6,10 +6,10 @@
 # ###
 
 # Verify OTP for RestaurantPartner/Admin first-login after admin approval
-POST {{AuthService.API_HostAddress}}/api/auth/verify-first-login
-Content-Type: application/json
+# POST {{AuthService.API_HostAddress}}/api/auth/verify-first-login
+# Content-Type: application/json
 
-{
-  "userId": "123e4567-e89b-12d3-a456-426614174000",
-  "otpCode": "123456"
-}
+# {
+#   "userId": "123e4567-e89b-12d3-a456-426614174000",
+#   "otpCode": "123456"
+# }

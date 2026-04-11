@@ -176,5 +176,17 @@ public class RestaurantService : IRestaurantService
             throw new KeyNotFoundException($"Restaurant with ID {restaurantId} not found");
 
         await _restaurantRepository.SoftDeleteAsync(restaurantId, cancellationToken);
+
+        // Publish deletion event to notify other services
+        var deletedEvent = new RestaurantDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            RestaurantId = restaurantId,
+            Name = restaurant.Name,
+            DeletedBy = "Admin"
+        };
+        await _publishEndpoint.Publish(deletedEvent, cancellationToken);
     }
 }

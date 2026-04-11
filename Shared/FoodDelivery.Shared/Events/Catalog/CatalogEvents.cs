@@ -45,6 +45,20 @@ public class RestaurantRejectedEvent
 }
 
 /// <summary>
+/// Published when a restaurant is deleted by admin
+/// </summary>
+public class RestaurantDeletedEvent
+{
+    public Guid EventId { get; set; }
+    public DateTime OccurredAt { get; set; }
+    public int EventVersion { get; set; } = 1;
+
+    public Guid RestaurantId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string DeletedBy { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Published when a menu item is created
 /// </summary>
 public class MenuItemCreatedEvent

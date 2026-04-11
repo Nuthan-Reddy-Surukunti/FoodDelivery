@@ -142,6 +142,36 @@ public class AuthService : IAuthService
             // If already verified by OTP (AccountStatus = Verified)
             if (user.AccountStatus == AccountStatus.Verified)
             {
+                // Check if 2FA is enabled for verified Admin
+                if (user.IsTwoFactorVerified)
+                {
+                    // Generate and send 2FA OTP
+                    var otp = GenerateOtp();
+                    var tempToken = GenerateSecureToken();
+                    var twoFactorToken = new TwoFactorToken()
+                    {
+                        UserId = user.Id,
+                        OTP = otp,
+                        TempToken = tempToken,
+                        ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                        IsUsed = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+
+                    return new AuthRequestDto()
+                    {
+                        Success = true,
+                        Message = "OTP sent to your email.",
+                        IsTwoFactorRequired = true,
+                        TempToken = tempToken,
+                        UserId = user.Id.ToString()
+                    };
+                }
+
+                // 2FA not enabled - proceed with login
                 var adminRefreshToken = GenerateSecureToken();
                 await _refreshTokenRepository.AddAsync(new RefreshToken
                 {
@@ -160,7 +190,8 @@ public class AuthService : IAuthService
                     Message = "Login successful.",
                     Token = adminJwtToken,
                     RefreshToken = adminRefreshToken,
-                    Role = user.Role.ToString()
+                    Role = user.Role.ToString(),
+                    UserId = user.Id.ToString()
                 };
             }
         }
@@ -221,6 +252,36 @@ public class AuthService : IAuthService
             // If already verified by OTP (AccountStatus = Verified)
             if (user.AccountStatus == AccountStatus.Verified)
             {
+                // Check if 2FA is enabled for verified RestaurantPartner
+                if (user.IsTwoFactorVerified)
+                {
+                    // Generate and send 2FA OTP
+                    var otp = GenerateOtp();
+                    var tempToken = GenerateSecureToken();
+                    var twoFactorToken = new TwoFactorToken()
+                    {
+                        UserId = user.Id,
+                        OTP = otp,
+                        TempToken = tempToken,
+                        ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                        IsUsed = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+
+                    return new AuthRequestDto()
+                    {
+                        Success = true,
+                        Message = "OTP sent to your email.",
+                        IsTwoFactorRequired = true,
+                        TempToken = tempToken,
+                        UserId = user.Id.ToString()
+                    };
+                }
+
+                // 2FA not enabled - proceed with login
                 var partnerRefreshToken = GenerateSecureToken();
                 await _refreshTokenRepository.AddAsync(new RefreshToken
                 {
@@ -239,7 +300,8 @@ public class AuthService : IAuthService
                     Message = "Login successful.",
                     Token = partnerJwtToken,
                     RefreshToken = partnerRefreshToken,
-                    Role = user.Role.ToString()
+                    Role = user.Role.ToString(),
+                    UserId = user.Id.ToString()
                 };
             }
         }
@@ -294,7 +356,8 @@ public class AuthService : IAuthService
             Message = "Login successful.",
             Token = jwtToken,
             RefreshToken = refreshToken,
-            Role = user.Role.ToString()
+            Role = user.Role.ToString(),
+            UserId = user.Id.ToString()
         };
     }
 
