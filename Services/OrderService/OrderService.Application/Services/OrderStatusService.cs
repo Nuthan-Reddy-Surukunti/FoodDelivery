@@ -16,14 +16,14 @@ public class OrderStatusService : IOrderStatusService
     private readonly IOrderRepository _orderRepository;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IPaymentRepository _paymentRepository;
-    private readonly IDeliveryService _deliveryService;
+    private readonly IDeliveryAssignmentRepository _deliveryAssignmentRepository;
 
-    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IPublishEndpoint publishEndpoint, IDeliveryService deliveryService)
+    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IDeliveryAssignmentRepository deliveryAssignmentRepository, IPublishEndpoint publishEndpoint)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _paymentRepository = paymentRepository ?? throw new ArgumentNullException(nameof(paymentRepository));
+        _deliveryAssignmentRepository = deliveryAssignmentRepository ?? throw new ArgumentNullException(nameof(deliveryAssignmentRepository));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
-        _deliveryService = deliveryService ?? throw new ArgumentNullException(nameof(deliveryService));
     }
 
     public async Task<OrderDetailDto> UpdateOrderStatusAsync(UpdateOrderStatusRequestDto request, CancellationToken cancellationToken = default)
@@ -42,6 +42,34 @@ public class OrderStatusService : IOrderStatusService
             order.DeliveryTime = DateTime.UtcNow;
         
         await _orderRepository.UpdateAsync(order, cancellationToken);
+
+        // Update DeliveryAssignment status if delivery agent is updating the status
+        if (order.DeliveryAssignmentId.HasValue && 
+            (request.TargetStatus == OrderStatus.PickedUp || 
+             request.TargetStatus == OrderStatus.OutForDelivery || 
+             request.TargetStatus == OrderStatus.Delivered))
+        {
+            var assignment = await _deliveryAssignmentRepository.GetByIdAsync(order.DeliveryAssignmentId.Value, cancellationToken);
+            if (assignment is not null)
+            {
+                // Map order status to delivery status
+                assignment.CurrentStatus = request.TargetStatus switch
+                {
+                    OrderStatus.PickedUp => DeliveryStatus.PickedUp,
+                    OrderStatus.OutForDelivery => DeliveryStatus.InTransit,
+                    OrderStatus.Delivered => DeliveryStatus.Delivered,
+                    _ => assignment.CurrentStatus
+                };
+
+                // Set pickup and delivery timestamps
+                if (request.TargetStatus == OrderStatus.PickedUp && !assignment.PickedUpAt.HasValue)
+                    assignment.PickedUpAt = DateTime.UtcNow;
+                else if (request.TargetStatus == OrderStatus.Delivered && !assignment.DeliveredAt.HasValue)
+                    assignment.DeliveredAt = DateTime.UtcNow;
+
+                await _deliveryAssignmentRepository.UpdateAsync(assignment, cancellationToken);
+            }
+        }
 
         // Publish order status changed event
         var oldStatus = order.OrderStatus.ToString();
@@ -129,70 +157,5 @@ public class OrderStatusService : IOrderStatusService
             timeline.Add(new() { Status = OrderStatus.CancelRequestedByCustomer, OccurredAt = order.CancelRequestedAt.Value, Label = "Cancel Requested" });
 
         return timeline.AsReadOnly();
-    }
-
-    public async Task<OrderDetailDto> SimulatePaymentAsync(SimulatePaymentRequestDto request, CancellationToken cancellationToken = default)
-    {
-        if (request.PaymentMethod != PaymentMethod.CashOnDelivery)
-        {
-            throw new ValidationException("Only CashOnDelivery is currently supported.");
-        }
-
-        var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
-        if (order is null) throw new ResourceNotFoundException("Order", request.OrderId);
-
-        var payment = await _paymentRepository.GetByOrderIdAsync(request.OrderId, cancellationToken) ?? new Payment
-        {
-            OrderId = request.OrderId,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        payment.PaymentMethod = PaymentMethod.CashOnDelivery;
-        payment.Amount = request.Amount ?? order.TotalAmount;
-        payment.PaymentStatus = request.IsSuccessful ? PaymentStatus.Success : PaymentStatus.Failed;
-        payment.TransactionId = request.TransactionId ?? Guid.NewGuid().ToString();
-        payment.ProcessedAt = DateTime.UtcNow;
-        payment.UpdatedAt = DateTime.UtcNow;
-        payment.FailureReason = request.IsSuccessful ? null : request.FailureReason;
-
-        if (payment.Id == Guid.Empty)
-        {
-            await _paymentRepository.AddAsync(payment, cancellationToken);
-        }
-        else
-        {
-            await _paymentRepository.UpdateAsync(payment, cancellationToken);
-        }
-
-        if (request.IsSuccessful)
-        {
-            order.PaymentId = payment.Id;
-            order.Payment = payment;
-            order.PaymentCompletedAt = DateTime.UtcNow;
-            order.OrderStatus = request.AutoAcceptByRestaurant ? OrderStatus.RestaurantAccepted : OrderStatus.Paid;
-        }
-        else
-        {
-            order.OrderStatus = OrderStatus.PaymentFailed;
-        }
-
-        order.UpdatedAt = DateTime.UtcNow;
-        await _orderRepository.UpdateAsync(order, cancellationToken);
-
-        // Attempt to auto-assign delivery agent after successful payment (non-blocking)
-        if (request.IsSuccessful && order.OrderStatus == OrderStatus.Paid)
-        {
-            try
-            {
-                await _deliveryService.AssignDeliveryAsync(order.Id, cancellationToken);
-            }
-            catch (Exception)
-            {
-                // Silently fail - delivery assignment is non-blocking
-                // Order remains in Paid status; assignment will be retried later or by admin
-            }
-        }
-
-        return OrderMappings.MapToDto(order);
     }
 }

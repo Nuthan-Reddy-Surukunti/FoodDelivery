@@ -12,38 +12,14 @@ namespace OrderService.API.Controllers;
 public class PaymentsController : ControllerBase
 {
     private readonly IOrderPlacementService _orderPlacementService;
-    private readonly IOrderStatusService _orderStatusService;
     private readonly IDeliveryService _deliveryService;
 
     public PaymentsController(
         IOrderPlacementService orderPlacementService,
-        IOrderStatusService orderStatusService,
         IDeliveryService deliveryService)
     {
         _orderPlacementService = orderPlacementService;
-        _orderStatusService = orderStatusService;
         _deliveryService = deliveryService;
-    }
-
-    [HttpPost("simulate")]
-    public async Task<IActionResult> SimulatePayment(
-        [FromBody] SimulatePaymentRequestDto request,
-        CancellationToken cancellationToken)
-    {
-        var currentUserId = this.GetCurrentUserId();
-        if (currentUserId == Guid.Empty)
-        {
-            return Unauthorized();
-        }
-
-        var orderToPay = await _orderPlacementService.GetOrderByIdAsync(request.OrderId, cancellationToken);
-        if (orderToPay.UserId != currentUserId)
-        {
-            return Forbid();
-        }
-
-        var order = await _orderStatusService.SimulatePaymentAsync(request, cancellationToken);
-        return Ok(order);
     }
 
     [HttpPost("{orderId:guid}/process")]

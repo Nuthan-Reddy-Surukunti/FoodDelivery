@@ -42,65 +42,19 @@ public class DeliveryService : IDeliveryService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<DeliveryAssignmentDto> AssignDeliveryAsync(Guid orderId, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<DeliveryAssignmentDto>> GetAssignedDeliveriesAsync(string authUserId, CancellationToken cancellationToken = default)
     {
-        var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
-        if (order is null)
+        // Look up delivery agent by AuthUserId (from JWT token)
+        var agent = await _deliveryAgentRepository.GetByAuthUserIdAsync(authUserId, cancellationToken);
+        if (agent is null)
         {
-            throw new ResourceNotFoundException("Order", orderId);
+            _logger.LogWarning("No delivery agent found for AuthUserId: {AuthUserId}", authUserId);
+            return new List<DeliveryAssignmentDto>().AsReadOnly();
         }
 
-        var existing = await _deliveryAssignmentRepository.GetByOrderIdAsync(orderId, cancellationToken);
-        if (existing is not null)
-        {
-            return MapToDto(existing);
-        }
-
-        var candidate = await SelectAvailableAgentAsync(cancellationToken);
-        
-        // Gracefully handle case where no agents are available
-        if (candidate is null)
-        {
-            _logger.LogInformation(
-                "Unable to assign delivery agent for order {OrderId}: No available delivery agents",
-                orderId);
-            
-            // Return empty DTO to indicate no assignment was made
-            return new DeliveryAssignmentDto();
-        }
-
-        var assignment = new DeliveryAssignment
-        {
-            OrderId = order.Id,
-            DeliveryAgentId = candidate.Id,
-            AssignedAt = DateTime.UtcNow,
-            CurrentStatus = DeliveryStatus.PickupPending,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        await _deliveryAssignmentRepository.AddAsync(assignment, cancellationToken);
-
-        order.DeliveryAssignmentId = assignment.Id;
-        order.DeliveryAssignment = assignment;
-        order.OrderStatus = OrderStatus.OutForDelivery;
-        order.UpdatedAt = DateTime.UtcNow;
-        await _orderRepository.UpdateAsync(order, cancellationToken);
-
-        await NotifyAssignedAgentAsync(candidate, order, assignment, cancellationToken);
-
-        _logger.LogInformation(
-            "Delivery assigned for order {OrderId} to agent {AgentId} ({AgentName})",
-            orderId, candidate.Id, candidate.FullName);
-
-        return MapToDto(assignment);
-    }
-
-    public async Task<IReadOnlyList<DeliveryAssignmentDto>> GetAssignedDeliveriesAsync(Guid deliveryAgentId, CancellationToken cancellationToken = default)
-    {
-        var assignments = await _deliveryAssignmentRepository.GetAssignmentsByAgentIdAsync(deliveryAgentId, cancellationToken);
+        var assignments = await _deliveryAssignmentRepository.GetAssignmentsByAgentIdAsync(agent.Id, cancellationToken);
         var active = assignments.Where(a => a.CurrentStatus != DeliveryStatus.Delivered).ToList();
-        return active.Select(MapToDto).ToList().AsReadOnly();
+        return active.Select(assignment => MapToDto(assignment)).ToList().AsReadOnly();
     }
 
     public async Task<PaymentResponseDto> ProcessPaymentAsync(Guid orderId, ProcessPaymentRequestDto request, CancellationToken cancellationToken = default)
@@ -112,6 +66,22 @@ public class DeliveryService : IDeliveryService
 
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", orderId);
+
+        var existingAssignment = await _deliveryAssignmentRepository.GetByOrderIdAsync(orderId, cancellationToken);
+        DeliveryAgent? assignedAgent = null;
+
+        if (existingAssignment is null)
+        {
+            assignedAgent = await SelectAvailableAgentAsync(cancellationToken);
+            if (assignedAgent is null)
+            {
+                throw new ValidationException("Payment cannot be processed because no delivery agents are currently available.");
+            }
+        }
+        else
+        {
+            assignedAgent = await _deliveryAgentRepository.GetByIdAsync(existingAssignment.DeliveryAgentId, cancellationToken);
+        }
 
         // Fetch or create payment
         var existingPayment = await _paymentRepository.GetByOrderIdAsync(orderId, cancellationToken);
@@ -140,16 +110,37 @@ public class DeliveryService : IDeliveryService
             await _paymentRepository.UpdateAsync(payment, cancellationToken);
         }
 
+        if (existingAssignment is null)
+        {
+            existingAssignment = new DeliveryAssignment
+            {
+                OrderId = order.Id,
+                DeliveryAgentId = assignedAgent!.Id,
+                AssignedAt = DateTime.UtcNow,
+                CurrentStatus = DeliveryStatus.PickupPending,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            await _deliveryAssignmentRepository.AddAsync(existingAssignment, cancellationToken);
+
+            await NotifyAssignedAgentAsync(assignedAgent, order, existingAssignment, cancellationToken);
+
+            _logger.LogInformation(
+                "Delivery assigned for order {OrderId} to agent {AgentId} ({AgentName})",
+                order.Id, assignedAgent.Id, assignedAgent.FullName);
+        }
+
         order.PaymentId = payment.Id;
         order.Payment = payment;
+        order.DeliveryAssignmentId = existingAssignment.Id;
+        order.DeliveryAssignment = existingAssignment;
         order.PaymentCompletedAt = DateTime.UtcNow;
-        order.OrderStatus = OrderStatus.Paid;
+        order.OrderStatus = OrderStatus.OutForDelivery;
         order.UpdatedAt = DateTime.UtcNow;
         await _orderRepository.UpdateAsync(order, cancellationToken);
-
-        // Attempt to auto-assign delivery agent after payment
-        // This is non-blocking - if no agents are available, order stays in Paid status
-        await AssignDeliveryAsync(orderId, cancellationToken);
+        
+        var assignmentDto = MapToDto(existingAssignment, assignedAgent);
         
         return new PaymentResponseDto
         {
@@ -159,7 +150,8 @@ public class DeliveryService : IDeliveryService
             Amount = payment.Amount,
             Currency = "INR",
             PaymentMethod = payment.PaymentMethod,
-            ProcessedAt = payment.ProcessedAt ?? DateTime.UtcNow
+            ProcessedAt = payment.ProcessedAt ?? DateTime.UtcNow,
+            DeliveryAssignment = assignmentDto
         };
     }
 
@@ -182,14 +174,17 @@ public class DeliveryService : IDeliveryService
         return timeline.AsReadOnly();
     }
 
-    private static DeliveryAssignmentDto MapToDto(DeliveryAssignment assignment) => new()
+    private static DeliveryAssignmentDto MapToDto(DeliveryAssignment assignment, DeliveryAgent? agent = null) => new()
     {
         DeliveryAssignmentId = assignment.Id,
         DeliveryAgentId = assignment.DeliveryAgentId,
         AssignedAt = assignment.AssignedAt,
         PickedUpAt = assignment.PickedUpAt,
         DeliveredAt = assignment.DeliveredAt,
-        CurrentStatus = assignment.CurrentStatus
+        CurrentStatus = assignment.CurrentStatus,
+        AgentName = agent?.FullName ?? assignment.DeliveryAgent?.FullName,
+        AgentEmail = agent?.Email ?? assignment.DeliveryAgent?.Email,
+        AgentPhone = agent?.PhoneNumber ?? assignment.DeliveryAgent?.PhoneNumber
     };
 
     private async Task<DeliveryAgent?> SelectAvailableAgentAsync(CancellationToken cancellationToken)
@@ -260,32 +255,40 @@ public class DeliveryService : IDeliveryService
             using var smtpClient = new SmtpClient(_emailOptions.Host, _emailOptions.Port)
             {
                 EnableSsl = _emailOptions.EnableSsl,
-                Credentials = new NetworkCredential(_emailOptions.SenderEmail, _emailOptions.SenderPassword)
+                Credentials = new NetworkCredential(_emailOptions.SenderEmail, _emailOptions.SenderPassword),
+                Timeout = 10000  // 10 second timeout
             };
 
             using var message = new MailMessage
             {
                 From = new MailAddress(_emailOptions.SenderEmail),
                 Subject = $"New Delivery Assignment - Order {order.Id}",
-                Body = BuildDeliveryEmailBody(agent, order, assignment)
+                Body = BuildDeliveryEmailBody(agent, order, assignment),
+                IsBodyHtml = false
             };
 
             message.To.Add(agent.Email);
             
-            // Async email sending - doesn't block order assignment
-            await smtpClient.SendMailAsync(message, cancellationToken);
+            // Send email asynchronously without cancellation token (SmtpClient.SendMailAsync doesn't support CancellationToken)
+            await smtpClient.SendMailAsync(message);
             
             _logger.LogInformation(
-                "Delivery assignment email sent to agent {AgentEmail} for order {OrderId}",
+                "Delivery assignment email sent successfully to agent {AgentEmail} for order {OrderId}",
                 agent.Email, order.Id);
+        }
+        catch (SmtpException smtpEx)
+        {
+            _logger.LogError(
+                smtpEx,
+                "SMTP Error sending delivery assignment email to agent {AgentEmail} for order {OrderId}. Status: {StatusCode}",
+                agent.Email, order.Id, smtpEx.StatusCode);
         }
         catch (Exception ex)
         {
             _logger.LogError(
                 ex,
-                "Failed to send delivery assignment email to agent {AgentEmail} for order {OrderId}",
-                agent.Email, order.Id);
-            // Don't throw - email failure shouldn't block the assignment
+                "Failed to send delivery assignment email to agent {AgentEmail} for order {OrderId}. Error: {ErrorMessage}",
+                agent.Email, order.Id, ex.Message);
         }
     }
 

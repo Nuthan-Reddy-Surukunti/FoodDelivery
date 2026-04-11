@@ -26,7 +26,8 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders
             .Include(order => order.OrderItems)
             .Include(order => order.Payment)
-            .Include(order => order.DeliveryAssignment)
+            .Include(order => order.DeliveryAssignment!)
+                .ThenInclude(assignment => assignment.DeliveryAgent)
             .FirstOrDefaultAsync(order => order.Id == orderId, cancellationToken);
     }
 
@@ -35,7 +36,8 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders
             .Include(order => order.OrderItems)
             .Include(order => order.Payment)
-            .Include(order => order.DeliveryAssignment)
+            .Include(order => order.DeliveryAssignment!)
+                .ThenInclude(assignment => assignment.DeliveryAgent)
             .Where(order => order.UserId == userId)
             .OrderByDescending(order => order.CreatedAt)
             .ToListAsync(cancellationToken);
@@ -52,7 +54,8 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders
             .Include(order => order.OrderItems)
             .Include(order => order.Payment)
-            .Include(order => order.DeliveryAssignment)
+            .Include(order => order.DeliveryAssignment!)
+                .ThenInclude(assignment => assignment.DeliveryAgent)
             .FirstOrDefaultAsync(order => order.Id == orderId, cancellationToken);
     }
 

@@ -105,10 +105,14 @@ public static class OrderMappings
         {
             DeliveryAssignmentId = assignment.Id,
             DeliveryAgentId = assignment.DeliveryAgentId,
+            AgentAuthUserId = assignment.DeliveryAgent?.AuthUserId,
             AssignedAt = assignment.AssignedAt,
             PickedUpAt = assignment.PickedUpAt,
             DeliveredAt = assignment.DeliveredAt,
-            CurrentStatus = assignment.CurrentStatus
+            CurrentStatus = assignment.CurrentStatus,
+            AgentName = assignment.DeliveryAgent?.FullName,
+            AgentEmail = assignment.DeliveryAgent?.Email,
+            AgentPhone = assignment.DeliveryAgent?.PhoneNumber
         };
     }
 }

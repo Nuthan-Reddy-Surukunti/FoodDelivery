@@ -1,5 +1,6 @@
 namespace OrderService.Application.DTOs.Payment;
 
+using OrderService.Application.DTOs.Delivery;
 using OrderService.Domain.Enums;
 
 public class PaymentResponseDto
@@ -17,6 +18,8 @@ public class PaymentResponseDto
     public PaymentMethod PaymentMethod { get; set; }
 
     public DateTime ProcessedAt { get; set; }
+
+    public DeliveryAssignmentDto? DeliveryAssignment { get; set; }
 
     public string? ErrorMessage { get; set; }
 }

@@ -153,28 +153,17 @@ public class OrdersController : ControllerBase
 
     [HttpGet("deliveries/assigned")]
     [Authorize(Roles = "DeliveryAgent")]
-    public async Task<IActionResult> GetAssignedDeliveries(
-        [FromQuery] Guid deliveryAgentId,
-        CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAssignedDeliveries(CancellationToken cancellationToken)
     {
         var currentUserId = this.GetCurrentUserId();
-        if (currentUserId == Guid.Empty || currentUserId != deliveryAgentId)
+        if (currentUserId == Guid.Empty)
         {
-            return Forbid();
+            return Unauthorized();
         }
 
-        var deliveries = await _deliveryService.GetAssignedDeliveriesAsync(deliveryAgentId, cancellationToken);
+        // Pass the AuthUserId (from JWT NameIdentifier claim) to get assigned deliveries
+        var deliveries = await _deliveryService.GetAssignedDeliveriesAsync(currentUserId.ToString(), cancellationToken);
         return Ok(deliveries);
-    }
-
-    [HttpPost("{orderId:guid}/assign-delivery")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> AssignDeliveryAgent(
-        [FromRoute] Guid orderId,
-        CancellationToken cancellationToken)
-    {
-        var assignment = await _deliveryService.AssignDeliveryAsync(orderId, cancellationToken);
-        return Ok(assignment);
     }
 }
 

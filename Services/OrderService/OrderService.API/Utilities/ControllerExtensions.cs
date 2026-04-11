@@ -48,7 +48,7 @@ public static class ControllerExtensions
         {
             "Admin" => true,
             "Customer" => currentUserId != Guid.Empty && order.UserId == currentUserId,
-            "DeliveryAgent" => currentUserId != Guid.Empty && order.DeliveryAssignment?.DeliveryAgentId == currentUserId,
+            "DeliveryAgent" => currentUserId != Guid.Empty && order.DeliveryAssignment?.AgentAuthUserId == currentUserId.ToString(),
             "RestaurantPartner" => controller.CanRestaurantPartnerAccessOrder(order),
             _ => false
         };
