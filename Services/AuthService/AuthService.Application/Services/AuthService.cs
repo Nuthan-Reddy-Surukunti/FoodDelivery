@@ -570,6 +570,23 @@ public class AuthService : IAuthService
         };
     }
 
+    public async Task<AuthRequestDto> VerifyFirstLoginOtpAsync(FirstLoginVerificationRequestDto dto)
+    {
+        var user = await _userRepository.FindByIdAsync(dto.UserId);
+        if (user == null)
+            return new AuthRequestDto { Success = false, Message = "User not found." };
+
+        var normalizedOtp = new string((dto.OtpCode ?? string.Empty).Where(char.IsDigit).ToArray());
+        if (normalizedOtp.Length != 6)
+            return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
+
+        var otpVerified = await _otpService.VerifyOtpAsync(user.Id, normalizedOtp);
+        if (!otpVerified)
+            return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
+
+        return new AuthRequestDto { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." };
+    }
+
     public async Task<AuthRequestDto> DeleteUserAsync(DeleteUserRequestDto dto)
     {
         var user = await _userRepository.FindByEmailAsync(dto.Email);

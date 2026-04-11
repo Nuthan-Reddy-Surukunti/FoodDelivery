@@ -59,6 +59,18 @@ namespace AuthService.API.Controllers
             return Ok(result);
         }
 
+        /// <summary>
+        /// Verify OTP for RestaurantPartner/Admin first-login after admin approval
+        /// </summary>
+        [HttpPost("verify-first-login")]
+        public async Task<IActionResult> VerifyFirstLogin([FromBody] FirstLoginVerificationRequestDto dto)
+        {
+            var result = await _authService.VerifyFirstLoginOtpAsync(dto);
+            if (!result.Success)
+                return BadRequest(result);
+            return Ok(result);
+        }
+
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
         {
@@ -116,38 +128,6 @@ namespace AuthService.API.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Request OTP explicitly for email verification or 2FA challenge.
-        /// Used when login returns IsTwoFactorRequired and the client needs to explicitly request the OTP.
-        /// </summary>
-        [HttpPost("request-otp")]
-        public async Task<IActionResult> RequestOtp([FromBody] OtpVerificationDto dto)
-        {
-            if (dto.UserId == Guid.Empty)
-                return BadRequest(new { Success = false, Message = "userId is required." });
-
-            var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(dto.UserId);
-            if (!otpGenerated)
-                return BadRequest(new { Success = false, Message = "Unable to generate and send OTP. Please try again." });
-
-            return Ok(new { Success = true, Message = "OTP sent to your registered email." });
-        }
-
-        /// <summary>
-        /// Verify OTP for RestaurantPartner first-login verification or 2FA challenge
-        /// </summary>
-        [HttpPost("verify-otp")]
-        public async Task<IActionResult> VerifyOtp([FromBody] OtpVerificationDto dto)
-        {
-            if (dto.UserId == Guid.Empty || string.IsNullOrWhiteSpace(dto.OtpCode))
-                return BadRequest(new { Success = false, Message = "userId and otpCode are required." });
-
-            var verified = await _otpService.VerifyOtpAsync(dto.UserId, dto.OtpCode);
-            if (!verified)
-                return BadRequest(new { Success = false, Message = "Invalid or expired OTP." });
-
-            return Ok(new { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." });
-        }
 
         /// <summary>
         /// Get all pending RestaurantPartner/Admin approvals (Admin only)
