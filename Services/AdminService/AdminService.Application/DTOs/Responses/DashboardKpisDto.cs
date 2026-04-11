@@ -4,10 +4,10 @@ public class DashboardKpisDto
 {
     public int TotalOrders { get; set; }
     public decimal TotalRevenue { get; set; }
-    public string TotalRevenueCurrency { get; set; } = "USD";
+    public string TotalRevenueCurrency { get; set; } = "INR";
     public int ActivePartners { get; set; }
     public int PendingApprovals { get; set; }
     public int OrdersToday { get; set; }
     public decimal RevenueToday { get; set; }
-    public string RevenueTodayCurrency { get; set; } = "USD";
+    public string RevenueTodayCurrency { get; set; } = "INR";
 }

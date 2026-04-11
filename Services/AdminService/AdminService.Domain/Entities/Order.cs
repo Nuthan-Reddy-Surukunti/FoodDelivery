@@ -12,7 +12,7 @@ public class Order
     public Guid RestaurantId { get; set; }
     public OrderStatus Status { get; set; }
     public decimal TotalAmount { get; set; }
-    public string Currency { get; set; } = "USD";
+    public string Currency { get; set; } = "INR";
     public DateTime CreatedAt { get; set; }
     public DateTime? UpdatedAt { get; set; }
     public DateTime? DeliveredAt { get; set; }

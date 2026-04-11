@@ -105,10 +105,10 @@ public class OrderRepository : IOrderRepository
     {
         var orders = await _context.Orders.ToListAsync(cancellationToken);
         if (!orders.Any())
-            return (0m, "USD");
+            return (0m, "INR");
 
         decimal totalAmount = orders.Sum(o => o.TotalAmount);
-        var firstCurrency = string.IsNullOrWhiteSpace(orders.First().Currency) ? "USD" : orders.First().Currency;
+        var firstCurrency = string.IsNullOrWhiteSpace(orders.First().Currency) ? "INR" : orders.First().Currency;
         
         return (totalAmount, firstCurrency);
     }
@@ -127,10 +127,10 @@ public class OrderRepository : IOrderRepository
             .ToListAsync(cancellationToken);
             
         if (!orders.Any())
-            return (0m, "USD");
+            return (0m, "INR");
 
         decimal totalAmount = orders.Sum(o => o.TotalAmount);
-        var firstCurrency = string.IsNullOrWhiteSpace(orders.First().Currency) ? "USD" : orders.First().Currency;
+        var firstCurrency = string.IsNullOrWhiteSpace(orders.First().Currency) ? "INR" : orders.First().Currency;
         
         return (totalAmount, firstCurrency);
     }

@@ -140,7 +140,7 @@ public class OrderPlacedEventHandler : IConsumer<OrderPlacedEvent>
                 RestaurantId = @event.RestaurantId,
                 Status = OrderStatus.Pending,
                 TotalAmount = @event.TotalAmount,
-                Currency = "USD",
+                Currency = "INR",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow,
                 LastSyncedAt = @event.OccurredAt,

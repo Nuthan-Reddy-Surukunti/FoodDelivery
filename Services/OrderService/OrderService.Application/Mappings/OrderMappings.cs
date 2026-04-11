@@ -37,7 +37,7 @@ public static class OrderMappings
             UpdatedAt = order.UpdatedAt,
             Subtotal = subtotal,
             Total = total,
-            Currency = "USD",
+            Currency = "INR",
             DeliveryAddress = MapDeliveryAddress(order),
             Items = order.OrderItems.Select(item => new OrderItemDto
             {
@@ -91,7 +91,7 @@ public static class OrderMappings
             PaymentMethod = payment.PaymentMethod,
             PaymentStatus = payment.PaymentStatus,
             Amount = payment.Amount,
-            Currency = "USD",
+            Currency = "INR",
             RefundedAmount = payment.RefundedAmount,
             TransactionId = payment.TransactionId,
             FailureReason = payment.FailureReason,

@@ -18,7 +18,7 @@ public static class CartMappings
             CreatedAt = cart.CreatedAt,
             UpdatedAt = cart.UpdatedAt,
             TotalAmount = totalAmount,
-            Currency = "USD",
+            Currency = "INR",
             Items = cart.Items.Select(item => new CartItemDto
             {
                 CartItemId = item.Id,
