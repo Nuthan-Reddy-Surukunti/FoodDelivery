@@ -15,15 +15,12 @@ public class RestaurantRepository : IRestaurantRepository
         _context = context;
     }
 
-    public async Task<(List<Restaurant>, int)> GetAllAsync(int pageNumber, int pageSize)
+    public async Task<List<Restaurant>> GetAllAsync()
     {
-        var totalCount = await _context.Restaurants.CountAsync();
         var restaurants = await _context.Restaurants
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (restaurants, totalCount);
+        return restaurants;
     }
 
     public async Task<Restaurant?> GetByIdAsync(Guid id)
@@ -41,67 +38,43 @@ public class RestaurantRepository : IRestaurantRepository
             .FirstOrDefaultAsync(r => r.Name == name);
     }
 
-    public async Task<(List<Restaurant>, int)> SearchByNameAsync(string query, int pageNumber, int pageSize)
+    public async Task<List<Restaurant>> SearchByNameAsync(string query)
     {
         var lowerQuery = query.ToLower();
-        
-        var totalCount = await _context.Restaurants
-            .Where(r => r.Name.ToLower().Contains(lowerQuery))
-            .CountAsync();
 
         var restaurants = await _context.Restaurants
             .Where(r => r.Name.ToLower().Contains(lowerQuery))
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (restaurants, totalCount);
+        return restaurants;
     }
 
-    public async Task<(List<Restaurant>, int)> GetByCuisineAsync(CuisineType cuisine, int pageNumber, int pageSize)
+    public async Task<List<Restaurant>> GetByCuisineAsync(CuisineType cuisine)
     {
-        var totalCount = await _context.Restaurants
-            .Where(r => r.CuisineType == cuisine)
-            .CountAsync();
-
         var restaurants = await _context.Restaurants
             .Where(r => r.CuisineType == cuisine)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (restaurants, totalCount);
+        return restaurants;
     }
 
-    public async Task<(List<Restaurant>, int)> GetByStatusAsync(RestaurantStatus status, int pageNumber, int pageSize)
+    public async Task<List<Restaurant>> GetByStatusAsync(RestaurantStatus status)
     {
-        var totalCount = await _context.Restaurants
-            .Where(r => r.Status == status)
-            .CountAsync();
-
         var restaurants = await _context.Restaurants
             .Where(r => r.Status == status)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (restaurants, totalCount);
+        return restaurants;
     }
 
-    public async Task<(List<Restaurant>, int)> GetByRatingAsync(decimal minRating, int pageNumber, int pageSize)
+    public async Task<List<Restaurant>> GetByRatingAsync(decimal minRating)
     {
-        var totalCount = await _context.Restaurants
-            .Where(r => r.Status == RestaurantStatus.Active && r.Rating >= minRating)
-            .CountAsync();
-
         var restaurants = await _context.Restaurants
             .Where(r => r.Status == RestaurantStatus.Active && r.Rating >= minRating)
             .OrderByDescending(r => r.Rating)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (restaurants, totalCount);
+        return restaurants;
     }
 
     public async Task<Restaurant> CreateAsync(Restaurant restaurant)

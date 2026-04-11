@@ -23,17 +23,15 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all restaurants (paginated) - active only by default, all for Admin
+    /// Get all restaurants - active only by default, all for Admin
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult> GetAll(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10)
+    public async Task<ActionResult> GetAll()
     {
         try
         {
             var userRole = this.GetCurrentUserRole();
-            var result = await _restaurantService.GetAllRestaurantsAsync(pageNumber, pageSize, userRole);
+            var result = await _restaurantService.GetAllRestaurantsAsync(userRole);
             return Ok(result);
         }
         catch (Exception ex)

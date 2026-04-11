@@ -10,7 +10,7 @@ public interface IOrderRepository : IRepository<Order>
 {
     Task<IEnumerable<Order>> GetByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default);
 
-    Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, OrderStatus? status = null, CancellationToken cancellationToken = default);
+    Task<IEnumerable<Order>> GetAllAsync(OrderStatus? status = null, CancellationToken cancellationToken = default);
     Task<IEnumerable<Order>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken cancellationToken = default);
     Task<IEnumerable<Order>> GetOrdersByRestaurantAsync(Guid restaurantId, CancellationToken cancellationToken = default);
     Task<int> GetCountByStatusAsync(OrderStatus status, CancellationToken cancellationToken = default);

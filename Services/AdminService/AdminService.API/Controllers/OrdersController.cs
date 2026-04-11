@@ -19,11 +19,9 @@ public class OrdersController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetOrders(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
         [FromQuery] string? status = null)
     {
-        var result = await _orderService.GetAllAsync(page, pageSize, status);
+        var result = await _orderService.GetAllAsync(status);
         return Ok(result);
     }
 

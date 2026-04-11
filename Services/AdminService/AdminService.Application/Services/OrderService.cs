@@ -43,7 +43,7 @@ public class OrderService : IOrderService
         return _mapper.Map<OrderDto>(order);
     }
 
-    public async Task<PagedResultDto<OrderDto>> GetAllAsync(int pageNumber, int pageSize, string? status = null, CancellationToken cancellationToken = default)
+    public async Task<List<OrderDto>> GetAllAsync(string? status = null, CancellationToken cancellationToken = default)
     {
         OrderStatus? orderStatus = null;
         if (status != null && Enum.TryParse<OrderStatus>(status, out var parsedStatus))
@@ -51,15 +51,8 @@ public class OrderService : IOrderService
             orderStatus = parsedStatus;
         }
 
-        var (orders, totalCount) = await _orderRepository.GetPagedAsync(pageNumber, pageSize, orderStatus, cancellationToken);
-        
-        return new PagedResultDto<OrderDto>
-        {
-            Items = _mapper.Map<IEnumerable<OrderDto>>(orders),
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        };
+        var orders = await _orderRepository.GetAllAsync(orderStatus, cancellationToken);
+        return _mapper.Map<List<OrderDto>>(orders);
     }
 
     public async Task<OrderDto> UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus, string reason, decimal? refundAmount, CancellationToken cancellationToken = default)

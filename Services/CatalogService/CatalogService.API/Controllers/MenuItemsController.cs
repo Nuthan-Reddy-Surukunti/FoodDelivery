@@ -43,19 +43,17 @@ public class MenuItemsController : ControllerBase
     }
 
     /// <summary>
-    /// Get all menu items for a restaurant (paginated) - active restaurant and available items only
+    /// Get all menu items for a restaurant - active restaurant and available items only
     /// </summary>
     [HttpGet("/api/restaurants/{restaurantId}/menu")]
     public async Task<ActionResult> GetByRestaurant(
-        [FromRoute] Guid restaurantId,
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10)
+        [FromRoute] Guid restaurantId)
     {
         try
         {
             var userId = this.GetCurrentUserId();
             var userRole = this.GetCurrentUserRole();
-            var result = await _menuItemService.GetMenuItemsByRestaurantAsync(restaurantId, pageNumber, pageSize, userRole, userId);
+            var result = await _menuItemService.GetMenuItemsByRestaurantAsync(restaurantId, userRole, userId);
             return Ok(result);
         }
         catch (RestaurantNotFoundException)

@@ -25,6 +25,22 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders.ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<Order>> GetAllAsync(OrderStatus? status = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Orders.AsQueryable();
+        
+        if (status.HasValue)
+        {
+            query = query.Where(o => o.Status == status.Value);
+        }
+
+        var items = await query
+            .OrderByDescending(o => o.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        return items;
+    }
+
     public async Task<Order> AddAsync(Order entity, CancellationToken cancellationToken = default)
     {
         await _context.Orders.AddAsync(entity, cancellationToken);
@@ -58,24 +74,6 @@ public class OrderRepository : IOrderRepository
         return await _context.Orders.Where(o => o.Status == status).ToListAsync(cancellationToken);
     }
 
-    public async Task<(IEnumerable<Order> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, OrderStatus? status = null, CancellationToken cancellationToken = default)
-    {
-        var query = _context.Orders.AsQueryable();
-        
-        if (status.HasValue)
-        {
-            query = query.Where(o => o.Status == status.Value);
-        }
-
-        var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .OrderByDescending(o => o.CreatedAt)
-            .ToListAsync(cancellationToken);
-
-        return (items, totalCount);
-    }
 
     public async Task<IEnumerable<Order>> GetOrdersByCustomerAsync(Guid customerId, CancellationToken cancellationToken = default)
     {

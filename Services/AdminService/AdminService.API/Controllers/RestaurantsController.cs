@@ -19,11 +19,9 @@ public class RestaurantsController : ControllerBase
 
     [HttpGet]
     public async Task<IActionResult> GetRestaurants(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10,
         [FromQuery] string? status = null)
     {
-        var result = await _restaurantService.GetAllAsync(page, pageSize, status);
+        var result = await _restaurantService.GetAllAsync(status);
         return Ok(result);
     }
 

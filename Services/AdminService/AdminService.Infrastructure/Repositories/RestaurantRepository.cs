@@ -25,6 +25,21 @@ public class RestaurantRepository : IRestaurantRepository
         return await _context.Restaurants.ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<Restaurant>> GetAllAsync(RestaurantStatus? status = null, CancellationToken cancellationToken = default)
+    {
+        var query = _context.Restaurants.AsQueryable();
+        
+        if (status.HasValue)
+        {
+            query = query.Where(r => r.Status == status.Value);
+        }
+
+        var items = await query
+            .ToListAsync(cancellationToken);
+
+        return items;
+    }
+
     public async Task<Restaurant> AddAsync(Restaurant entity, CancellationToken cancellationToken = default)
     {
         await _context.Restaurants.AddAsync(entity, cancellationToken);
@@ -66,23 +81,6 @@ public class RestaurantRepository : IRestaurantRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<(IEnumerable<Restaurant> Items, int TotalCount)> GetPagedAsync(int pageNumber, int pageSize, RestaurantStatus? status = null, CancellationToken cancellationToken = default)
-    {
-        var query = _context.Restaurants.AsQueryable();
-        
-        if (status.HasValue)
-        {
-            query = query.Where(r => r.Status == status.Value);
-        }
-
-        var totalCount = await query.CountAsync(cancellationToken);
-        var items = await query
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync(cancellationToken);
-
-        return (items, totalCount);
-    }
 
     public async Task<int> GetCountByStatusAsync(RestaurantStatus status, CancellationToken cancellationToken = default)
     {

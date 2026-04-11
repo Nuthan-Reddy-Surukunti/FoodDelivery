@@ -1,6 +1,5 @@
 using AutoMapper;
 using CatalogService.Application.DTOs.MenuItem;
-using CatalogService.Application.DTOs.Pagination;
 using CatalogService.Application.Exceptions;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
@@ -42,7 +41,7 @@ public class MenuItemService : IMenuItemService
         return _mapper.Map<MenuItemDto>(menuItem);
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10, string? userRole = null, Guid? userId = null)
+    public async Task<List<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, string? userRole = null, Guid? userId = null)
     {
         var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
         if (restaurant == null)
@@ -60,97 +59,54 @@ public class MenuItemService : IMenuItemService
             throw new RestaurantNotFoundException(restaurantId);
         }
 
-        var (items, totalCount) = await _repository.GetByRestaurantAsync(restaurantId, pageNumber, pageSize);
+        var items = await _repository.GetByRestaurantAsync(restaurantId);
         
         // Filter by available status unless user is Admin or restaurant owner
         if (userRole != "Admin" && !(userRole == "RestaurantPartner" && userId.HasValue && restaurant.OwnerId == userId))
         {
             items = items.Where(i => i.AvailabilityStatus == ItemAvailabilityStatus.Available).ToList();
-            totalCount = items.Count;
         }
         
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        
-        return new PaginatedResultDto<MenuItemDto>
-        {
-            Data = itemDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return itemDtos;
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByCategoryAsync(Guid categoryId, int pageNumber = 1, int pageSize = 10)
+    public async Task<List<MenuItemDto>> GetMenuItemsByCategoryAsync(Guid categoryId)
     {
-        var (items, totalCount) = await _repository.GetByCategoryAsync(categoryId, pageNumber, pageSize);
+        var items = await _repository.GetByCategoryAsync(categoryId);
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        
-        return new PaginatedResultDto<MenuItemDto>
-        {
-            Data = itemDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return itemDtos;
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> SearchByNameAsync(string query, Guid restaurantId, int pageNumber = 1, int pageSize = 10)
+    public async Task<List<MenuItemDto>> SearchByNameAsync(string query, Guid restaurantId)
     {
-        var (items, totalCount) = await _repository.SearchByNameAsync(query, restaurantId, pageNumber, pageSize);
+        var items = await _repository.SearchByNameAsync(query, restaurantId);
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        
-        return new PaginatedResultDto<MenuItemDto>
-        {
-            Data = itemDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return itemDtos;
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status, int pageNumber = 1, int pageSize = 10)
+    public async Task<List<MenuItemDto>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status)
     {
-        var (items, totalCount) = await _repository.GetByAvailabilityAsync(restaurantId, status, pageNumber, pageSize);
+        var items = await _repository.GetByAvailabilityAsync(restaurantId, status);
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        
-        return new PaginatedResultDto<MenuItemDto>
-        {
-            Data = itemDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return itemDtos;
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetVegItemsAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10)
+    public async Task<List<MenuItemDto>> GetVegItemsAsync(Guid restaurantId)
     {
-        var (items, totalCount) = await _repository.GetVegItemsAsync(restaurantId, pageNumber, pageSize);
+        var items = await _repository.GetVegItemsAsync(restaurantId);
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        
-        return new PaginatedResultDto<MenuItemDto>
-        {
-            Data = itemDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return itemDtos;
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetNonVegItemsAsync(Guid restaurantId, int pageNumber = 1, int pageSize = 10)
+    public async Task<List<MenuItemDto>> GetNonVegItemsAsync(Guid restaurantId)
     {
-        var (items, totalCount) = await _repository.GetNonVegItemsAsync(restaurantId, pageNumber, pageSize);
+        var items = await _repository.GetNonVegItemsAsync(restaurantId);
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        
-        return new PaginatedResultDto<MenuItemDto>
-        {
-            Data = itemDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return itemDtos;
     }
 
-    public async Task<PaginatedResultDto<MenuItemDto>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice, int pageNumber = 1, int pageSize = 10)
+    public async Task<List<MenuItemDto>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice)
     {
         if (minPrice < 0 || maxPrice < 0)
             throw new InvalidMenuItemPriceException(0m);
@@ -158,16 +114,9 @@ public class MenuItemService : IMenuItemService
         if (minPrice > maxPrice)
             throw new InvalidMenuItemPriceException(0m);
 
-        var (items, totalCount) = await _repository.GetByPriceRangeAsync(restaurantId, minPrice, maxPrice, pageNumber, pageSize);
+        var items = await _repository.GetByPriceRangeAsync(restaurantId, minPrice, maxPrice);
         var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        
-        return new PaginatedResultDto<MenuItemDto>
-        {
-            Data = itemDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return itemDtos;
     }
 
     public async Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto, Guid userId, string userRole)

@@ -1,6 +1,5 @@
 
 using CatalogService.Application.DTOs.MenuItem;
-using CatalogService.Application.DTOs.Pagination;
 using CatalogService.Domain.Enums;
 
 namespace CatalogService.Application.Interfaces;
@@ -8,19 +7,19 @@ public interface IMenuItemService
 {
     Task<MenuItemDto> GetMenuItemByIdAsync(Guid id, string? userRole = null);
 
-    Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, int pageNumber, int pageSize, string? userRole = null, Guid? userId = null);
+    Task<List<MenuItemDto>> GetMenuItemsByRestaurantAsync(Guid restaurantId, string? userRole = null, Guid? userId = null);
 
-    Task<PaginatedResultDto<MenuItemDto>> GetMenuItemsByCategoryAsync(Guid categoryId, int pageNumber, int pageSize);
+    Task<List<MenuItemDto>> GetMenuItemsByCategoryAsync(Guid categoryId);
 
-    Task<PaginatedResultDto<MenuItemDto>> SearchByNameAsync(string query, Guid restaurantId, int pageNumber, int pageSize);
+    Task<List<MenuItemDto>> SearchByNameAsync(string query, Guid restaurantId);
 
-    Task<PaginatedResultDto<MenuItemDto>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status, int pageNumber, int pageSize);
+    Task<List<MenuItemDto>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status);
 
-    Task<PaginatedResultDto<MenuItemDto>> GetVegItemsAsync(Guid restaurantId, int pageNumber, int pageSize);
+    Task<List<MenuItemDto>> GetVegItemsAsync(Guid restaurantId);
 
-    Task<PaginatedResultDto<MenuItemDto>> GetNonVegItemsAsync(Guid restaurantId, int pageNumber, int pageSize);
+    Task<List<MenuItemDto>> GetNonVegItemsAsync(Guid restaurantId);
 
-    Task<PaginatedResultDto<MenuItemDto>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice, int pageNumber, int pageSize);
+    Task<List<MenuItemDto>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice);
 
     Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto, Guid userId, string userRole);
 

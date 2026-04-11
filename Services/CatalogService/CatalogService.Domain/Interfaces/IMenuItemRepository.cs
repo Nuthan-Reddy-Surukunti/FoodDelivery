@@ -7,19 +7,19 @@ public interface IMenuItemRepository
 {
     Task<MenuItem?> GetByIdAsync(Guid id);
 
-    Task<(List<MenuItem>, int)> GetByRestaurantAsync(Guid restaurantId, int pageNumber, int pageSize);
+    Task<List<MenuItem>> GetByRestaurantAsync(Guid restaurantId);
 
-    Task<(List<MenuItem>, int)> GetByCategoryAsync(Guid categoryId, int pageNumber, int pageSize);
+    Task<List<MenuItem>> GetByCategoryAsync(Guid categoryId);
 
-    Task<(List<MenuItem>, int)> SearchByNameAsync(string query, Guid restaurantId, int pageNumber, int pageSize);
+    Task<List<MenuItem>> SearchByNameAsync(string query, Guid restaurantId);
 
-    Task<(List<MenuItem>, int)> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status, int pageNumber, int pageSize);
+    Task<List<MenuItem>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status);
 
-    Task<(List<MenuItem>, int)> GetVegItemsAsync(Guid restaurantId, int pageNumber, int pageSize);
+    Task<List<MenuItem>> GetVegItemsAsync(Guid restaurantId);
 
-    Task<(List<MenuItem>, int)> GetNonVegItemsAsync(Guid restaurantId, int pageNumber, int pageSize);
+    Task<List<MenuItem>> GetNonVegItemsAsync(Guid restaurantId);
 
-    Task<(List<MenuItem>, int)> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice, int pageNumber, int pageSize);
+    Task<List<MenuItem>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice);
 
     Task<MenuItem> CreateAsync(MenuItem menuItem);
 

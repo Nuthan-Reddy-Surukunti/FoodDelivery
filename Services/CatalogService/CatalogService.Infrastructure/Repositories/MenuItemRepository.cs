@@ -22,110 +22,68 @@ public class MenuItemRepository : IMenuItemRepository
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
-    public async Task<(List<MenuItem>, int)> GetByRestaurantAsync(Guid restaurantId, int pageNumber, int pageSize)
+    public async Task<List<MenuItem>> GetByRestaurantAsync(Guid restaurantId)
     {
-        var totalCount = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId)
-            .CountAsync();
-
         var items = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId)
             .Include(m => m.Category)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (items, totalCount);
+        return items;
     }
 
-    public async Task<(List<MenuItem>, int)> GetByCategoryAsync(Guid categoryId, int pageNumber, int pageSize)
+    public async Task<List<MenuItem>> GetByCategoryAsync(Guid categoryId)
     {
-        var totalCount = await _context.MenuItems
-            .Where(m => m.CategoryId == categoryId)
-            .CountAsync();
-
         var items = await _context.MenuItems
             .Where(m => m.CategoryId == categoryId)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (items, totalCount);
+        return items;
     }
 
-    public async Task<(List<MenuItem>, int)> SearchByNameAsync(string query, Guid restaurantId, int pageNumber, int pageSize)
+    public async Task<List<MenuItem>> SearchByNameAsync(string query, Guid restaurantId)
     {
-        var totalCount = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && EF.Functions.Like(m.Name, $"%{query}%"))
-            .CountAsync();
-
         var items = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId && EF.Functions.Like(m.Name, $"%{query}%"))
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (items, totalCount);
+        return items;
     }
 
-    public async Task<(List<MenuItem>, int)> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status, int pageNumber, int pageSize)
+    public async Task<List<MenuItem>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status)
     {
-        var totalCount = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.AvailabilityStatus == status)
-            .CountAsync();
-
         var items = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId && m.AvailabilityStatus == status)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (items, totalCount);
+        return items;
     }
 
-    public async Task<(List<MenuItem>, int)> GetVegItemsAsync(Guid restaurantId, int pageNumber, int pageSize)
+    public async Task<List<MenuItem>> GetVegItemsAsync(Guid restaurantId)
     {
-        var totalCount = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.IsVeg == true)
-            .CountAsync();
-
         var items = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId && m.IsVeg == true)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (items, totalCount);
+        return items;
     }
 
-    public async Task<(List<MenuItem>, int)> GetNonVegItemsAsync(Guid restaurantId, int pageNumber, int pageSize)
+    public async Task<List<MenuItem>> GetNonVegItemsAsync(Guid restaurantId)
     {
-        var totalCount = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.IsVeg == false)
-            .CountAsync();
-
         var items = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId && m.IsVeg == false)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (items, totalCount);
+        return items;
     }
 
-    public async Task<(List<MenuItem>, int)> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice, int pageNumber, int pageSize)
+    public async Task<List<MenuItem>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice)
     {
-        var totalCount = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.Price >= minPrice && m.Price <= maxPrice)
-            .CountAsync();
-
         var items = await _context.MenuItems
             .Where(m => m.RestaurantId == restaurantId && m.Price >= minPrice && m.Price <= maxPrice)
-            .Skip((pageNumber - 1) * pageSize)
-            .Take(pageSize)
             .ToListAsync();
 
-        return (items, totalCount);
+        return items;
     }
 
     public async Task<MenuItem> CreateAsync(MenuItem menuItem)

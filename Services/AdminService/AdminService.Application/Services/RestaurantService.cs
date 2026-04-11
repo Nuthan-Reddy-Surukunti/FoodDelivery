@@ -38,7 +38,7 @@ public class RestaurantService : IRestaurantService
         return _mapper.Map<RestaurantDto>(restaurant);
     }
 
-    public async Task<PagedResultDto<RestaurantDto>> GetAllAsync(int pageNumber, int pageSize, string? status = null, CancellationToken cancellationToken = default)
+    public async Task<List<RestaurantDto>> GetAllAsync(string? status = null, CancellationToken cancellationToken = default)
     {
         RestaurantStatus? restaurantStatus = null;
         if (status != null && Enum.TryParse<RestaurantStatus>(status, out var parsedStatus))
@@ -46,15 +46,8 @@ public class RestaurantService : IRestaurantService
             restaurantStatus = parsedStatus;
         }
 
-        var (restaurants, totalCount) = await _restaurantRepository.GetPagedAsync(pageNumber, pageSize, restaurantStatus, cancellationToken);
-        
-        return new PagedResultDto<RestaurantDto>
-        {
-            Items = _mapper.Map<IEnumerable<RestaurantDto>>(restaurants),
-            TotalCount = totalCount,
-            PageNumber = pageNumber,
-            PageSize = pageSize
-        };
+        var restaurants = await _restaurantRepository.GetAllAsync(restaurantStatus, cancellationToken);
+        return _mapper.Map<List<RestaurantDto>>(restaurants);
     }
 
     public async Task<IEnumerable<RestaurantDto>> GetPendingApprovalsAsync(CancellationToken cancellationToken = default)

@@ -36,8 +36,6 @@ public class SearchController : ControllerBase
         [FromQuery] decimal? maxPrice,
         [FromQuery] string? city,
         [FromQuery] string? serviceZoneId,
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10,
         [FromQuery] string? sortBy = "rating")
     {
         try
@@ -52,8 +50,6 @@ public class SearchController : ControllerBase
                 MaxPrice = maxPrice,
                 City = city,
                 ServiceZoneId = serviceZoneId,
-                PageNumber = pageNumber,
-                PageSize = pageSize,
                 SortBy = sortBy
             };
 
@@ -71,16 +67,14 @@ public class SearchController : ControllerBase
     /// </summary>
     [HttpGet("restaurantsByName")]
     public async Task<ActionResult> SearchRestaurantsByName(
-        [FromQuery] string? query,
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10)
+        [FromQuery] string? query)
     {
         if (string.IsNullOrWhiteSpace(query))
             return BadRequest("Query cannot be empty");
 
         try
         {
-            var result = await _searchService.SearchByNameAsync(query, pageNumber, pageSize);
+            var result = await _searchService.SearchByNameAsync(query);
             return Ok(result);
         }
         catch (Exception ex)

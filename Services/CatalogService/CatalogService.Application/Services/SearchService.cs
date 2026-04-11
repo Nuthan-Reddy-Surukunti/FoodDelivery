@@ -1,6 +1,5 @@
 using AutoMapper;
 using CatalogService.Application.DTOs.Helpers;
-using CatalogService.Application.DTOs.Pagination;
 using CatalogService.Application.DTOs.Restaurant;
 using CatalogService.Application.DTOs.Search;
 using CatalogService.Application.Interfaces;
@@ -19,34 +18,27 @@ public class SearchService : ISearchService
         _mapper = mapper;
     }
 
-    public async Task<PaginatedResultDto<RestaurantDto>> SearchByNameAsync(string query, int pageNumber = 1, int pageSize = 10)
+    public async Task<List<RestaurantDto>> SearchByNameAsync(string query)
     {
-        var (restaurants, totalCount) = await _repository.SearchByNameAsync(query, pageNumber, pageSize);
+        var restaurants = await _repository.SearchByNameAsync(query);
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(restaurants);
-        
-        return new PaginatedResultDto<RestaurantDto>
-        {
-            Data = restaurantDtos,
-            PageNumber = pageNumber,
-            PageSize = pageSize,
-            TotalCount = totalCount
-        };
+        return restaurantDtos;
     }
 
-    public async Task<PaginatedResultDto<RestaurantDto>> AdvancedSearchAsync(SearchRestaurantFilterDto filters)
+    public async Task<List<RestaurantDto>> AdvancedSearchAsync(SearchRestaurantFilterDto filters)
     {
-        var (restaurants, totalCount) = await _repository.GetAllAsync(filters.PageNumber, filters.PageSize);
+        var restaurants = await _repository.GetAllAsync();
         
         // Apply filters
         if (!string.IsNullOrEmpty(filters.Query))
         {
-            var (searchResults, _) = await _repository.SearchByNameAsync(filters.Query, filters.PageNumber, filters.PageSize);
+            var searchResults = await _repository.SearchByNameAsync(filters.Query);
             restaurants = searchResults;
         }
 
         if (filters.CuisineType.HasValue)
         {
-            var (cuisineResults, _) = await _repository.GetByCuisineAsync(filters.CuisineType.Value, filters.PageNumber, filters.PageSize);
+            var cuisineResults = await _repository.GetByCuisineAsync(filters.CuisineType.Value);
             restaurants = restaurants.Intersect(cuisineResults).ToList();
         }
 
@@ -57,31 +49,27 @@ public class SearchService : ISearchService
 
         if (filters.MinRating.HasValue)
         {
-            var (ratingResults, _) = await _repository.GetByRatingAsync(filters.MinRating.Value, filters.PageNumber, filters.PageSize);
+            var ratingResults = await _repository.GetByRatingAsync(filters.MinRating.Value);
             restaurants = restaurants.Intersect(ratingResults).ToList();
         }
 
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(restaurants);
-        
-        return new PaginatedResultDto<RestaurantDto>
-        {
-            Data = restaurantDtos,
-            PageNumber = filters.PageNumber,
-            PageSize = filters.PageSize,
-            TotalCount = restaurants.Count
-        };
+        return restaurantDtos;
     }
 
     public async Task<HomePageDto> GetHomepageDataAsync(string? serviceZoneId = null)
     {
-        // Get featured restaurants (top rated, up to 10)
-        var (featuredRestaurants, _) = await _repository.GetByRatingAsync(4.0m, 1, 10);
+        // Get featured restaurants (top rated)
+        var featuredRestaurants = await _repository.GetByRatingAsync(4.0m);
         
         // Filter by service zone if provided
         if (!string.IsNullOrEmpty(serviceZoneId))
         {
             featuredRestaurants = featuredRestaurants.Where(r => r.ServiceZoneId == serviceZoneId).ToList();
         }
+        
+        // Limit to 10 featured restaurants for display
+        featuredRestaurants = featuredRestaurants.Take(10).ToList();
         
         var featuredDtos = _mapper.Map<List<RestaurantDto>>(featuredRestaurants);
 

@@ -5,19 +5,19 @@ using CatalogService.Domain.Enums;
 
 public interface IRestaurantRepository
 {
-    Task<(List<Restaurant>, int)> GetAllAsync(int pageNumber, int pageSize);
+    Task<List<Restaurant>> GetAllAsync();
 
     Task<Restaurant?> GetByIdAsync(Guid id);
 
     Task<Restaurant?> GetByNameAsync(string name);
 
-    Task<(List<Restaurant>, int)> SearchByNameAsync(string query, int pageNumber, int pageSize);
+    Task<List<Restaurant>> SearchByNameAsync(string query);
 
-    Task<(List<Restaurant>, int)> GetByCuisineAsync(CuisineType cuisine, int pageNumber, int pageSize);
+    Task<List<Restaurant>> GetByCuisineAsync(CuisineType cuisine);
 
-    Task<(List<Restaurant>, int)> GetByStatusAsync(RestaurantStatus status, int pageNumber, int pageSize);
+    Task<List<Restaurant>> GetByStatusAsync(RestaurantStatus status);
 
-    Task<(List<Restaurant>, int)> GetByRatingAsync(decimal minRating, int pageNumber, int pageSize);
+    Task<List<Restaurant>> GetByRatingAsync(decimal minRating);
 
     Task<Restaurant> CreateAsync(Restaurant restaurant);
 
