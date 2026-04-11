@@ -106,8 +106,8 @@ public class OtpService : IOtpService
             if (!emailVerified)
                 return false;
 
-            // RestaurantPartner transitions from Active -> Verified after successful OTP verification.
-            if (user.Role == UserRole.RestaurantPartner && user.AccountStatus == AccountStatus.Active)
+            // RestaurantPartner and Admin transition from Active -> Verified after successful OTP verification.
+            if ((user.Role == UserRole.RestaurantPartner || user.Role == UserRole.Admin) && user.AccountStatus == AccountStatus.Active)
             {
                 var statusUpdated = await _userRepository.SetAccountStatusAsync(userId, AccountStatus.Verified);
                 if (!statusUpdated)

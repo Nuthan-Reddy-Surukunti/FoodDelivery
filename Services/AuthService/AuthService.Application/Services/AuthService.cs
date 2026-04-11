@@ -86,29 +86,83 @@ public class AuthService : IAuthService
         if (!passwordValid)
             return new AuthRequestDto { Success = false, Message = "Invalid credentials." };
 
-        // For Admin: Always allow direct JWT (pre-verified on creation)
+        // For Admin: Check AccountStatus (same as RestaurantPartner)
         if (user.Role == UserRole.Admin)
         {
-            var adminRefreshToken = GenerateSecureToken();
-            await _refreshTokenRepository.AddAsync(new RefreshToken
-            {
-                UserId = user.Id,
-                Token = adminRefreshToken,
-                ExpiredAt = DateTime.UtcNow.AddDays(7),
-                IsRevoked = false,
-                CreatedAt = DateTime.UtcNow
-            });
+            // If still pending (shouldn't reach here, but safety check)
+            if (user.AccountStatus == AccountStatus.Pending)
+                return new AuthRequestDto { Success = false, Message = "Your account is pending admin approval." };
 
-            var adminJwtToken = _jwtTokenGenerator.GenerateToken(user);
-
-            return new AuthRequestDto
+            // If approved but not yet verified by OTP
+            if (user.AccountStatus == AccountStatus.Active)
             {
-                Success = true,
-                Message = "Login successful.",
-                Token = adminJwtToken,
-                RefreshToken = adminRefreshToken,
-                Role = user.Role.ToString()
-            };
+                // Check if 2FA is enabled for this Admin
+                if (user.IsTwoFactorVerified)
+                {
+                    // Generate and send 2FA OTP
+                    var otp = GenerateOtp();
+                    var tempToken = GenerateSecureToken();
+                    var twoFactorToken = new TwoFactorToken()
+                    {
+                        UserId = user.Id,
+                        OTP = otp,
+                        TempToken = tempToken,
+                        ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                        IsUsed = false,
+                        CreatedAt = DateTime.UtcNow
+                    };
+
+                    await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+
+                    return new AuthRequestDto()
+                    {
+                        Success = true,
+                        Message = "OTP sent to your email.",
+                        IsTwoFactorRequired = true,
+                        TempToken = tempToken,
+                        UserId = user.Id.ToString()
+                    };
+                }
+
+                // 2FA not enabled - send email verification OTP for first-time verification after admin approval
+                var otpGenerated = await _otpService.GenerateAndStoreOtpAsync(user.Id);
+                if (!otpGenerated)
+                    return new AuthRequestDto { Success = false, Message = "Unable to send verification OTP. Please try again." };
+
+                return new AuthRequestDto()
+                {
+                    Success = true,
+                    Message = "If an account exists, a verification OTP has been sent to the registered email.",
+                    IsTwoFactorRequired = true,
+                    UserId = user.Id.ToString()
+                };
+            }
+
+            // If already verified by OTP (AccountStatus = Verified)
+            if (user.AccountStatus == AccountStatus.Verified)
+            {
+                var adminRefreshToken = GenerateSecureToken();
+                await _refreshTokenRepository.AddAsync(new RefreshToken
+                {
+                    UserId = user.Id,
+                    Token = adminRefreshToken,
+                    ExpiredAt = DateTime.UtcNow.AddDays(7),
+                    IsRevoked = false,
+                    CreatedAt = DateTime.UtcNow
+                });
+
+                var adminJwtToken = _jwtTokenGenerator.GenerateToken(user);
+
+                return new AuthRequestDto
+                {
+                    Success = true,
+                    Message = "Login successful.",
+                    Token = adminJwtToken,
+                    RefreshToken = adminRefreshToken,
+                    Role = user.Role.ToString()
+                };
+            }
         }
 
         // For RestaurantPartner: Check AccountStatus
@@ -352,7 +406,7 @@ public class AuthService : IAuthService
         if (parsedRole == UserRole.RestaurantPartner || parsedRole == UserRole.Admin)
         {
             await _emailService.SendEmailAsync(
-                "admin@fooddelivery.com", // Send to admin email for approval
+                "surkuntinuthanreddy@gmail.com", // Send to admin email for approval
                 $"New {parsedRole} Registration Pending Approval",
                 $"A new {parsedRole} account has been created and is awaiting your approval.\n\n" +
                 $"User: {user.FullName}\n" +
@@ -456,11 +510,11 @@ public class AuthService : IAuthService
         if (normalizedOtp.Length != 6)
             return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
 
-        // Backward-compatible path: approved RestaurantPartner first-login OTP can be verified by email.
-        if (user.Role == UserRole.RestaurantPartner && user.AccountStatus == AccountStatus.Active)
+        // Backward-compatible path: approved RestaurantPartner or Admin first-login OTP can be verified by email.
+        if ((user.Role == UserRole.RestaurantPartner || user.Role == UserRole.Admin) && user.AccountStatus == AccountStatus.Active)
         {
-            var partnerOtpVerified = await _otpService.VerifyOtpAsync(user.Id, normalizedOtp);
-            if (!partnerOtpVerified)
+            var otpVerified = await _otpService.VerifyOtpAsync(user.Id, normalizedOtp);
+            if (!otpVerified)
                 return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
 
             return new AuthRequestDto { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." };
