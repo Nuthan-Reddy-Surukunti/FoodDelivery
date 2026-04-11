@@ -57,10 +57,4 @@ public class DashboardService : IDashboardService
             RevenueTodayCurrency = revenueToday.Currency
         };
     }
-
-    public async Task<List<RestaurantDto>> GetApprovalQueueAsync(CancellationToken cancellationToken = default)
-    {
-        var pendingRestaurants = await _restaurantRepository.GetPendingApprovalsAsync(cancellationToken);
-        return _mapper.Map<List<RestaurantDto>>(pendingRestaurants);
-    }
 }

@@ -25,14 +25,4 @@ public class DashboardController : ControllerBase
         var kpis = await _dashboardService.GetKpisAsync();
         return Ok(kpis);
     }
-
-    /// <summary>
-    /// Get approval queue for pending restaurants
-    /// </summary>
-    [HttpGet("approval-queue")]
-    public async Task<IActionResult> GetApprovalQueue()
-    {
-        var queue = await _dashboardService.GetApprovalQueueAsync();
-        return Ok(queue);
-    }
 }

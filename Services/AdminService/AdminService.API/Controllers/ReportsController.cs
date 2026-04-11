@@ -17,54 +17,6 @@ public class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// Get user analytics report
-    /// </summary>
-    [HttpGet("users")]
-    public async Task<IActionResult> GetUserAnalytics(
-        [FromQuery] DateTime from,
-        [FromQuery] DateTime to)
-    {
-        var report = await _reportService.GetUserAnalyticsAsync(from, to);
-        return Ok(report);
-    }
-
-    /// <summary>
-    /// Get restaurant analytics report
-    /// </summary>
-    [HttpGet("restaurants")]
-    public async Task<IActionResult> GetRestaurantAnalytics(
-        [FromQuery] DateTime from,
-        [FromQuery] DateTime to)
-    {
-        var report = await _reportService.GetRestaurantAnalyticsAsync(from, to);
-        return Ok(report);
-    }
-
-    /// <summary>
-    /// Generate sales report (PRD: GET /admin/reports/sales)
-    /// </summary>
-    [HttpGet("sales")]
-    public async Task<IActionResult> GetSalesReport(
-        [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate)
-    {
-        var report = await _reportService.GenerateSalesReportAsync(startDate, endDate);
-        return Ok(report);
-    }
-
-    /// <summary>
-    /// Generate partner performance report (PRD: GET /admin/reports/partners)
-    /// </summary>
-    [HttpGet("partners")]
-    public async Task<IActionResult> GetPartnerPerformanceReport(
-        [FromQuery] DateTime startDate,
-        [FromQuery] DateTime endDate)
-    {
-        var report = await _reportService.GeneratePartnerPerformanceReportAsync(startDate, endDate);
-        return Ok(report);
-    }
-
-    /// <summary>
     /// Get all users analytics (no date filters)
     /// </summary>
     [HttpGet("all-users")]
