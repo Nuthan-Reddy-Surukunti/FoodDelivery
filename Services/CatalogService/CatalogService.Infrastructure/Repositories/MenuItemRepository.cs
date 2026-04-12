@@ -32,60 +32,6 @@ public class MenuItemRepository : IMenuItemRepository
         return items;
     }
 
-    public async Task<List<MenuItem>> GetByCategoryAsync(Guid categoryId)
-    {
-        var items = await _context.MenuItems
-            .Where(m => m.CategoryId == categoryId)
-            .ToListAsync();
-
-        return items;
-    }
-
-    public async Task<List<MenuItem>> SearchByNameAsync(string query, Guid restaurantId)
-    {
-        var items = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && EF.Functions.Like(m.Name, $"%{query}%"))
-            .ToListAsync();
-
-        return items;
-    }
-
-    public async Task<List<MenuItem>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status)
-    {
-        var items = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.AvailabilityStatus == status)
-            .ToListAsync();
-
-        return items;
-    }
-
-    public async Task<List<MenuItem>> GetVegItemsAsync(Guid restaurantId)
-    {
-        var items = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.IsVeg == true)
-            .ToListAsync();
-
-        return items;
-    }
-
-    public async Task<List<MenuItem>> GetNonVegItemsAsync(Guid restaurantId)
-    {
-        var items = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.IsVeg == false)
-            .ToListAsync();
-
-        return items;
-    }
-
-    public async Task<List<MenuItem>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice)
-    {
-        var items = await _context.MenuItems
-            .Where(m => m.RestaurantId == restaurantId && m.Price >= minPrice && m.Price <= maxPrice)
-            .ToListAsync();
-
-        return items;
-    }
-
     public async Task<MenuItem> CreateAsync(MenuItem menuItem)
     {
         menuItem.CreatedAt = DateTime.UtcNow;

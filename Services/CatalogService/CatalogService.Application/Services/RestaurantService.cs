@@ -134,42 +134,4 @@ public class RestaurantService : IRestaurantService
         
         return _mapper.Map<RestaurantDetailDto>(updatedRestaurant);
     }
-
-    public async Task<List<RestaurantDto>> GetRestaurantsByCityAsync(string city, string? userRole = null)
-    {
-        var restaurants = await _repository.GetAllAsync();
-        var filteredRestaurants = restaurants.Where(r => r.City == city).ToList();
-        
-        // Filter by active status unless user is Admin
-        if (userRole != "Admin")
-        {
-            filteredRestaurants = filteredRestaurants.Where(r => r.Status == Domain.Enums.RestaurantStatus.Active).ToList();
-        }
-        
-        var restaurantDtos = _mapper.Map<List<RestaurantDto>>(filteredRestaurants);
-        return restaurantDtos;
-    }
-
-    public async Task<RestaurantDetailDto> ToggleRestaurantStatusAsync(Guid id)
-    {
-        var restaurant = await _repository.GetByIdAsync(id);
-        if (restaurant == null)
-            throw new RestaurantNotFoundException(id);
-
-        restaurant.Status = restaurant.Status == Domain.Enums.RestaurantStatus.Active 
-            ? Domain.Enums.RestaurantStatus.Inactive 
-            : Domain.Enums.RestaurantStatus.Active;
-
-        var updatedRestaurant = await _repository.UpdateAsync(restaurant);
-        return _mapper.Map<RestaurantDetailDto>(updatedRestaurant);
-    }
-
-    public async Task<List<DTOs.MenuItem.MenuItemDto>> GetRestaurantMenuAsync(Guid restaurantId)
-    {
-        var restaurant = await _repository.GetByIdAsync(restaurantId);
-        if (restaurant == null)
-            throw new RestaurantNotFoundException(restaurantId);
-
-        return _mapper.Map<List<DTOs.MenuItem.MenuItemDto>>(restaurant.MenuItems);
-    }
 }

@@ -557,7 +557,9 @@ public class AuthService : IAuthService
         if (user == null)
             return new AuthRequestDto { Success = false, Message = "User not found." };
 
-        await _userRepository.SetTwoFactorEnabledAsync(userGuid, request.Enable);
+        var updateSucceeded = await _userRepository.SetTwoFactorEnabledAsync(userGuid, request.Enable);
+        if (!updateSucceeded)
+            return new AuthRequestDto { Success = false, Message = "Failed to update two-factor authentication settings." };
 
         var message = request.Enable ? "Two factor authentication enabled." : "Two factor authentication disabled.";
         return new AuthRequestDto { Success = true, Message = message };
@@ -631,23 +633,6 @@ public class AuthService : IAuthService
             RefreshToken = refreshToken,
             Role = user.Role.ToString()
         };
-    }
-
-    public async Task<AuthRequestDto> VerifyFirstLoginOtpAsync(FirstLoginVerificationRequestDto dto)
-    {
-        var user = await _userRepository.FindByIdAsync(dto.UserId);
-        if (user == null)
-            return new AuthRequestDto { Success = false, Message = "User not found." };
-
-        var normalizedOtp = new string((dto.OtpCode ?? string.Empty).Where(char.IsDigit).ToArray());
-        if (normalizedOtp.Length != 6)
-            return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
-
-        var otpVerified = await _otpService.VerifyOtpAsync(user.Id, normalizedOtp);
-        if (!otpVerified)
-            return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
-
-        return new AuthRequestDto { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." };
     }
 
     public async Task<AuthRequestDto> DeleteUserAsync(DeleteUserRequestDto dto)

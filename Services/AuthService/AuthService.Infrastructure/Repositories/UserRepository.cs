@@ -2,6 +2,7 @@ using System;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
+using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 
@@ -10,9 +11,11 @@ namespace AuthService.Infrastructure.Repositories;
 public class UserRepository : IUserRepository
 {
     private readonly UserManager<ApplicationUser> _userManager;
-    public UserRepository(UserManager<ApplicationUser> userManager)
+    private readonly AuthDbContext _context;
+    public UserRepository(UserManager<ApplicationUser> userManager, AuthDbContext context)
     {
         _userManager = userManager;
+        _context = context;
     }
     public async Task<bool> CheckPasswordAsync(Guid userId, string password)
     {
@@ -26,6 +29,8 @@ public class UserRepository : IUserRepository
         if (appUser == null) return false;
         var token = await _userManager.GeneratePasswordResetTokenAsync(appUser);
         var result = await _userManager.ResetPasswordAsync(appUser, token, newPassword);
+        if (result.Succeeded)
+            await _context.SaveChangesAsync();
         return result.Succeeded;
     }
 
@@ -68,6 +73,8 @@ public class UserRepository : IUserRepository
         if (appUser == null) return false;
         appUser.IsEmailVerified = true;
         var result = await _userManager.UpdateAsync(appUser);
+        if (result.Succeeded)
+            await _context.SaveChangesAsync();
         return result.Succeeded;
     }
 
@@ -77,6 +84,8 @@ public class UserRepository : IUserRepository
         if (appUser == null) return false;
         appUser.AccountStatus = (int)accountStatus;
         var result = await _userManager.UpdateAsync(appUser);
+        if (result.Succeeded)
+            await _context.SaveChangesAsync();
         return result.Succeeded;
     }
 
@@ -86,6 +95,8 @@ public class UserRepository : IUserRepository
         if (appUser == null) return false;
         appUser.IsTwoFactorEnabled = enabled;
         var result = await _userManager.UpdateAsync(appUser);
+        if (result.Succeeded)
+            await _context.SaveChangesAsync();
         return result.Succeeded;
     }
 

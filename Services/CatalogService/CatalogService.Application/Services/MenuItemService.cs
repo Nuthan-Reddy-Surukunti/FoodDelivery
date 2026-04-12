@@ -71,54 +71,6 @@ public class MenuItemService : IMenuItemService
         return itemDtos;
     }
 
-    public async Task<List<MenuItemDto>> GetMenuItemsByCategoryAsync(Guid categoryId)
-    {
-        var items = await _repository.GetByCategoryAsync(categoryId);
-        var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        return itemDtos;
-    }
-
-    public async Task<List<MenuItemDto>> SearchByNameAsync(string query, Guid restaurantId)
-    {
-        var items = await _repository.SearchByNameAsync(query, restaurantId);
-        var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        return itemDtos;
-    }
-
-    public async Task<List<MenuItemDto>> GetByAvailabilityAsync(Guid restaurantId, ItemAvailabilityStatus status)
-    {
-        var items = await _repository.GetByAvailabilityAsync(restaurantId, status);
-        var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        return itemDtos;
-    }
-
-    public async Task<List<MenuItemDto>> GetVegItemsAsync(Guid restaurantId)
-    {
-        var items = await _repository.GetVegItemsAsync(restaurantId);
-        var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        return itemDtos;
-    }
-
-    public async Task<List<MenuItemDto>> GetNonVegItemsAsync(Guid restaurantId)
-    {
-        var items = await _repository.GetNonVegItemsAsync(restaurantId);
-        var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        return itemDtos;
-    }
-
-    public async Task<List<MenuItemDto>> GetByPriceRangeAsync(Guid restaurantId, decimal minPrice, decimal maxPrice)
-    {
-        if (minPrice < 0 || maxPrice < 0)
-            throw new InvalidMenuItemPriceException(0m);
-
-        if (minPrice > maxPrice)
-            throw new InvalidMenuItemPriceException(0m);
-
-        var items = await _repository.GetByPriceRangeAsync(restaurantId, minPrice, maxPrice);
-        var itemDtos = _mapper.Map<List<MenuItemDto>>(items);
-        return itemDtos;
-    }
-
     public async Task<MenuItemDto> CreateMenuItemAsync(CreateMenuItemDto dto, Guid userId, string userRole)
     {
         if (dto.Price <= 0)
@@ -182,17 +134,5 @@ public class MenuItemService : IMenuItemService
             throw new UnauthorizedAccessException("You can only delete items from your own restaurant.");
 
         return await _repository.DeleteAsync(id);
-    }
-
-    public async Task<MenuItemDto> ToggleAvailabilityAsync(Guid id, ItemAvailabilityStatus status)
-    {
-        var menuItem = await _repository.GetByIdAsync(id);
-        if (menuItem == null)
-            throw new MenuItemNotFoundException(id);
-
-        menuItem.AvailabilityStatus = status;
-        var updatedItem = await _repository.UpdateAsync(menuItem);
-        
-        return _mapper.Map<MenuItemDto>(updatedItem);
     }
 }

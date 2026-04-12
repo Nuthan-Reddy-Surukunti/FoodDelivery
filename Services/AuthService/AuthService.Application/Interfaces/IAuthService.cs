@@ -9,7 +9,6 @@ public interface IAuthService
     Task<AuthRequestDto> RegisterAsync(RegisterRequestDto request);
     Task<AuthRequestDto> LoginAsync(LoginRequestDto request);
     Task<AuthRequestDto> VerifyTwoFactorOtpAsync(VerifyTwoFactorOtpRequestDto request);
-    Task<AuthRequestDto> VerifyFirstLoginOtpAsync(FirstLoginVerificationRequestDto request);
     Task<AuthRequestDto> RefreshTokenAsync(RefreshTokenDto request);
     Task<AuthRequestDto> LogoutAsync(RefreshTokenDto dto);
     Task<AuthRequestDto> ForgotPasswordAsync(ForgotPasswordDto request);

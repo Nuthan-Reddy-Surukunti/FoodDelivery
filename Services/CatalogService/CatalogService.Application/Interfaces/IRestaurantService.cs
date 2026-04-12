@@ -12,10 +12,4 @@ public interface IRestaurantService
     Task<RestaurantDetailDto> CreateRestaurantAsync(CreateRestaurantDto dto, Guid userId, string userRole);
 
     Task<RestaurantDetailDto> UpdateRestaurantAsync(Guid id, UpdateRestaurantDto dto, Guid userId, string userRole);
-
-    Task<List<RestaurantDto>> GetRestaurantsByCityAsync(string city, string? userRole = null);
-
-    Task<RestaurantDetailDto> ToggleRestaurantStatusAsync(Guid id);
-
-    Task<List<MenuItemDto>> GetRestaurantMenuAsync(Guid restaurantId);
 }

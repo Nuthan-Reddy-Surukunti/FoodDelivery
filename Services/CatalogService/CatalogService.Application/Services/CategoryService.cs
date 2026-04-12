@@ -133,31 +133,4 @@ public class CategoryService : ICategoryService
 
         return await _repository.DeleteAsync(id);
     }
-
-    public async Task<List<CategoryDto>> ReorderCategoriesAsync(Guid restaurantId, List<Guid> categoryIds)
-    {
-        var restaurant = await _restaurantRepository.GetByIdAsync(restaurantId);
-        if (restaurant == null)
-            throw new RestaurantNotFoundException(restaurantId);
-
-        var categories = await _repository.GetByRestaurantAsync(restaurantId);
-        var orderedCategories = new List<Category>();
-
-        foreach (var id in categoryIds)
-        {
-            var category = categories.FirstOrDefault(c => c.Id == id);
-            if (category != null)
-            {
-                category.DisplayOrder = categoryIds.IndexOf(id);
-                orderedCategories.Add(category);
-            }
-        }
-
-        foreach (var category in orderedCategories)
-        {
-            await _repository.UpdateAsync(category);
-        }
-
-        return _mapper.Map<List<CategoryDto>>(orderedCategories);
-    }
 }

@@ -59,18 +59,6 @@ namespace AuthService.API.Controllers
             return Ok(result);
         }
 
-        /// <summary>
-        /// Verify OTP for RestaurantPartner/Admin first-login after admin approval
-        /// </summary>
-        [HttpPost("verify-first-login")]
-        public async Task<IActionResult> VerifyFirstLogin([FromBody] FirstLoginVerificationRequestDto dto)
-        {
-            var result = await _authService.VerifyFirstLoginOtpAsync(dto);
-            if (!result.Success)
-                return BadRequest(result);
-            return Ok(result);
-        }
-
         [HttpPost("refresh-token")]
         public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto)
         {

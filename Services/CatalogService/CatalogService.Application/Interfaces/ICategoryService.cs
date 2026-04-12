@@ -13,6 +13,4 @@ public interface ICategoryService
     Task<CategoryDto> UpdateCategoryAsync(UpdateCategoryDto dto, Guid userId, string userRole);
 
     Task<bool> DeleteCategoryAsync(Guid id, Guid userId, string userRole);
-
-    Task<List<CategoryDto>> ReorderCategoriesAsync(Guid restaurantId, List<Guid> categoryIds);
 }
