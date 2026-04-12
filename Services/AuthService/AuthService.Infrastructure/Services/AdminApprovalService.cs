@@ -73,18 +73,6 @@ public class AdminApprovalService : IAdminApprovalService
                         $"Congratulations! Your {user.Role} account has been approved. On your first login, a verification OTP will be sent to your email. Verify that OTP to complete activation and log in.");
                 }
 
-                // Publish UserApprovedEvent to notify other services
-                await _publishEndpoint.Publish(new UserApprovedEvent
-                {
-                    EventId = Guid.NewGuid(),
-                    OccurredAt = DateTime.UtcNow,
-                    EventVersion = 1,
-                    UserId = Guid.Parse(user.Id),
-                    Email = user.Email ?? string.Empty,
-                    FullName = user.FullName,
-                    Role = user.Role
-                });
-
                 return true;
             }
 

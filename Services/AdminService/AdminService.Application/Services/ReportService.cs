@@ -19,21 +19,6 @@ public class ReportService : IReportService
         _mapper = mapper;
     }
 
-    public async Task<ReportDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-    {
-        var report = await _reportRepository.GetByIdAsync(id, cancellationToken);
-        if (report == null)
-            throw new KeyNotFoundException($"Report with ID {id} not found");
-
-        return _mapper.Map<ReportDto>(report);
-    }
-
-    public async Task<IEnumerable<ReportDto>> GetByDateRangeAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
-    {
-        var reports = await _reportRepository.GetByDateRangeAsync(startDate, endDate, cancellationToken);
-        return _mapper.Map<IEnumerable<ReportDto>>(reports);
-    }
-
     // GetAll methods - no date filters, returns all data
     public async Task<UserAnalyticsDto> GetAllUsersAnalyticsAsync(CancellationToken cancellationToken = default)
     {

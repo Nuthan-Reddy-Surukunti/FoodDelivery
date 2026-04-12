@@ -24,6 +24,7 @@ builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<RestaurantApprovedEventHandler>();
     x.AddConsumer<RestaurantRejectedEventHandler>();
+    x.AddConsumer<RestaurantDeletedEventHandler>();
     
     x.UsingRabbitMq((context, cfg) =>
     {

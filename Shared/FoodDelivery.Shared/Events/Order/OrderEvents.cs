@@ -61,18 +61,3 @@ public class OrderCancelledEvent
     public string CancellationReason { get; set; } = string.Empty;
     public decimal RefundAmount { get; set; }
 }
-
-/// <summary>
-/// Published when order is delivered
-/// </summary>
-public class OrderDeliveredEvent
-{
-    public Guid EventId { get; set; }
-    public DateTime OccurredAt { get; set; }
-    public int EventVersion { get; set; } = 1;
-
-    public Guid OrderId { get; set; }
-    public Guid UserId { get; set; }
-    public Guid RestaurantId { get; set; }
-    public DateTime DeliveredAt { get; set; }
-}
