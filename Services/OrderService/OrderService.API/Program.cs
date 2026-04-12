@@ -5,6 +5,7 @@ using OrderService.Application;
 using OrderService.Application.Interfaces;
 using OrderService.Application.Options;
 using OrderService.Application.EventHandlers;
+using OrderService.Application.Services;
 using OrderService.Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -18,14 +19,11 @@ builder.Services.AddApplicationServices();
 builder.Services.Configure<DeliveryEmailOptions>(builder.Configuration.GetSection(DeliveryEmailOptions.SectionName));
 
 // Register HttpClient for inter-service calls (AuthService)
-builder.Services.AddHttpClient<IDeliveryAgentSyncService>(client =>
+builder.Services.AddHttpClient<IDeliveryAgentSyncService, DeliveryAgentSyncService>(client =>
 {
     var authServiceUrl = builder.Configuration["Services:AuthService:Url"] ?? "http://localhost:5001";
     client.BaseAddress = new Uri(authServiceUrl);
     client.Timeout = TimeSpan.FromSeconds(10);
-}).ConfigureHttpClient(client =>
-{
-    // Additional configuration if needed
 });
 builder.Services.AddMassTransit(x =>
 {
