@@ -9,19 +9,6 @@ using AdminService.Domain.Interfaces;
 
 namespace AdminService.Application.EventHandlers;
 
-// UserRegisteredEventHandler
-public class UserRegisteredEventHandler : IConsumer<UserRegisteredEvent>
-{
-    private readonly ILogger<UserRegisteredEventHandler> _logger;
-    public UserRegisteredEventHandler(ILogger<UserRegisteredEventHandler> logger) => _logger = logger;
-    public async Task Consume(ConsumeContext<UserRegisteredEvent> context)
-    {
-        var @event = context.Message;
-        _logger.LogInformation("Processing UserRegisteredEvent: UserId={UserId}", @event.UserId);
-        await Task.CompletedTask;
-    }
-}
-
 // RestaurantCreatedEventHandler - Syncs restaurants created by partners into AdminService
 public class RestaurantCreatedEventHandler : IConsumer<RestaurantCreatedEvent>
 {
@@ -79,38 +66,6 @@ public class RestaurantCreatedEventHandler : IConsumer<RestaurantCreatedEvent>
             _logger.LogError(ex, "Error processing RestaurantCreatedEvent: RestaurantId={RestaurantId}", @event.RestaurantId);
             throw;
         }
-    }
-}
-
-// RestaurantApprovedEventHandler - Logs approval events (approval happens in AdminService endpoint, just audit here)
-public class RestaurantApprovedEventHandler : IConsumer<RestaurantApprovedEvent>
-{
-    private readonly ILogger<RestaurantApprovedEventHandler> _logger;
-    
-    public RestaurantApprovedEventHandler(ILogger<RestaurantApprovedEventHandler> logger) => _logger = logger;
-    
-    public async Task Consume(ConsumeContext<RestaurantApprovedEvent> context)
-    {
-        var @event = context.Message;
-        _logger.LogInformation("Restaurant approved successfully: RestaurantId={RestaurantId}, Name={Name}, ApprovedBy={ApprovedBy}", 
-            @event.RestaurantId, @event.Name, @event.ApprovedBy);
-        await Task.CompletedTask;
-    }
-}
-
-// RestaurantRejectedEventHandler - Logs rejection events (rejection happens in AdminService endpoint, just audit here)
-public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
-{
-    private readonly ILogger<RestaurantRejectedEventHandler> _logger;
-    
-    public RestaurantRejectedEventHandler(ILogger<RestaurantRejectedEventHandler> logger) => _logger = logger;
-    
-    public async Task Consume(ConsumeContext<RestaurantRejectedEvent> context)
-    {
-        var @event = context.Message;
-        _logger.LogInformation("Restaurant rejected: RestaurantId={RestaurantId}, Name={Name}, Reason={Reason}", 
-            @event.RestaurantId, @event.Name, @event.RejectionReason);
-        await Task.CompletedTask;
     }
 }
 
@@ -205,18 +160,5 @@ public class OrderStatusChangedEventHandler : IConsumer<OrderStatusChangedEvent>
             _logger.LogError(ex, "Error processing OrderStatusChangedEvent: OrderId={OrderId}", @event.OrderId);
             throw;
         }
-    }
-}
-
-// OrderCancelledEventHandler
-public class OrderCancelledEventHandler : IConsumer<OrderCancelledEvent>
-{
-    private readonly ILogger<OrderCancelledEventHandler> _logger;
-    public OrderCancelledEventHandler(ILogger<OrderCancelledEventHandler> logger) => _logger = logger;
-    public async Task Consume(ConsumeContext<OrderCancelledEvent> context)
-    {
-        var @event = context.Message;
-        _logger.LogInformation("Processing OrderCancelledEvent: OrderId={OrderId}", @event.OrderId);
-        await Task.CompletedTask;
     }
 }
