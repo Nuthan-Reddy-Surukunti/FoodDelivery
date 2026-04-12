@@ -14,6 +14,7 @@ public static class ServiceRegistration
         services.AddScoped<IOrderStatusService, OrderStatusService>();
         services.AddScoped<IDeliveryService, DeliveryService>();
         services.AddScoped<IUserAddressService, UserAddressService>();
+        services.AddScoped<IDeliveryAgentSyncService, DeliveryAgentSyncService>();
 
         return services;
     }

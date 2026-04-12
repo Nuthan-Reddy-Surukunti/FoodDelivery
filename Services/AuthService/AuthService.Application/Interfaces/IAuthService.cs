@@ -16,5 +16,6 @@ public interface IAuthService
     Task<AuthRequestDto> ToggleTwoFactorAsync(string userId, ToggleTwoFactorRequestDto request);
     Task<AuthRequestDto> DeleteUserAsync(DeleteUserRequestDto request);
     Task<AuthRequestDto> CreateAdminAsync(CreateAdminDto request);
+    Task<List<DeliveryAgentDto>> GetDeliveryAgentsAsync();
 }
 

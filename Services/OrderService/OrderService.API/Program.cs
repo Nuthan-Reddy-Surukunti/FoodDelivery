@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using MassTransit;
 using OrderService.API.Middleware;
 using OrderService.Application;
+using OrderService.Application.Interfaces;
 using OrderService.Application.Options;
 using OrderService.Application.EventHandlers;
 using OrderService.Infrastructure;
@@ -15,6 +16,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.Configure<DeliveryEmailOptions>(builder.Configuration.GetSection(DeliveryEmailOptions.SectionName));
+
+// Register HttpClient for inter-service calls (AuthService)
+builder.Services.AddHttpClient<IDeliveryAgentSyncService>(client =>
+{
+    var authServiceUrl = builder.Configuration["Services:AuthService:Url"] ?? "http://localhost:5001";
+    client.BaseAddress = new Uri(authServiceUrl);
+    client.Timeout = TimeSpan.FromSeconds(10);
+}).ConfigureHttpClient(client =>
+{
+    // Additional configuration if needed
+});
 builder.Services.AddMassTransit(x =>
 {
     x.AddConsumer<DeliveryAgentRegisteredEventHandler>();
@@ -94,6 +106,21 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+// Run delivery agent sync on startup
+using (var scope = app.Services.CreateScope())
+{
+    var syncService = scope.ServiceProvider.GetRequiredService<IDeliveryAgentSyncService>();
+    try
+    {
+        var syncedCount = await syncService.SyncDeliveryAgentsFromAuthServiceAsync();
+        Console.WriteLine($"[Startup] Synced {syncedCount} delivery agents from AuthService.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Startup] Warning: Delivery agent sync failed: {ex.Message}");
+    }
+}
 
 if (app.Environment.IsDevelopment())
 {

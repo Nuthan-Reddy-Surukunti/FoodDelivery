@@ -5,6 +5,7 @@ using AuthService.Domain.Interfaces;
 using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace AuthService.Infrastructure.Repositories;
 
@@ -67,6 +68,12 @@ public class UserRepository : IUserRepository
          return MapToDomain(user);
     }
 
+    public async Task<IEnumerable<User>> GetAllAsync()
+    {
+        var users = await _context.Users.ToListAsync();
+        return users.Select(MapToDomain).ToList();
+    }
+
     public async Task<bool> SetEmailVerifiedAsync(Guid userId)
     {
         var appUser = await _userManager.FindByIdAsync(userId.ToString());
@@ -126,5 +133,29 @@ public class UserRepository : IUserRepository
             ApprovalNotes = appUser.ApprovalNotes,
             CreatedAt = appUser.CreatedAt
         };
+    }
+
+    public async Task<bool> IsAdminAsync(Guid userId)
+    {
+        var user = await FindByIdAsync(userId);
+        return user != null && user.Role == UserRole.Admin;
+    }
+
+    public async Task<bool> IsUserAsync(Guid userId)
+    {
+        var user = await FindByIdAsync(userId);
+        return user != null && user.Role == UserRole.Customer;
+    }
+
+    public async Task<bool> IsRestaurantAsync(Guid userId)
+    {
+        var user = await FindByIdAsync(userId);
+        return user != null && user.Role == UserRole.RestaurantPartner;
+    }
+
+    public async Task<UserRole?> GetUserRoleAsync(Guid userId)
+    {
+        var user = await FindByIdAsync(userId);
+        return user?.Role;
     }
 }

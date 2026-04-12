@@ -704,4 +704,19 @@ public class AuthService : IAuthService
     {
         return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
     }
+
+    public async Task<List<DeliveryAgentDto>> GetDeliveryAgentsAsync()
+    {
+        var allUsers = await _userRepository.GetAllAsync();
+        var agents = allUsers
+            .Where(u => u.Role == UserRole.DeliveryAgent && !string.IsNullOrEmpty(u.Email))
+            .Select(u => new DeliveryAgentDto
+            {
+                UserId = u.Id.ToString(),
+                FullName = u.FullName ?? "Unknown",
+                Email = u.Email
+            })
+            .ToList();
+        return agents;
+    }
 }

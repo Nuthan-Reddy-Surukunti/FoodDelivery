@@ -1,5 +1,6 @@
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
+using AuthService.Domain.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,12 +13,18 @@ namespace AuthService.API.Controllers
         private readonly IAuthService _authService;
         private readonly IOtpService _otpService;
         private readonly IAdminApprovalService _adminApprovalService;
+        private readonly IRestaurantApprovalService _restaurantApprovalService;
 
-        public AuthController(IAuthService authService, IOtpService otpService, IAdminApprovalService adminApprovalService)
+        public AuthController(
+            IAuthService authService,
+            IOtpService otpService,
+            IAdminApprovalService adminApprovalService,
+            IRestaurantApprovalService restaurantApprovalService)
         {
             _authService = authService;
             _otpService = otpService;
             _adminApprovalService = adminApprovalService;
+            _restaurantApprovalService = restaurantApprovalService;
         }
 
         [HttpPost("register")]
@@ -186,6 +193,65 @@ namespace AuthService.API.Controllers
                 return BadRequest(result);
 
             return Ok(result);
+        }
+
+        /// <summary>
+        /// Get all delivery agents (for inter-service sync from OrderService).
+        /// This endpoint is called by OrderService to sync existing delivery agents.
+        /// </summary>
+        [HttpGet("admin/delivery-agents")]
+        [AllowAnonymous] // Allow OrderService to call this internally
+        public async Task<IActionResult> GetDeliveryAgents()
+        {
+            var agents = await _authService.GetDeliveryAgentsAsync();
+            return Ok(agents);
+        }
+
+        /// <summary>
+        /// Get all pending restaurant approvals (Admin only)
+        /// </summary>
+        [HttpGet("admin/restaurants/pending")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetPendingRestaurants()
+        {
+            var restaurants = await _restaurantApprovalService.GetPendingRestaurantsAsync();
+            return Ok(new { Success = true, Data = restaurants });
+        }
+
+        /// <summary>
+        /// Approve a pending restaurant registration (Admin only)
+        /// </summary>
+        [HttpPost("admin/restaurants/approve")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ApproveRestaurant([FromBody] AdminApprovalDto dto)
+        {
+            var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(adminId))
+                return Unauthorized();
+
+            var approved = await _restaurantApprovalService.ApproveRestaurantAsync(dto.UserId, Guid.Parse(adminId), dto.Notes);
+            if (!approved)
+                return BadRequest(new { Success = false, Message = "Failed to approve restaurant." });
+
+            return Ok(new { Success = true, Message = "Restaurant approved successfully." });
+        }
+
+        /// <summary>
+        /// Reject a pending restaurant registration (Admin only)
+        /// </summary>
+        [HttpPost("admin/restaurants/reject")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> RejectRestaurant([FromBody] AdminRejectionDto dto)
+        {
+            var adminId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(adminId))
+                return Unauthorized();
+
+            var rejected = await _restaurantApprovalService.RejectRestaurantAsync(dto.UserId, Guid.Parse(adminId), dto.Reason);
+            if (!rejected)
+                return BadRequest(new { Success = false, Message = "Failed to reject restaurant." });
+
+            return Ok(new { Success = true, Message = "Restaurant rejected successfully." });
         }
     }
 }

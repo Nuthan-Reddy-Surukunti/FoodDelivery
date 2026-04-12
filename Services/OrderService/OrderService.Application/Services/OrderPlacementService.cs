@@ -1,7 +1,5 @@
-namespace OrderService.Application.Services;
 using FoodDelivery.Shared.Events.Order;
 using MassTransit;
-
 using OrderService.Application.DTOs.Cart;
 using OrderService.Application.DTOs.Order;
 using OrderService.Application.DTOs.Requests;
@@ -18,17 +16,20 @@ public class OrderPlacementService : IOrderPlacementService
     private readonly ICartRepository _cartRepository;
     private readonly IOrderRepository _orderRepository;
     private readonly IUserAddressRepository _userAddressRepository;
+    private readonly IDeliveryService _deliveryService;
     private readonly IPublishEndpoint _publishEndpoint;
 
     public OrderPlacementService(
         ICartRepository cartRepository,
         IOrderRepository orderRepository,
         IUserAddressRepository userAddressRepository,
+        IDeliveryService deliveryService,
         IPublishEndpoint publishEndpoint)
     {
         _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _userAddressRepository = userAddressRepository ?? throw new ArgumentNullException(nameof(userAddressRepository));
+        _deliveryService = deliveryService ?? throw new ArgumentNullException(nameof(deliveryService));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
     }
 
@@ -77,6 +78,24 @@ public class OrderPlacementService : IOrderPlacementService
         };
 
         await _orderRepository.AddAsync(order, cancellationToken);
+
+        // Process payment immediately (COD - Cash on Delivery)
+        try
+        {
+            var paymentRequest = new ProcessPaymentRequestDto
+            {
+                PaymentMethod = PaymentMethod.CashOnDelivery,
+                Amount = order.TotalAmount
+            };
+            var paymentResponse = await _deliveryService.ProcessPaymentAsync(order.Id, paymentRequest, cancellationToken);
+            order.PaymentId = paymentResponse.PaymentId;
+            await _orderRepository.UpdateAsync(order, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            // Log payment failure but continue - customer can retry payment later
+            System.Diagnostics.Debug.WriteLine($"Payment processing failed for order {order.Id}: {ex.Message}");
+        }
 
         cart.Status = CartStatus.Abandoned;
         cart.UpdatedAt = DateTime.UtcNow;
