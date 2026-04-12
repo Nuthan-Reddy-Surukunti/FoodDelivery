@@ -9,6 +9,11 @@ public class DeliveryAssignmentDto
     public Guid DeliveryAgentId { get; set; }
 
     /// <summary>
+    /// The Order ID associated with this delivery assignment (needed for status updates).
+    /// </summary>
+    public Guid OrderId { get; set; }
+
+    /// <summary>
     /// The AuthService user ID for the assigned delivery agent (used for JWT token comparison).
     /// </summary>
     public string? AgentAuthUserId { get; set; }

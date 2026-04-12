@@ -103,19 +103,25 @@ public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
 }
 
 /// <summary>
-/// Handles RestaurantDeletedEvent from AdminService to sync restaurant deletion status
+/// Handles RestaurantDeletedEvent from AdminService to delete restaurant and cascade delete all items and categories
 /// </summary>
 public class RestaurantDeletedEventHandler : IConsumer<RestaurantDeletedEvent>
 {
     private readonly ILogger<RestaurantDeletedEventHandler> _logger;
     private readonly IRestaurantRepository _restaurantRepository;
+    private readonly IMenuItemRepository _menuItemRepository;
+    private readonly ICategoryRepository _categoryRepository;
 
     public RestaurantDeletedEventHandler(
         ILogger<RestaurantDeletedEventHandler> logger,
-        IRestaurantRepository restaurantRepository)
+        IRestaurantRepository restaurantRepository,
+        IMenuItemRepository menuItemRepository,
+        ICategoryRepository categoryRepository)
     {
         _logger = logger;
         _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
+        _menuItemRepository = menuItemRepository ?? throw new ArgumentNullException(nameof(menuItemRepository));
+        _categoryRepository = categoryRepository ?? throw new ArgumentNullException(nameof(categoryRepository));
     }
 
     public async Task Consume(ConsumeContext<RestaurantDeletedEvent> context)
@@ -133,12 +139,51 @@ public class RestaurantDeletedEventHandler : IConsumer<RestaurantDeletedEvent>
                 return; // Restaurant may have already been deleted or doesn't exist
             }
 
-            // Update restaurant status to Inactive (deleted)
-            restaurant.Status = RestaurantStatus.Inactive;
-            restaurant.UpdatedAt = DateTime.UtcNow;
+            // Step 1: Delete all menu items for this restaurant (cascade)
+            var menuItems = await _menuItemRepository.GetByRestaurantAsync(@event.RestaurantId);
+            foreach (var menuItem in menuItems)
+            {
+                try
+                {
+                    await _menuItemRepository.DeleteAsync(menuItem.Id);
+                    _logger.LogInformation("Deleted menu item: MenuItemId={MenuItemId}, Name={Name}", 
+                        menuItem.Id, menuItem.Name);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error deleting menu item: MenuItemId={MenuItemId}", menuItem.Id);
+                    // Continue with other items instead of failing entire deletion
+                }
+            }
 
-            await _restaurantRepository.UpdateAsync(restaurant);
-            _logger.LogInformation("Restaurant marked as Inactive (deleted): RestaurantId={RestaurantId}", @event.RestaurantId);
+            // Step 2: Delete all categories for this restaurant (cascade)
+            var categories = await _categoryRepository.GetByRestaurantAsync(@event.RestaurantId);
+            foreach (var category in categories)
+            {
+                try
+                {
+                    await _categoryRepository.DeleteAsync(category.Id);
+                    _logger.LogInformation("Deleted category: CategoryId={CategoryId}, Name={Name}", 
+                        category.Id, category.Name);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error deleting category: CategoryId={CategoryId}", category.Id);
+                    // Continue with other categories instead of failing entire deletion
+                }
+            }
+
+            // Step 3: Delete the restaurant itself
+            var deleted = await _restaurantRepository.DeleteAsync(@event.RestaurantId);
+            if (deleted)
+            {
+                _logger.LogInformation("Restaurant hard deleted: RestaurantId={RestaurantId}, Name={Name}", 
+                    @event.RestaurantId, @event.Name);
+            }
+            else
+            {
+                _logger.LogWarning("Failed to delete restaurant: RestaurantId={RestaurantId}", @event.RestaurantId);
+            }
         }
         catch (Exception ex)
         {

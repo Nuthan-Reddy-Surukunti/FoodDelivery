@@ -178,6 +178,8 @@ public class DeliveryService : IDeliveryService
     {
         DeliveryAssignmentId = assignment.Id,
         DeliveryAgentId = assignment.DeliveryAgentId,
+        OrderId = assignment.OrderId,
+        AgentAuthUserId = agent?.AuthUserId ?? assignment.DeliveryAgent?.AuthUserId,
         AssignedAt = assignment.AssignedAt,
         PickedUpAt = assignment.PickedUpAt,
         DeliveredAt = assignment.DeliveredAt,

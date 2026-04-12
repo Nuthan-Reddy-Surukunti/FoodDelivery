@@ -105,6 +105,7 @@ public static class OrderMappings
         {
             DeliveryAssignmentId = assignment.Id,
             DeliveryAgentId = assignment.DeliveryAgentId,
+            OrderId = assignment.OrderId,
             AgentAuthUserId = assignment.DeliveryAgent?.AuthUserId,
             AssignedAt = assignment.AssignedAt,
             PickedUpAt = assignment.PickedUpAt,
