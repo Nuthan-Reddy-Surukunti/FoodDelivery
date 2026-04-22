@@ -38,7 +38,7 @@ builder.Services.AddMassTransit(x =>
                 h.Username(builder.Configuration["RabbitMq:UserName"] ?? "guest");
                 h.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
             });
-        cfg.ConfigureEndpoints(context);
+        cfg.ConfigureEndpoints(context, new DefaultEndpointNameFormatter("OrderService", false));
     });
 });
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
