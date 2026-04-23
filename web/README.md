@@ -34,6 +34,7 @@ Currently the project contains:
 
 ## Documentation
 
+- [DESIGN_REFERENCE.md](./DESIGN_REFERENCE.md) - **START HERE** - Complete guide to all 16 page designs
 - [ARCHITECTURE.md](./ARCHITECTURE.md) - Project structure, component patterns, and development workflow
 - [IMPLEMENTATION_CHECKLIST.md](./IMPLEMENTATION_CHECKLIST.md) - Phase-by-phase implementation tasks
 

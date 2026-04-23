@@ -209,28 +209,42 @@ All colors, spacing, and typography are pre-configured in `tailwind.config.js` f
 
 ## Design Reference
 
-**All page designs are available in the `/docs/stitch_react_application_design/` folder:**
+**⭐ ALL PAGE DESIGNS ARE PROVIDED - FOLLOW EXACTLY**
+
+- **[DESIGN_REFERENCE.md](./DESIGN_REFERENCE.md)** - Complete guide to all designs and how to use them
+- Location: `/docs/stitch_react_application_design/`
+- 16 complete page designs with HTML code and screenshots
+- All using Horizon UI design system with Tailwind CSS
+
+### Available Designs
+
+**Customer Pages (8):**
+- home_horizon_delivery/ - Landing page
+- login_horizon_delivery/ - Login form
+- register_horizon_delivery/ - Registration form
+- restaurant_details_horizon_delivery/ - Menu & details
+- your_cart_horizon_delivery/ - Shopping cart
+- checkout_horizon_delivery/ - Multi-step checkout
+- my_orders_horizon_delivery/ - Order history
+- track_order_horizon_delivery/ - Order tracking
+
+**Partner Pages (2):**
+- partner_dashboard_overview/ - Dashboard
+- partner_menu_management/ - Menu CRUD
+
+**Admin Pages (4):**
+- admin_overview/ - Metrics dashboard
+- admin_orders/ - Order management
+- admin_restaurants/ - Partner management
+- admin_users/ - User management
+
+**Delivery Agent Pages (2):**
+- agent_active_deliveries/ - Live deliveries
+- agent_earnings_history/ - Payment history
 
 Each design contains:
-- `code.html` - Complete HTML prototype with Tailwind CSS (ready to convert)
-- `screen.png` - Screenshot of the design
-
-**Available Designs:**
-- `home_horizon_delivery/` - Hero, categories, restaurants
-- `login_horizon_delivery/` - Email/password login form
-- `register_horizon_delivery/` - Name, email, phone, password registration
-- `restaurant_details_horizon_delivery/` - Menu items and restaurant info
-- `your_cart_horizon_delivery/` - Cart items, total, checkout button
-- `checkout_horizon_delivery/` - Address, time slot, payment (COD only)
-- `my_orders_horizon_delivery/` - Order history
-- `track_order_horizon_delivery/` - Real-time order tracking
-- `horizon_ui/DESIGN.md` - Design system documentation
-
-**How to Use:**
-1. Open the `code.html` file for your target page
-2. Extract the HTML structure and Tailwind classes
-3. Convert to React component with useState/useContext for dynamic data
-4. Replace hardcoded data with API calls via services
+- `code.html` - Complete working HTML with Tailwind CSS
+- `screen.png` - Design screenshot
 
 ## Setup Instructions
 
