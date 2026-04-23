@@ -2,55 +2,46 @@
 
 ## Phase 1: Project Setup ✅ (COMPLETED)
 - [x] Create React project structure with Vite
-- [x] Configure TypeScript with path aliases
+- [x] Configure JavaScript with path aliases
 - [x] Setup Tailwind CSS with Horizon UI tokens
 - [x] Configure environment variables
 - [x] Setup ESLint configuration
 - [x] Create global styles
+- [x] Remove TypeScript files (tsconfig.json, .ts/.tsx files)
 
-## Phase 2: Type Definitions & Constants (READY)
+## Phase 2: Constants & Enums (READY)
 
 ### To Do:
-- [ ] Create TypeScript interfaces for:
-  - User (name, email, phone, role)
-  - Restaurant (id, name, address, rating, cuisine)
-  - MenuItem (id, name, price, description, image)
-  - Cart (items, restaurantId, total)
-  - Order (id, status, items, total, deliveryAddress, trackingUpdates)
-  - Address (street, city, zipcode, coordinates)
-  - Auth (token, refreshToken, user)
-
-- [ ] Create enums:
-  - UserRole (CUSTOMER, PARTNER, ADMIN, DELIVERY_AGENT)
-  - OrderStatus (PENDING, CONFIRMED, PREPARING, READY, PICKED_UP, DELIVERED, CANCELLED)
-  - PaymentMethod (COD)
-  - CuisineType (Pizza, Burgers, Sushi, etc.)
-
-- [ ] Create constants:
+- [ ] Create constants for:
   - API endpoints
   - Error messages
   - Validation patterns (email, phone, password)
   - Success messages
   - Time slots for delivery
+  - User roles
+  - Order statuses
+  - Payment methods
+
+- [ ] Create enums/constants in JavaScript:
+  - UserRole: { CUSTOMER, PARTNER, ADMIN, DELIVERY_AGENT }
+  - OrderStatus: { PENDING, CONFIRMED, PREPARING, READY, PICKED_UP, DELIVERED, CANCELLED }
+  - PaymentMethod: { COD }
+  - CuisineType: { Pizza, Burgers, Sushi, etc. }
 
 **Files to create:**
-- `src/types/index.ts`
-- `src/types/auth.ts`
-- `src/types/restaurant.ts`
-- `src/types/order.ts`
-- `src/types/user.ts`
-- `src/constants/enums.ts`
-- `src/constants/messages.ts`
-- `src/constants/api.ts`
+- `src/constants/enums.js` - All enum constants
+- `src/constants/messages.js` - Error and success messages
+- `src/constants/api.js` - API endpoint paths
+- `src/constants/validation.js` - Regex patterns and validators
 
 ## Phase 3: API Service Layer (READY)
 
 **Files to create:**
-- `src/services/api.ts` - Axios instance with interceptors
-- `src/services/auth.ts` - Auth endpoints
-- `src/services/catalog.ts` - Restaurant/menu endpoints
-- `src/services/order.ts` - Order endpoints
-- `src/services/admin.ts` - Admin endpoints (if needed initially)
+- `src/services/api.js` - Axios instance with interceptors
+- `src/services/auth.js` - Auth endpoints
+- `src/services/catalog.js` - Restaurant/menu endpoints
+- `src/services/order.js` - Order endpoints
+- `src/services/admin.js` - Admin endpoints (if needed initially)
 
 **Key features:**
 - [ ] Setup axios instance with base URL from .env
@@ -75,14 +66,14 @@
 - [ ] `useLocalStorage(key)` - Persist cart locally
 
 **Files to create:**
-- `src/context/AuthContext.tsx`
-- `src/context/CartContext.tsx`
-- `src/context/NotificationContext.tsx`
-- `src/context/ThemeContext.tsx`
-- `src/hooks/useAuth.ts`
-- `src/hooks/useCart.ts`
-- `src/hooks/useApi.ts`
-- `src/hooks/useNotification.ts`
+- `src/context/AuthContext.jsx`
+- `src/context/CartContext.jsx`
+- `src/context/NotificationContext.jsx`
+- `src/context/ThemeContext.jsx`
+- `src/hooks/useAuth.js`
+- `src/hooks/useCart.js`
+- `src/hooks/useApi.js`
+- `src/hooks/useNotification.js`
 
 ## Phase 5: Atomic Components (READY)
 
@@ -98,14 +89,14 @@
 - [ ] Card - Generic card container
 
 **Files:**
-- `src/components/atoms/Button.tsx`
-- `src/components/atoms/Input.tsx`
-- `src/components/atoms/Badge.tsx`
-- `src/components/atoms/Icon.tsx`
-- `src/components/atoms/Loader.tsx`
-- `src/components/atoms/Toast.tsx`
-- `src/components/atoms/Modal.tsx`
-- `src/components/atoms/Card.tsx`
+- `src/components/atoms/Button.jsx`
+- `src/components/atoms/Input.jsx`
+- `src/components/atoms/Badge.jsx`
+- `src/components/atoms/Icon.jsx`
+- `src/components/atoms/Loader.jsx`
+- `src/components/atoms/Toast.jsx`
+- `src/components/atoms/Modal.jsx`
+- `src/components/atoms/Card.jsx`
 
 ## Phase 6: Molecule Components (READY)
 
@@ -122,14 +113,14 @@
 - [ ] CuisineChip - Category chip
 
 **Files:**
-- `src/components/molecules/SearchBar.tsx`
-- `src/components/molecules/MenuItem.tsx`
-- `src/components/molecules/FormField.tsx`
-- `src/components/molecules/RestaurantCard.tsx`
-- `src/components/molecules/CartItem.tsx`
-- `src/components/molecules/AddressField.tsx`
-- `src/components/molecules/TimeSlotSelector.tsx`
-- `src/components/molecules/StepperIndicator.tsx`
+- `src/components/molecules/SearchBar.jsx`
+- `src/components/molecules/MenuItem.jsx`
+- `src/components/molecules/FormField.jsx`
+- `src/components/molecules/RestaurantCard.jsx`
+- `src/components/molecules/CartItem.jsx`
+- `src/components/molecules/AddressField.jsx`
+- `src/components/molecules/TimeSlotSelector.jsx`
+- `src/components/molecules/StepperIndicator.jsx`
 - etc.
 
 ## Phase 7: Organism Components (READY)
@@ -147,16 +138,16 @@
 - [ ] OrderTracker - Real-time order status timeline
 
 **Files:**
-- `src/components/organisms/Header.tsx`
-- `src/components/organisms/Footer.tsx`
-- `src/components/organisms/NavBar.tsx`
-- `src/components/organisms/RegistrationForm.tsx`
-- `src/components/organisms/LoginForm.tsx`
-- `src/components/organisms/RestaurantList.tsx`
-- `src/components/organisms/MenuSection.tsx`
-- `src/components/organisms/CartSummary.tsx`
-- `src/components/organisms/CheckoutForm.tsx`
-- `src/components/organisms/OrderTracker.tsx`
+- `src/components/organisms/Header.jsx`
+- `src/components/organisms/Footer.jsx`
+- `src/components/organisms/NavBar.jsx`
+- `src/components/organisms/RegistrationForm.jsx`
+- `src/components/organisms/LoginForm.jsx`
+- `src/components/organisms/RestaurantList.jsx`
+- `src/components/organisms/MenuSection.jsx`
+- `src/components/organisms/CartSummary.jsx`
+- `src/components/organisms/CheckoutForm.jsx`
+- `src/components/organisms/OrderTracker.jsx`
 
 ## Phase 8: Pages (READY)
 
@@ -182,20 +173,20 @@
 - [ ] ReportsPage - Sales, cancellations, etc.
 
 **Files:**
-- `src/pages/customer/HomePage.tsx`
-- `src/pages/customer/LoginPage.tsx`
-- `src/pages/customer/RegisterPage.tsx`
-- `src/pages/customer/RestaurantDetailPage.tsx`
-- `src/pages/customer/CartPage.tsx`
-- `src/pages/customer/CheckoutPage.tsx`
-- `src/pages/customer/MyOrdersPage.tsx`
-- `src/pages/customer/OrderTrackingPage.tsx`
-- `src/pages/partner/DashboardPage.tsx`
+- `src/pages/customer/HomePage.jsx`
+- `src/pages/customer/LoginPage.jsx`
+- `src/pages/customer/RegisterPage.jsx`
+- `src/pages/customer/RestaurantDetailPage.jsx`
+- `src/pages/customer/CartPage.jsx`
+- `src/pages/customer/CheckoutPage.jsx`
+- `src/pages/customer/MyOrdersPage.jsx`
+- `src/pages/customer/OrderTrackingPage.jsx`
+- `src/pages/partner/DashboardPage.jsx`
 - `src/pages/admin/DashboardPage.tsx`
 
 ## Phase 9: Routing Setup (READY)
 
-- [ ] Create main App.tsx with React Router
+- [ ] Create main App.jsx with React Router
 - [ ] Setup route guards (PrivateRoute component)
 - [ ] Role-based route protection
 - [ ] Lazy load pages with React.lazy
@@ -229,7 +220,8 @@
 ✅ Mobile-responsive design
 ✅ Accessibility (WCAG 2.1 AA)
 ✅ ESLint passes with 0 warnings
-✅ TypeScript strict mode passes
+✅ JavaScript strict mode enabled
+✅ No TypeScript errors (N/A - using JavaScript)
 
 ## Notes
 

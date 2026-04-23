@@ -14,16 +14,14 @@ web/
 │   ├── context/                # React context providers
 │   ├── services/               # API service layer
 │   ├── utils/                  # Helper functions
-│   ├── types/                  # TypeScript type definitions
 │   ├── constants/              # App constants and enums
 │   ├── styles/                 # Global styles
-│   ├── App.tsx                 # Root component
-│   └── main.tsx                # Entry point
+│   ├── App.jsx                 # Root component
+│   └── main.jsx                # Entry point
 ├── public/                     # Static assets
 ├── package.json
-├── tsconfig.json
+├── vite.config.js
 ├── tailwind.config.js
-├── vite.config.ts
 └── .env.example
 ```
 
@@ -31,8 +29,8 @@ web/
 
 | Layer | Technology | Purpose |
 |-------|-----------|---------|
-| **Framework** | React 18 | UI library |
-| **Language** | TypeScript | Type safety |
+| **Framework** | React 18 | UI library with hooks |
+| **Language** | JavaScript (ES2020) | Dynamic typing for rapid development |
 | **Routing** | React Router v6 | Client-side routing |
 | **Styling** | Tailwind CSS | Utility-first CSS framework |
 | **HTTP Client** | Axios | API requests with interceptors |
@@ -68,18 +66,18 @@ web/
 ```
 components/
 ├── atoms/
-│   ├── Button.tsx
-│   ├── Input.tsx
-│   ├── Badge.tsx
-│   └── Icon.tsx
+│   ├── Button.jsx
+│   ├── Input.jsx
+│   ├── Badge.jsx
+│   └── Icon.jsx
 ├── molecules/
-│   ├── SearchBar.tsx
-│   ├── MenuItem.tsx
-│   └── CartBadge.tsx
+│   ├── SearchBar.jsx
+│   ├── MenuItem.jsx
+│   └── CartBadge.jsx
 └── organisms/
-    ├── Header.tsx
-    ├── Footer.tsx
-    └── RestaurantCard.tsx
+    ├── Header.jsx
+    ├── Footer.jsx
+    └── RestaurantCard.jsx
 ```
 
 ## State Management
@@ -107,11 +105,11 @@ Create reusable hook logic:
 ### Service Layer Structure
 ```
 services/
-├── api.ts          # Axios instance with interceptors
-├── auth.ts         # Auth endpoints
-├── catalog.ts      # Catalog/restaurant endpoints
-├── order.ts        # Order endpoints
-└── admin.ts        # Admin endpoints
+├── api.js          # Axios instance with interceptors
+├── auth.js         # Auth endpoints
+├── catalog.js      # Catalog/restaurant endpoints
+├── order.js        # Order endpoints
+└── admin.js        # Admin endpoints
 ```
 
 ### API Interceptors
@@ -136,7 +134,7 @@ POST /gateway/order/orders             → Create order
 All colors, spacing, and typography are pre-configured in `tailwind.config.js` from the Horizon UI design system.
 
 ### Usage Examples
-```tsx
+```jsx
 <button className="bg-primary text-on-primary px-4 py-2 rounded-lg hover:bg-primary-container">
   Submit
 </button>
@@ -198,16 +196,41 @@ All colors, spacing, and typography are pre-configured in `tailwind.config.js` f
 
 ## Development Workflow
 
-1. **Create type definitions** in `src/types/`
-2. **Design API services** in `src/services/`
-3. **Build atoms** in `src/components/atoms/`
-4. **Compose molecules** from atoms
-5. **Assemble organisms** from molecules
-6. **Create pages** using organisms
-7. **Setup routing** in App.tsx
-8. **Implement context/hooks** for state management
-9. **Add error handling & validation**
-10. **Style with Tailwind + Horizon UI colors**
+1. **Create service functions** in `src/services/` for API calls
+2. **Design API services** with proper error handling
+3. **Build atoms** in `src/components/atoms/` using existing design HTML
+4. **Compose molecules** from atoms for reusability
+5. **Assemble organisms** from molecules (Header, Footer, Forms)
+6. **Create pages** using organisms with routing
+7. **Setup routing** in App.jsx with React Router v6
+8. **Implement context/hooks** for global state management
+9. **Add error handling & form validation** with user feedback
+10. **Style with Tailwind + Horizon UI colors** (pre-configured)
+
+## Design Reference
+
+**All page designs are available in the `/docs/stitch_react_application_design/` folder:**
+
+Each design contains:
+- `code.html` - Complete HTML prototype with Tailwind CSS (ready to convert)
+- `screen.png` - Screenshot of the design
+
+**Available Designs:**
+- `home_horizon_delivery/` - Hero, categories, restaurants
+- `login_horizon_delivery/` - Email/password login form
+- `register_horizon_delivery/` - Name, email, phone, password registration
+- `restaurant_details_horizon_delivery/` - Menu items and restaurant info
+- `your_cart_horizon_delivery/` - Cart items, total, checkout button
+- `checkout_horizon_delivery/` - Address, time slot, payment (COD only)
+- `my_orders_horizon_delivery/` - Order history
+- `track_order_horizon_delivery/` - Real-time order tracking
+- `horizon_ui/DESIGN.md` - Design system documentation
+
+**How to Use:**
+1. Open the `code.html` file for your target page
+2. Extract the HTML structure and Tailwind classes
+3. Convert to React component with useState/useContext for dynamic data
+4. Replace hardcoded data with API calls via services
 
 ## Setup Instructions
 

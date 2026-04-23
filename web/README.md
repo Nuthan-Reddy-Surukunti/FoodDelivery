@@ -1,6 +1,6 @@
 # CraveCloud Frontend - React SPA
 
-A modern, mobile-first React single-page application for food delivery and restaurant aggregation, built with TypeScript, Tailwind CSS, and the Horizon UI design system.
+A modern, mobile-first React single-page application for food delivery and restaurant aggregation, built with JavaScript, Tailwind CSS, and the Horizon UI design system.
 
 ## Quick Start
 
@@ -22,14 +22,15 @@ Development server will start at `http://localhost:3000`
 🚀 **Project Setup Complete** - All configuration files and directory structure are ready.
 
 Currently the project contains:
-- ✅ TypeScript configuration with path aliases
+- ✅ JavaScript configuration with Vite and path aliases
 - ✅ Tailwind CSS with Horizon UI design tokens
 - ✅ Vite development server with API proxy
-- ✅ ESLint configuration
+- ✅ ESLint configuration for JavaScript/React
 - ✅ Global styles and CSS reset
 - ✅ Directory structure for atomic design components
 - ✅ Architecture documentation
 - ✅ Implementation checklist
+- ✅ Reference designs in `/docs/stitch_react_application_design/`
 
 ## Documentation
 
