@@ -6,6 +6,10 @@ export default {
   ],
   darkMode: 'class',
   theme: {
+    fontFamily: {
+      inter: ['Inter', 'sans-serif'],
+      sans: ['Inter', 'sans-serif'],
+    },
     extend: {
       colors: {
         // Horizon UI Color Palette
@@ -67,6 +71,7 @@ export default {
         md: '0.75rem',
         lg: '1rem',
         xl: '1.5rem',
+        '2xl': '1.125rem',
         full: '9999px',
       },
       spacing: {
@@ -77,28 +82,16 @@ export default {
         'gutter': '16px',
         'container-padding': '24px',
       },
-      fontFamily: {
-        inter: ['Inter', 'sans-serif'],
-        'body-md': ['Inter'],
-        'body-lg': ['Inter'],
-        'label-md': ['Inter'],
-        'title-lg': ['Inter'],
-        'headline-md': ['Inter'],
-        'headline-lg': ['Inter'],
-        'display-xl': ['Inter'],
-        'caption-sm': ['Inter'],
-        'price-lg': ['Inter'],
-      },
       fontSize: {
-        'caption-sm': ['12px', { lineHeight: '1.4', fontWeight: '500' }],
-        'label-md': ['14px', { lineHeight: '1.0', fontWeight: '600' }],
-        'body-md': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
-        'body-lg': ['18px', { lineHeight: '1.6', fontWeight: '400' }],
-        'title-lg': ['20px', { lineHeight: '1.4', fontWeight: '600' }],
+        'caption-sm': ['12px', { lineHeight: '1.4', fontWeight: '400' }],
+        'label-md': ['14px', { lineHeight: '1.43', fontWeight: '500' }],
+        'body-md': ['14px', { lineHeight: '1.43', fontWeight: '400' }],
+        'body-lg': ['16px', { lineHeight: '1.5', fontWeight: '400' }],
+        'title-lg': ['18px', { lineHeight: '1.33', fontWeight: '600' }],
         'price-lg': ['20px', { lineHeight: '1.0', fontWeight: '700' }],
-        'headline-md': ['24px', { lineHeight: '1.3', fontWeight: '700' }],
-        'headline-lg': ['32px', { lineHeight: '1.2', letterSpacing: '-0.01em', fontWeight: '700' }],
-        'display-xl': ['40px', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '800' }],
+        'headline-md': ['20px', { lineHeight: '1.25', fontWeight: '600' }],
+        'headline-lg': ['24px', { lineHeight: '1.33', fontWeight: '700' }],
+        'display-xl': ['34px', { lineHeight: '1.24', letterSpacing: '-0.02em', fontWeight: '700' }],
       },
     },
   },

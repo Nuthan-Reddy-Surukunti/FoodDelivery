@@ -1,6 +1,39 @@
+/* Import Material Symbols Outlined icons */
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Base typography styles */
+@layer base {
+  body {
+    @apply font-inter text-body-md text-on-background;
+  }
+
+  h1 {
+    @apply text-display-xl font-bold;
+  }
+
+  h2 {
+    @apply text-headline-lg font-bold;
+  }
+
+  h3 {
+    @apply text-headline-md font-semibold;
+  }
+
+  h4 {
+    @apply text-title-lg font-semibold;
+  }
+
+  p {
+    @apply text-body-md;
+  }
+}
 
 /* Reset */
 html, body, div, span, applet, object, iframe,
