@@ -1,4 +1,5 @@
 import React, { createContext, useState, useCallback, useEffect } from 'react'
+import authApi from '../services/authApi'
 
 export const AuthContext = createContext()
 
@@ -25,45 +26,39 @@ export const AuthProvider = ({ children }) => {
     setIsLoading(true)
     setError(null)
     try {
-      // TODO: Replace with actual API call
-      const mockResponse = {
-        user: { id: '1', email, name: 'User' },
-        token: 'mock-jwt-token-' + Date.now()
-      }
+      const response = await authApi.login(email, password)
       
-      setUser(mockResponse.user)
-      setToken(mockResponse.token)
-      localStorage.setItem('token', mockResponse.token)
-      localStorage.setItem('user', JSON.stringify(mockResponse.user))
+      setUser(response.user)
+      setToken(response.token)
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('user', JSON.stringify(response.user))
       
-      return mockResponse
+      return response
     } catch (err) {
-      setError(err.message)
-      throw err
+      const errorMessage = err.message || 'Login failed'
+      setError(errorMessage)
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }
   }, [])
 
-  const register = useCallback(async (email, password, name) => {
+  const register = useCallback(async (fullName, email, mobileNumber, password, role = 'customer') => {
     setIsLoading(true)
     setError(null)
     try {
-      // TODO: Replace with actual API call
-      const mockResponse = {
-        user: { id: '1', email, name },
-        token: 'mock-jwt-token-' + Date.now()
-      }
+      const response = await authApi.register(fullName, email, mobileNumber, password, role)
       
-      setUser(mockResponse.user)
-      setToken(mockResponse.token)
-      localStorage.setItem('token', mockResponse.token)
-      localStorage.setItem('user', JSON.stringify(mockResponse.user))
+      setUser(response.user)
+      setToken(response.token)
+      localStorage.setItem('token', response.token)
+      localStorage.setItem('user', JSON.stringify(response.user))
       
-      return mockResponse
+      return response
     } catch (err) {
-      setError(err.message)
-      throw err
+      const errorMessage = err.message || 'Registration failed'
+      setError(errorMessage)
+      throw new Error(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -72,8 +67,7 @@ export const AuthProvider = ({ children }) => {
   const logout = useCallback(() => {
     setUser(null)
     setToken(null)
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    authApi.logout()
   }, [])
 
   const value = {

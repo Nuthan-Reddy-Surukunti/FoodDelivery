@@ -37,6 +37,19 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+// Configure CORS for frontend development
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost", policy =>
+    {
+        policy.WithOrigins("http://localhost:3000", "http://localhost:5173", "http://localhost:5174")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
+    });
+});
+
 builder.Services.AddOcelot(builder.Configuration);
 
 // Add endpoints explorer (required by SwaggerForOcelot)
@@ -49,6 +62,7 @@ var app = builder.Build();
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("AllowLocalhost");
 
 app.MapWhen(context => context.Request.Path == "/", rootApp =>
 {

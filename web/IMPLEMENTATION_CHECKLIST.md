@@ -1,18 +1,21 @@
 # Frontend Implementation Checklist
 
 ## Phase 1: Project Setup ✅ (COMPLETED)
-- [x] Create React project structure with Vite
-- [x] Configure JavaScript with path aliases
-- [x] Setup Tailwind CSS with Horizon UI tokens
-- [x] Configure environment variables
-- [x] Setup ESLint configuration
-- [x] Create global styles
-- [x] Remove TypeScript files (tsconfig.json, .ts/.tsx files)
+
+- [X] Create React project structure with Vite
+- [X] Configure JavaScript with path aliases
+- [X] Setup Tailwind CSS with Horizon UI tokens
+- [X] Configure environment variables
+- [X] Setup ESLint configuration
+- [X] Create global styles
+- [X] Remove TypeScript files (tsconfig.json, .ts/.tsx files)
 
 ## Phase 2: Constants & Enums (READY)
 
 ### To Do:
+
 - [ ] Create constants for:
+
   - API endpoints
   - Error messages
   - Validation patterns (email, phone, password)
@@ -21,14 +24,15 @@
   - User roles
   - Order statuses
   - Payment methods
-
 - [ ] Create enums/constants in JavaScript:
+
   - UserRole: { CUSTOMER, PARTNER, ADMIN, DELIVERY_AGENT }
   - OrderStatus: { PENDING, CONFIRMED, PREPARING, READY, PICKED_UP, DELIVERED, CANCELLED }
   - PaymentMethod: { COD }
   - CuisineType: { Pizza, Burgers, Sushi, etc. }
 
 **Files to create:**
+
 - `src/constants/enums.js` - All enum constants
 - `src/constants/messages.js` - Error and success messages
 - `src/constants/api.js` - API endpoint paths
@@ -37,6 +41,7 @@
 ## Phase 3: API Service Layer (READY)
 
 **Files to create:**
+
 - `src/services/api.js` - Axios instance with interceptors
 - `src/services/auth.js` - Auth endpoints
 - `src/services/catalog.js` - Restaurant/menu endpoints
@@ -44,6 +49,7 @@
 - `src/services/admin.js` - Admin endpoints (if needed initially)
 
 **Key features:**
+
 - [ ] Setup axios instance with base URL from .env
 - [ ] Create request interceptor to add JWT token
 - [ ] Create response interceptor for error handling
@@ -53,12 +59,14 @@
 ## Phase 4: Context & Hooks (READY)
 
 **Global Context:**
+
 - [ ] AuthContext - Login, logout, token management
 - [ ] CartContext - Add/remove items, calculate total
 - [ ] NotificationContext - Toast notifications
 - [ ] ThemeContext - Light/dark mode toggle
 
 **Custom Hooks:**
+
 - [ ] `useAuth()` - Get current user & auth functions
 - [ ] `useCart()` - Get cart & cart operations
 - [ ] `useApi(url, options)` - Fetch data with loading/error states
@@ -66,6 +74,7 @@
 - [ ] `useLocalStorage(key)` - Persist cart locally
 
 **Files to create:**
+
 - `src/context/AuthContext.jsx`
 - `src/context/CartContext.jsx`
 - `src/context/NotificationContext.jsx`
@@ -78,6 +87,7 @@
 ## Phase 5: Atomic Components (READY)
 
 ### Atoms to Create:
+
 - [ ] Button - Primary, secondary, outline variants
 - [ ] Input - Text input with validation
 - [ ] Label - Form labels
@@ -89,6 +99,7 @@
 - [ ] Card - Generic card container
 
 **Files:**
+
 - `src/components/atoms/Button.jsx`
 - `src/components/atoms/Input.jsx`
 - `src/components/atoms/Badge.jsx`
@@ -101,6 +112,7 @@
 ## Phase 6: Molecule Components (READY)
 
 ### Molecules to Create:
+
 - [ ] SearchBar - Input + search icon + button
 - [ ] MenuItem - Image + name + price + rating
 - [ ] FormField - Label + input + error message
@@ -113,6 +125,7 @@
 - [ ] CuisineChip - Category chip
 
 **Files:**
+
 - `src/components/molecules/SearchBar.jsx`
 - `src/components/molecules/MenuItem.jsx`
 - `src/components/molecules/FormField.jsx`
@@ -126,6 +139,7 @@
 ## Phase 7: Organism Components (READY)
 
 ### Organisms to Create:
+
 - [ ] Header - Logo + nav + cart + profile menu
 - [ ] Footer - Links + copyright
 - [ ] NavBar - Navigation with role-based menu
@@ -138,6 +152,7 @@
 - [ ] OrderTracker - Real-time order status timeline
 
 **Files:**
+
 - `src/components/organisms/Header.jsx`
 - `src/components/organisms/Footer.jsx`
 - `src/components/organisms/NavBar.jsx`
@@ -152,6 +167,7 @@
 ## Phase 8: Pages (READY)
 
 ### Customer Pages:
+
 - [ ] HomePage - Hero + categories + nearby restaurants
 - [ ] LoginPage - Auth page with form
 - [ ] RegisterPage - Signup with role selection
@@ -163,16 +179,19 @@
 - [ ] OrderTrackingPage - Real-time order status
 
 ### Partner Pages:
+
 - [ ] PartnerDashboard - Overview + stats
 - [ ] MenuManagementPage - CRUD operations on menu items
 - [ ] OrderQueuePage - Incoming orders to prepare
 
 ### Admin Pages:
+
 - [ ] AdminDashboard - Key metrics
 - [ ] RestaurantManagementPage - Approve/manage partners
 - [ ] ReportsPage - Sales, cancellations, etc.
 
 **Files:**
+
 - `src/pages/customer/HomePage.jsx`
 - `src/pages/customer/LoginPage.jsx`
 - `src/pages/customer/RegisterPage.jsx`
