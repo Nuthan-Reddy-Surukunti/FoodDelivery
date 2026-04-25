@@ -1,4 +1,4 @@
-# CraveCloud Frontend - React SPA
+# QuickBite Frontend - React SPA
 
 A modern, mobile-first React single-page application for food delivery and restaurant aggregation, built with JavaScript, Tailwind CSS, and the Horizon UI design system.
 

@@ -71,7 +71,7 @@ export const ResetPasswordPage = () => {
 
         <div className="absolute top-8 left-8">
           <h1 className="font-headline-md text-headline-md text-primary bg-surface-container-lowest/90 px-4 py-2 rounded-[16px] shadow-ambient backdrop-blur-md">
-            CraveCloud
+            QuickBite
           </h1>
         </div>
 
@@ -80,7 +80,7 @@ export const ResetPasswordPage = () => {
             Create new password
           </h2>
           <p className="font-body-lg text-body-lg text-on-primary drop-shadow-sm max-w-md">
-            Enter a strong password to secure your CraveCloud account.
+            Enter a strong password to secure your QuickBite account.
           </p>
         </div>
       </div>
@@ -90,7 +90,7 @@ export const ResetPasswordPage = () => {
         <div className="w-full max-w-md space-y-stack-lg">
           {/* Mobile Brand Header */}
           <div className="md:hidden text-center mb-8">
-            <h1 className="font-headline-md text-headline-md text-primary">CraveCloud</h1>
+            <h1 className="font-headline-md text-headline-md text-primary">QuickBite</h1>
           </div>
 
           {/* Header */}

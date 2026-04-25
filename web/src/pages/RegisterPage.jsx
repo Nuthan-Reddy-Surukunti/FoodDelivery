@@ -51,7 +51,7 @@ export const RegisterPage = () => {
         <div className="max-w-md w-full mx-auto space-y-stack-lg">
           {/* Header */}
           <div className="space-y-stack-sm text-center lg:text-left">
-            <h1 className="font-display-xl text-display-xl text-primary tracking-tight">CraveCloud</h1>
+            <h1 className="font-display-xl text-display-xl text-primary tracking-tight">QuickBite</h1>
             <h2 className="font-headline-md text-headline-md text-on-surface">Join the Feast</h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant">
               Create an account to get your favorite meals delivered fast.

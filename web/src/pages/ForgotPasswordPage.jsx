@@ -47,7 +47,7 @@ export const ForgotPasswordPage = () => {
         {/* Brand Badge */}
         <div className="absolute top-8 left-8">
           <h1 className="font-headline-md text-headline-md text-primary bg-surface-container-lowest/90 px-4 py-2 rounded-[16px] shadow-ambient backdrop-blur-md">
-            CraveCloud
+            QuickBite
           </h1>
         </div>
 
@@ -67,7 +67,7 @@ export const ForgotPasswordPage = () => {
         <div className="w-full max-w-md space-y-stack-lg">
           {/* Mobile Brand Header */}
           <div className="md:hidden text-center mb-8">
-            <h1 className="font-headline-md text-headline-md text-primary">CraveCloud</h1>
+            <h1 className="font-headline-md text-headline-md text-primary">QuickBite</h1>
           </div>
 
           {/* Header */}
