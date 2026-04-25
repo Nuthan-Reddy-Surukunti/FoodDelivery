@@ -1,12 +1,12 @@
 import api from './api'
 
 const orderApi = {
-	async getOrdersByUser(userId, activeOnly = false) {
-		const response = await api.get('/gateway/orders', {
-			params: { userId, activeOnly },
-		})
-		return response.data
-	},
+  async getOrdersByUser(userId, activeOnly = false, extraParams = {}) {
+    const response = await api.get('/gateway/orders', {
+      params: { userId, activeOnly, ...extraParams },
+    })
+    return response.data
+  },
 
 	async getOrderById(orderId) {
 		const response = await api.get(`/gateway/orders/${orderId}`)
@@ -18,10 +18,15 @@ const orderApi = {
 		return response.data
 	},
 
-	async createOrder(payload) {
-		const response = await api.post('/gateway/orders', payload)
-		return response.data
-	},
+  async createOrder(payload) {
+    const response = await api.post('/gateway/orders', payload)
+    return response.data
+  },
+
+  async updateOrderStatus(orderId, targetStatus) {
+    const response = await api.put(`/gateway/orders/${orderId}/status`, { orderId, targetStatus })
+    return response.data
+  },
 
 	// Cart Operations
 	async clearCart(userId, restaurantId) {
