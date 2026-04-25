@@ -6,8 +6,18 @@ const catalogApi = {
 		return response.data
 	},
 
+	async getMyRestaurant() {
+		const response = await api.get('/gateway/catalog/restaurants/my')
+		return response.data
+	},
+
 	async getRestaurantById(restaurantId) {
 		const response = await api.get(`/gateway/catalog/restaurants/${restaurantId}`)
+		return response.data
+	},
+
+	async createRestaurant(payload) {
+		const response = await api.post('/gateway/catalog/restaurants', payload)
 		return response.data
 	},
 

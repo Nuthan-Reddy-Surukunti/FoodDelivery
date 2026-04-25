@@ -38,6 +38,17 @@ public class RestaurantRepository : IRestaurantRepository
             .FirstOrDefaultAsync(r => r.Name == name);
     }
 
+    public async Task<Restaurant?> GetByOwnerIdAsync(Guid ownerId)
+    {
+        return await _context.Restaurants
+            .Include(r => r.MenuItems)
+            .Include(r => r.Categories)
+            .Include(r => r.OperatingHours)
+            .Where(r => r.OwnerId == ownerId)
+            .OrderByDescending(r => r.CreatedAt)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<List<Restaurant>> SearchByNameAsync(string query)
     {
         var lowerQuery = query.ToLower();

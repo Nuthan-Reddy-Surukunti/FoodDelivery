@@ -59,6 +59,30 @@ public class RestaurantsController : ControllerBase
     }
 
     /// <summary>
+    /// Get current restaurant partner's own restaurant (any status: pending/active/rejected)
+    /// </summary>
+    [HttpGet("my")]
+    [Authorize(Roles = "RestaurantPartner")]
+    public async Task<ActionResult<RestaurantDetailDto>> GetMyRestaurant()
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _restaurantService.GetRestaurantByOwnerAsync(userId, userRole);
+            return Ok(result);
+        }
+        catch (RestaurantNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+        }
+    }
+
+    /// <summary>
     /// Create a new restaurant (Admin or RestaurantPartner)
     /// </summary>
     [HttpPost]

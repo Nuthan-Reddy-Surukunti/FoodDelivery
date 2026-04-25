@@ -9,6 +9,8 @@ public interface IRestaurantService
 
     Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id, string? userRole = null);
 
+    Task<RestaurantDetailDto> GetRestaurantByOwnerAsync(Guid ownerId, string userRole);
+
     Task<RestaurantDetailDto> CreateRestaurantAsync(CreateRestaurantDto dto, Guid userId, string userRole);
 
     Task<RestaurantDetailDto> UpdateRestaurantAsync(Guid id, UpdateRestaurantDto dto, Guid userId, string userRole);

@@ -49,6 +49,18 @@ public class RestaurantService : IRestaurantService
         return _mapper.Map<RestaurantDetailDto>(restaurant);
     }
 
+    public async Task<RestaurantDetailDto> GetRestaurantByOwnerAsync(Guid ownerId, string userRole)
+    {
+        if (userRole != "RestaurantPartner" && userRole != "Admin")
+            throw new UnauthorizedAccessException("Only administrators and restaurant partners can access owner restaurants.");
+
+        var restaurant = await _repository.GetByOwnerIdAsync(ownerId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(ownerId);
+
+        return _mapper.Map<RestaurantDetailDto>(restaurant);
+    }
+
     public async Task<RestaurantDetailDto> CreateRestaurantAsync(CreateRestaurantDto dto, Guid userId, string userRole)
     {
         if (string.IsNullOrWhiteSpace(dto.Name))
