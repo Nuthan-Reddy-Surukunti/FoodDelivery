@@ -4,6 +4,7 @@ import { Button } from '../components/atoms/Button'
 import { Icon } from '../components/atoms/Icon'
 import { useAuth } from '../context/AuthContext'
 import { useFormValidation } from '../hooks/useFormValidation'
+import { getRoleHomePath } from '../utils/authRoutes'
 
 export const LoginPage = () => {
   const navigate = useNavigate()
@@ -15,8 +16,32 @@ export const LoginPage = () => {
     async (values) => {
       setSubmitError(null)
       try {
-        await login(values.email, values.password)
-        navigate('/')
+        const result = await login(values.email, values.password)
+        
+        if (result.status === 'SUCCESS') {
+          // Direct login - redirect by role
+          navigate(getRoleHomePath(result.user?.role), { replace: true })
+        } else if (result.status === 'VERIFY_2FA') {
+          // 2FA required - redirect with state
+          navigate('/verify-2fa', {
+            state: {
+              tempToken: result.tempToken,
+              userId: result.userId,
+              email: result.email,
+              role: result.role
+            }
+          })
+        } else if (result.status === 'VERIFY_EMAIL') {
+          // Email verification required - redirect with state
+          navigate('/verify-email', {
+            state: {
+              email: result.email,
+              userId: result.userId,
+              isAfterLogin: true,
+              role: result.role
+            }
+          })
+        }
       } catch (error) {
         setSubmitError(error.message || 'Login failed. Please try again.')
       }

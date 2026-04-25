@@ -15,6 +15,8 @@ public interface IUserRepository
     Task<bool> SetAccountStatusAsync(Guid userId, AccountStatus accountStatus);
     Task<bool> SetTwoFactorEnabledAsync(Guid userId, bool enabled);
     Task<bool> UpdatePasswordAsync(Guid userId, string newPassword);
+    Task<bool> ChangePasswordAsync(Guid userId, string newPassword);
+    Task<bool> UpdateUserAsync(User user);
     Task<bool> DeleteUserAsync(Guid userId);
     Task<bool> IsAdminAsync(Guid userId);
     Task<bool> IsUserAsync(Guid userId);

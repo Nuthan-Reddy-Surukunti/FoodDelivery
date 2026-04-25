@@ -4,11 +4,12 @@ import { Icon } from '../components/atoms/Icon'
 import { useFormValidation } from '../hooks/useFormValidation'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/authApi'
+import { getRoleHomePath } from '../utils/authRoutes'
 
 export const VerifyTwoFactorPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { login } = useAuth()
+  const { setAuthUser } = useAuth()
 
   // Get temp credentials from login redirect
   const tempToken = location.state?.tempToken
@@ -41,9 +42,14 @@ export const VerifyTwoFactorPage = () => {
       setSubmitError(null)
       setIsLoading(true)
       try {
-        await authApi.verifyTwoFactor(tempToken, values.otp)
-        // Complete login after 2FA verification
-        navigate('/')
+        const result = await authApi.verifyTwoFactor(tempToken, values.otp)
+        
+        // After 2FA verification, complete login
+        if (result.token && result.user) {
+          // Update context with user and token
+          setAuthUser(result.user, result.token)
+          navigate(getRoleHomePath(result.user?.role), { replace: true })
+        }
       } catch (error) {
         setSubmitError(error.message || 'Invalid OTP. Please try again.')
       } finally {
@@ -132,7 +138,15 @@ export const VerifyTwoFactorPage = () => {
                   maxLength="6"
                   className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-6 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient text-center tracking-widest text-2xl"
                   value={form.values.otp}
-                  onChange={(e) => form.handleChange({ ...e, target: { ...e.target, value: e.target.value.replace(/\D/g, '') } })}
+                  onChange={(e) => {
+                    const filteredValue = e.target.value.replace(/\D/g, '')
+                    form.handleChange({
+                      target: {
+                        name: 'otp',
+                        value: filteredValue
+                      }
+                    })
+                  }}
                   onBlur={form.handleBlur}
                   required
                   autoFocus

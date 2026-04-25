@@ -43,6 +43,7 @@ public class UserRepository : IUserRepository
             Email = user.Email,
             FullName = user.FullName,
             UserName_Custom = user.UserName,
+            MobileNumber = user.MobileNumber,
             Role = user.Role.ToString(),
             IsActive = true,
             IsEmailVerified = false,
@@ -107,6 +108,30 @@ public class UserRepository : IUserRepository
         return result.Succeeded;
     }
 
+    public async Task<bool> UpdateUserAsync(User user)
+    {
+        var appUser = await _userManager.FindByIdAsync(user.Id.ToString());
+        if (appUser == null) return false;
+        
+        appUser.FullName = user.FullName;
+        appUser.MobileNumber = user.MobileNumber;
+        
+        var result = await _userManager.UpdateAsync(appUser);
+        if (result.Succeeded)
+            await _context.SaveChangesAsync();
+        return result.Succeeded;
+    }
+
+    public async Task<bool> ChangePasswordAsync(Guid userId, string newPassword)
+    {
+        var appUser = await _userManager.FindByIdAsync(userId.ToString());
+        if (appUser == null) return false;
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(appUser);
+        var result = await _userManager.ResetPasswordAsync(appUser, token, newPassword);
+        return result.Succeeded;
+    }
+
     public async Task<bool> DeleteUserAsync(Guid userId)
     {
         var appUser = await _userManager.FindByIdAsync(userId.ToString());
@@ -123,6 +148,7 @@ public class UserRepository : IUserRepository
             FullName = appUser.FullName,
             UserName = appUser.UserName_Custom,
             Email = appUser.Email!,
+            MobileNumber = appUser.MobileNumber,
             Role = Enum.Parse<AuthService.Domain.Enums.UserRole>(appUser.Role),
             IsActive = appUser.IsActive,
             IsEmailVerified = appUser.IsEmailVerified,

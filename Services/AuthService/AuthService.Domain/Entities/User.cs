@@ -8,6 +8,7 @@ public class User
     public Guid Id { get; set; }=Guid.NewGuid();
     public string FullName { get; set; } = string.Empty;
     public string? UserName { get; set; }
+    public string? MobileNumber { get; set; }
 
     public string Email { get; set; }=string.Empty;
     public string PasswordHash { get; set; }=string.Empty;
@@ -37,4 +38,5 @@ public class User
     public string? ApprovalNotes { get; set; }
     
     public DateTime CreatedAt { get; set; }=DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; }=DateTime.UtcNow;
 }

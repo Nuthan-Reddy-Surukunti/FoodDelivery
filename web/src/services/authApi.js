@@ -18,21 +18,39 @@ export const authApi = {
         password,
       })
 
-      // Response format from backend:
-      // { success, message, token, refreshToken, role, userId, isTwoFactorRequired }
-      if (response.data.success && response.data.token) {
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Login failed')
+      }
+
+      // Response format from backend varies based on flow
+      // { success, message, token, refreshToken, role, userId, isTwoFactorRequired, tempToken }
+
+      if (response.data.isTwoFactorRequired) {
+        // 2FA or Email verification required
+        return {
+          success: true,
+          isTwoFactorRequired: true,
+          tempToken: response.data.tempToken || null, // Has TempToken if 2FA app, null if email verification
+          userId: response.data.userId,
+          role: response.data.role || 'customer',
+        }
+      } else if (response.data.token) {
+        // Direct login successful
         return {
           success: true,
           token: response.data.token,
           user: {
             id: response.data.userId,
-            email,
+            email: response.data.email || email,
+            name: response.data.fullName || response.data.name || email.split('@')[0], // Use fullName, or email prefix as fallback
+            phone: response.data.mobileNumber || '',
             role: response.data.role || 'customer',
+            isTwoFactorEnabled: response.data.isTwoFactorEnabled || false,
+            ...response.data // Spread any additional fields from backend
           },
-          isTwoFactorRequired: response.data.isTwoFactorRequired || false,
         }
       } else {
-        throw new Error(response.data.message || 'Login failed')
+        throw new Error('Unexpected login response')
       }
     } catch (error) {
       const message = error.response?.data?.message || error.message || 'Login failed'
@@ -46,10 +64,10 @@ export const authApi = {
    * @param {string} email - User email
    * @param {string} mobileNumber - User phone number
    * @param {string} password - User password
-   * @param {string} role - User role (customer, restaurant_partner, delivery_agent)
+   * @param {string} role - User role (Customer, DeliveryAgent, RestaurantPartner, Admin)
    * @returns {Promise} Response with token and user data
    */
-  register: async (fullName, email, mobileNumber, password, role = 'customer') => {
+  register: async (fullName, email, mobileNumber, password, role = 'Customer') => {
     try {
       const response = await api.post('/gateway/auth/register', {
         fullName,
@@ -59,16 +77,23 @@ export const authApi = {
         role,
       })
 
-      if (response.data.success && response.data.token) {
-        return {
-          success: true,
-          token: response.data.token,
-          user: {
-            id: response.data.userId,
-            email,
-            name: fullName,
-            role: response.data.role || role,
-          },
+      if (response.data.success) {
+        // Check if account is pending approval (RestaurantPartner/Admin)
+        if (response.data.message.includes('pending approval')) {
+          return {
+            success: true,
+            message: response.data.message,
+            isPendingApproval: true,
+            requiresEmailVerification: false
+          }
+        } else if (response.data.message.includes('verify your email')) {
+          // Customer/DeliveryAgent - needs email verification
+          return {
+            success: true,
+            message: response.data.message,
+            isPendingApproval: false,
+            requiresEmailVerification: true
+          }
         }
       } else {
         throw new Error(response.data.message || 'Registration failed')
@@ -145,9 +170,26 @@ export const authApi = {
       })
 
       if (response.data.success) {
-        return {
-          success: true,
-          message: response.data.message || 'Email verified successfully',
+        // Check if token and user data are returned (for login scenarios)
+        if (response.data.token && response.data.userId) {
+          return {
+            success: true,
+            token: response.data.token,
+            user: {
+              id: response.data.userId,
+              email: response.data.email,
+              name: response.data.fullName || response.data.email.split('@')[0],
+              phone: response.data.mobileNumber || '',
+              role: response.data.role || 'customer',
+            },
+            message: response.data.message || 'Email verified successfully',
+          }
+        } else {
+          // Old response format - just success message
+          return {
+            success: true,
+            message: response.data.message || 'Email verified successfully',
+          }
         }
       } else {
         throw new Error(response.data.message || 'Email verification failed')
@@ -178,7 +220,10 @@ export const authApi = {
           user: {
             id: response.data.userId,
             email: response.data.email,
+            name: response.data.fullName || response.data.name || response.data.email.split('@')[0],
+            phone: response.data.mobileNumber || '',
             role: response.data.role || 'customer',
+            ...response.data // Spread any additional fields from backend
           },
         }
       } else {
@@ -196,6 +241,127 @@ export const authApi = {
   logout: () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+  },
+
+  /**
+   * Update user profile
+   * @param {string} userId - User ID
+   * @param {string} fullName - Full name
+   * @param {string} mobileNumber - Phone number
+   * @returns {Promise} Response with updated user data
+   */
+  updateProfile: async (userId, fullName, mobileNumber) => {
+    try {
+      const response = await api.put('/gateway/auth/update-profile', {
+        userId,
+        fullName,
+        mobileNumber,
+      })
+
+      if (response.data.success) {
+        return {
+          success: true,
+          user: {
+            id: response.data.userId,
+            email: response.data.email,
+            name: response.data.fullName || response.data.name,
+            phone: response.data.mobileNumber,
+            role: response.data.role,
+          },
+        }
+      } else {
+        throw new Error(response.data.message || 'Profile update failed')
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Profile update failed'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Toggle two-factor authentication
+   * @param {string} userId - User ID
+   * @param {boolean} enable - Enable (true) or disable (false) 2FA
+   * @returns {Promise} Response with updated status
+   */
+  toggleTwoFactor: async (userId, enable) => {
+    try {
+      const response = await api.put('/gateway/auth/toggle-2fa', {
+        userId,
+        enable,
+      })
+
+      if (response.data.success) {
+        return {
+          success: true,
+          message: response.data.message,
+          isTwoFactorEnabled: enable,
+        }
+      } else {
+        throw new Error(response.data.message || '2FA toggle failed')
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || '2FA toggle failed'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Change user password
+   * @param {string} currentPassword - Current password
+   * @param {string} newPassword - New password
+   * @param {string} confirmPassword - Confirm new password
+   * @returns {Promise} Response with change status
+   */
+  changePassword: async (currentPassword, newPassword, confirmPassword) => {
+    try {
+      const response = await api.put('/gateway/auth/change-password', {
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      })
+
+      if (response.data.success) {
+        return {
+          success: true,
+          message: response.data.message || 'Password changed successfully'
+        }
+      } else {
+        throw new Error(response.data.message || 'Password change failed')
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Password change failed'
+      throw new Error(message)
+    }
+  },
+
+  /**
+   * Delete user account
+   * @param {string} email - User email
+   * @param {string} password - User password for confirmation
+   * @returns {Promise} Response with deletion status
+   */
+  deleteAccount: async (email, password) => {
+    try {
+      const response = await api.delete('/gateway/auth/delete-account', {
+        data: {
+          email,
+          password,
+        }
+      })
+
+      if (response.data.success) {
+        return {
+          success: true,
+          message: response.data.message || 'Account deleted successfully'
+        }
+      } else {
+        throw new Error(response.data.message || 'Account deletion failed')
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Account deletion failed'
+      throw new Error(message)
+    }
   },
 }
 

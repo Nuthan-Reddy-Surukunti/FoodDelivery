@@ -2,27 +2,35 @@ import { useState } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { Icon } from '../components/atoms/Icon'
 import { useFormValidation } from '../hooks/useFormValidation'
+import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/authApi'
+import { getRoleHomePath } from '../utils/authRoutes'
 
 export const VerifyEmailPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
+  const { setAuthUser } = useAuth()
   const email = location.state?.email
+  const isAfterRegistration = location.state?.isAfterRegistration
+  const isAfterLogin = location.state?.isAfterLogin
+  const userId = location.state?.userId
+  const role = location.state?.role
+
   const [isLoading, setIsLoading] = useState(false)
   const [submitError, setSubmitError] = useState(null)
   const [successMessage, setSuccessMessage] = useState(null)
 
-  // Redirect if no email passed from register
+  // Redirect if no email passed
   if (!email) {
     return (
       <div className="bg-background min-h-screen flex items-center justify-center">
         <div className="text-center space-y-stack-md">
           <h1 className="font-display-xl text-display-xl text-on-background">Invalid Access</h1>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Please register first to verify your email.
+            Please try again by logging in or registering.
           </p>
-          <Link to="/register" className="inline-block bg-primary text-on-primary px-6 py-3 rounded-[16px] hover:bg-surface-tint transition-colors">
-            Back to Register
+          <Link to="/login" className="inline-block bg-primary text-on-primary px-6 py-3 rounded-[16px] hover:bg-surface-tint transition-colors">
+            Back to Login
           </Link>
         </div>
       </div>
@@ -36,9 +44,22 @@ export const VerifyEmailPage = () => {
       setSuccessMessage(null)
       setIsLoading(true)
       try {
-        await authApi.verifyEmail(email, values.otp)
-        setSuccessMessage('Email verified successfully! Redirecting...')
-        setTimeout(() => navigate('/'), 2000)
+        const result = await authApi.verifyEmail(email, values.otp)
+        
+        // If token is returned, set user in context and redirect
+        if (result.token && result.user) {
+          setAuthUser(result.user, result.token)
+          setSuccessMessage('Email verified! Redirecting...')
+          setTimeout(() => navigate(getRoleHomePath(result.user?.role || role), { replace: true }), 1000)
+        } else if (isAfterRegistration) {
+          // After registration - auto login and redirect to home
+          setSuccessMessage('Email verified! Logging you in...')
+          setTimeout(() => navigate(getRoleHomePath(role), { replace: true }), 2000)
+        } else if (isAfterLogin) {
+          // After login (RestaurantPartner/Admin after approval) - complete login
+          setSuccessMessage('Email verified! Redirecting...')
+          setTimeout(() => navigate(getRoleHomePath(role), { replace: true }), 2000)
+        }
       } catch (error) {
         setSubmitError(error.message || 'Invalid OTP. Please try again.')
       } finally {
@@ -68,10 +89,10 @@ export const VerifyEmailPage = () => {
 
         <div className="absolute bottom-16 left-8 right-8">
           <h2 className="font-display-xl text-display-xl text-on-primary drop-shadow-md mb-stack-sm">
-            Verify your email
+            {isAfterRegistration ? 'Verify your email' : 'Email verification'}
           </h2>
           <p className="font-body-lg text-body-lg text-on-primary drop-shadow-sm max-w-md">
-            We've sent a verification code to {email}. Enter it below to verify your account.
+            We've sent a verification code to {email}. Enter it below to {isAfterRegistration ? 'complete registration' : 'continue'}.
           </p>
         </div>
       </div>
@@ -127,7 +148,15 @@ export const VerifyEmailPage = () => {
                   maxLength="6"
                   className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-6 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient text-center tracking-widest"
                   value={form.values.otp}
-                  onChange={(e) => form.handleChange({ ...e, target: { ...e.target, value: e.target.value.replace(/\D/g, '') } })}
+                  onChange={(e) => {
+                    const filteredValue = e.target.value.replace(/\D/g, '')
+                    form.handleChange({
+                      target: {
+                        name: 'otp',
+                        value: filteredValue
+                      }
+                    })
+                  }}
                   onBlur={form.handleBlur}
                   required
                 />
@@ -147,14 +176,14 @@ export const VerifyEmailPage = () => {
             </div>
           </form>
 
-          {/* Back to Register */}
+          {/* Back to Previous */}
           <div className="text-center pt-stack-sm">
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Already verified?{' '}
-              <Link to="/login" className="font-title-lg text-title-lg text-primary hover:text-surface-tint ml-1 transition-colors">
-                Sign In
-              </Link>
-            </p>
+            <Link 
+              to={isAfterRegistration ? "/register" : "/login"} 
+              className="font-body-md text-body-md text-primary hover:text-surface-tint transition-colors"
+            >
+              {isAfterRegistration ? 'Back to Register' : 'Back to Login'}
+            </Link>
           </div>
         </div>
       </div>

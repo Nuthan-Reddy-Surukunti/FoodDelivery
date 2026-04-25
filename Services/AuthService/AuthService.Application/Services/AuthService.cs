@@ -121,7 +121,8 @@ public class AuthService : IAuthService
                         Message = "OTP sent to your email.",
                         IsTwoFactorRequired = true,
                         TempToken = tempToken,
-                        UserId = user.Id.ToString()
+                        UserId = user.Id.ToString(),
+                        Role = user.Role.ToString()
                     };
                 }
 
@@ -135,7 +136,8 @@ public class AuthService : IAuthService
                     Success = true,
                     Message = "If an account exists, a verification OTP has been sent to the registered email.",
                     IsTwoFactorRequired = true,
-                    UserId = user.Id.ToString()
+                    UserId = user.Id.ToString(),
+                    Role = user.Role.ToString()
                 };
             }
 
@@ -167,7 +169,8 @@ public class AuthService : IAuthService
                         Message = "OTP sent to your email.",
                         IsTwoFactorRequired = true,
                         TempToken = tempToken,
-                        UserId = user.Id.ToString()
+                        UserId = user.Id.ToString(),
+                        Role = user.Role.ToString()
                     };
                 }
 
@@ -191,7 +194,11 @@ public class AuthService : IAuthService
                     Token = adminJwtToken,
                     RefreshToken = adminRefreshToken,
                     Role = user.Role.ToString(),
-                    UserId = user.Id.ToString()
+                    UserId = user.Id.ToString(),
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    MobileNumber = user.MobileNumber,
+                    IsTwoFactorEnabled = user.IsTwoFactorVerified
                 };
             }
         }
@@ -245,7 +252,8 @@ public class AuthService : IAuthService
                     Success = true,
                     Message = "If an account exists, a verification OTP has been sent to the registered email.",
                     IsTwoFactorRequired = true,
-                    UserId = user.Id.ToString()
+                    UserId = user.Id.ToString(),
+                    Role = user.Role.ToString()
                 };
             }
 
@@ -301,7 +309,11 @@ public class AuthService : IAuthService
                     Token = partnerJwtToken,
                     RefreshToken = partnerRefreshToken,
                     Role = user.Role.ToString(),
-                    UserId = user.Id.ToString()
+                    UserId = user.Id.ToString(),
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    MobileNumber = user.MobileNumber,
+                    IsTwoFactorEnabled = user.IsTwoFactorVerified
                 };
             }
         }
@@ -334,7 +346,8 @@ public class AuthService : IAuthService
                 Message = "OTP sent to your email.",
                 IsTwoFactorRequired = true,
                 TempToken = tempToken,
-                UserId = user.Id.ToString()
+                UserId = user.Id.ToString(),
+                Role = user.Role.ToString()
             };
         }
 
@@ -357,7 +370,11 @@ public class AuthService : IAuthService
             Token = jwtToken,
             RefreshToken = refreshToken,
             Role = user.Role.ToString(),
-            UserId = user.Id.ToString()
+            UserId = user.Id.ToString(),
+            FullName = user.FullName,
+            Email = user.Email,
+            MobileNumber = user.MobileNumber,
+            IsTwoFactorEnabled = user.IsTwoFactorVerified
         };
     }
 
@@ -427,10 +444,21 @@ public class AuthService : IAuthService
         // Parse role: default to Customer if not specified
         if (!Enum.TryParse<UserRole>(dto.Role, out var parsedRole))
             parsedRole = UserRole.Customer;
+
+        // Admin accounts must be created through the dedicated admin creation flow.
+        // This prevents public self-registration from producing pending admin accounts.
+        if (parsedRole == UserRole.Admin)
+        {
+            return new AuthRequestDto
+            {
+                Success = false,
+                Message = "Admin accounts cannot be created through public registration. Use the admin creation flow."
+            };
+        }
         
         // Determine account status based on role
         var accountStatus = AccountStatus.Verified; // Default for Customer/DeliveryAgent
-        if (parsedRole == UserRole.RestaurantPartner || parsedRole == UserRole.Admin)
+        if (parsedRole == UserRole.RestaurantPartner)
         {
             // RestaurantPartner and Admin roles require admin approval
             accountStatus = AccountStatus.Pending;
@@ -440,9 +468,10 @@ public class AuthService : IAuthService
         {
             FullName = dto.FullName,
             Email = dto.Email,
+            MobileNumber = dto.MobileNumber,
             Role = parsedRole,
             IsActive = true,
-            IsEmailVerified = parsedRole != UserRole.RestaurantPartner && parsedRole != UserRole.Admin, // Email not verified for pending users
+            IsEmailVerified = parsedRole != UserRole.RestaurantPartner, // Email not verified for pending users
             AccountStatus = accountStatus,
             CreatedAt = DateTime.UtcNow
         };
@@ -582,7 +611,32 @@ public class AuthService : IAuthService
             if (!otpVerified)
                 return new AuthRequestDto { Success = false, Message = "OTP is invalid or expired." };
 
-            return new AuthRequestDto { Success = true, Message = "OTP verified successfully. Please log in again to receive your access token." };
+            // Generate JWT token for approved RestaurantPartner/Admin
+            var refreshToken = GenerateSecureToken();
+            await _refreshTokenRepository.AddAsync(new RefreshToken
+            {
+                UserId = user.Id,
+                Token = refreshToken,
+                ExpiredAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            var jwtToken = _jwtTokenGenerator.GenerateToken(user);
+
+            return new AuthRequestDto 
+            { 
+                Success = true, 
+                Message = "Email verified successfully.",
+                Token = jwtToken,
+                RefreshToken = refreshToken,
+                UserId = user.Id.ToString(),
+                FullName = user.FullName,
+                Email = user.Email,
+                MobileNumber = user.MobileNumber,
+                Role = user.Role.ToString(),
+                IsTwoFactorEnabled = user.IsTwoFactorVerified
+            };
         }
 
         var token = await _emailVerificationTokenRepository.GetLatestByUserIdAsync(user.Id);
@@ -595,7 +649,32 @@ public class AuthService : IAuthService
         await _emailVerificationTokenRepository.MarkUsedAsync(token.Id);
         await _userRepository.SetEmailVerifiedAsync(user.Id);
 
-        return new AuthRequestDto { Success = true, Message = "Email verified successfully." };
+        // Generate JWT token for Customer/DeliveryAgent after email verification
+        var customerRefreshToken = GenerateSecureToken();
+        await _refreshTokenRepository.AddAsync(new RefreshToken
+        {
+            UserId = user.Id,
+            Token = customerRefreshToken,
+            ExpiredAt = DateTime.UtcNow.AddDays(7),
+            IsRevoked = false,
+            CreatedAt = DateTime.UtcNow
+        });
+
+        var customerJwtToken = _jwtTokenGenerator.GenerateToken(user);
+
+        return new AuthRequestDto 
+        { 
+            Success = true, 
+            Message = "Email verified successfully.",
+            Token = customerJwtToken,
+            RefreshToken = customerRefreshToken,
+            UserId = user.Id.ToString(),
+            FullName = user.FullName,
+            Email = user.Email,
+            MobileNumber = user.MobileNumber,
+            Role = user.Role.ToString(),
+            IsTwoFactorEnabled = user.IsTwoFactorVerified
+        };
     }
 
     public async Task<AuthRequestDto> VerifyTwoFactorOtpAsync(VerifyTwoFactorOtpRequestDto dto)
@@ -631,8 +710,77 @@ public class AuthService : IAuthService
             Message = "Login successful.",
             Token = jwtToken,
             RefreshToken = refreshToken,
+            Role = user.Role.ToString(),
+            UserId = user.Id.ToString(),
+            FullName = user.FullName,
+            Email = user.Email,
+            MobileNumber = user.MobileNumber,
+            IsTwoFactorEnabled = true
+        };
+    }
+
+    public async Task<AuthRequestDto> UpdateProfileAsync(string userId, UpdateProfileRequestDto request)
+    {
+        if (!Guid.TryParse(userId, out var userGuid))
+            return new AuthRequestDto { Success = false, Message = "Invalid user ID." };
+        
+        var user = await _userRepository.FindByIdAsync(userGuid);
+        if (user == null)
+            return new AuthRequestDto { Success = false, Message = "User not found." };
+
+        // Update user profile
+        user.FullName = request.FullName;
+        user.MobileNumber = request.MobileNumber;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        var result = await _userRepository.UpdateUserAsync(user);
+        if (!result)
+            return new AuthRequestDto { Success = false, Message = "Failed to update profile." };
+
+        return new AuthRequestDto
+        {
+            Success = true,
+            Message = "Profile updated successfully.",
+            UserId = user.Id.ToString(),
+            Email = user.Email,
+            FullName = user.FullName,
+            MobileNumber = user.MobileNumber,
             Role = user.Role.ToString()
         };
+    }
+
+    public async Task<AuthRequestDto> ChangePasswordAsync(ChangePasswordRequestDto dto)
+    {
+        if (!Guid.TryParse(dto.UserId, out var userGuid))
+            return new AuthRequestDto { Success = false, Message = "Invalid user ID." };
+
+        var user = await _userRepository.FindByIdAsync(userGuid);
+        if (user == null)
+            return new AuthRequestDto { Success = false, Message = "User not found." };
+
+        // Verify current password
+        var passwordValid = await _userRepository.CheckPasswordAsync(user.Id, dto.CurrentPassword);
+        if (!passwordValid)
+            return new AuthRequestDto { Success = false, Message = "Current password is incorrect." };
+
+        // Validate password match
+        if (dto.NewPassword != dto.ConfirmPassword)
+            return new AuthRequestDto { Success = false, Message = "New passwords do not match." };
+
+        // Validate password length
+        if (string.IsNullOrWhiteSpace(dto.NewPassword) || dto.NewPassword.Length < 8)
+            return new AuthRequestDto { Success = false, Message = "Password must be at least 8 characters." };
+
+        // Check if new password is same as current password
+        if (dto.CurrentPassword == dto.NewPassword)
+            return new AuthRequestDto { Success = false, Message = "New password must be different from current password." };
+
+        // Update password
+        var result = await _userRepository.ChangePasswordAsync(user.Id, dto.NewPassword);
+        if (!result)
+            return new AuthRequestDto { Success = false, Message = "Failed to change password." };
+
+        return new AuthRequestDto { Success = true, Message = "Password changed successfully." };
     }
 
     public async Task<AuthRequestDto> DeleteUserAsync(DeleteUserRequestDto dto)

@@ -28,12 +28,39 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authApi.login(email, password)
       
-      setUser(response.user)
-      setToken(response.token)
-      localStorage.setItem('token', response.token)
-      localStorage.setItem('user', JSON.stringify(response.user))
+      // Handle different login response scenarios
+      if (response.isTwoFactorRequired && response.tempToken) {
+        // 2FA required with tempToken - means 2FA authenticator app
+        return {
+          status: 'VERIFY_2FA',
+          tempToken: response.tempToken,
+          userId: response.userId,
+          email: email,
+          role: response.role
+        }
+      } else if (response.isTwoFactorRequired && !response.tempToken) {
+        // Email verification required (RestaurantPartner/Admin first login after approval)
+        return {
+          status: 'VERIFY_EMAIL',
+          userId: response.userId,
+          email: email,
+          role: response.role
+        }
+      } else if (response.token) {
+        // Direct login successful
+        setUser(response.user)
+        setToken(response.token)
+        localStorage.setItem('token', response.token)
+        localStorage.setItem('user', JSON.stringify(response.user))
+        
+        return {
+          status: 'SUCCESS',
+          user: response.user,
+          token: response.token
+        }
+      }
       
-      return response
+      throw new Error('Unexpected login response')
     } catch (err) {
       const errorMessage = err.message || 'Login failed'
       setError(errorMessage)
@@ -43,18 +70,18 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  const register = useCallback(async (fullName, email, mobileNumber, password, role = 'customer') => {
+  const register = useCallback(async (fullName, email, mobileNumber, password, role = 'Customer') => {
     setIsLoading(true)
     setError(null)
     try {
       const response = await authApi.register(fullName, email, mobileNumber, password, role)
       
-      setUser(response.user)
-      setToken(response.token)
-      localStorage.setItem('token', response.token)
-      localStorage.setItem('user', JSON.stringify(response.user))
-      
-      return response
+      return {
+        success: response.success,
+        message: response.message,
+        isPendingApproval: response.isPendingApproval,
+        requiresEmailVerification: response.requiresEmailVerification
+      }
     } catch (err) {
       const errorMessage = err.message || 'Registration failed'
       setError(errorMessage)
@@ -70,6 +97,13 @@ export const AuthProvider = ({ children }) => {
     authApi.logout()
   }, [])
 
+  const setAuthUser = useCallback((userData, authToken) => {
+    setUser(userData)
+    setToken(authToken)
+    localStorage.setItem('token', authToken)
+    localStorage.setItem('user', JSON.stringify(userData))
+  }, [])
+
   const value = {
     user,
     token,
@@ -78,6 +112,7 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
+    setAuthUser,
     isAuthenticated: !!token
   }
 

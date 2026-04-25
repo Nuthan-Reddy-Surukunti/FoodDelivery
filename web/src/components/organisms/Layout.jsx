@@ -13,7 +13,13 @@ export const Layout = ({ children }) => {
   const location = useLocation()
 
   // Don't show header/footer on auth pages
-  const isAuthPage = location.pathname === '/login' || location.pathname === '/register'
+  const isAuthPage = 
+    location.pathname === '/login' || 
+    location.pathname === '/register' ||
+    location.pathname === '/forgot-password' ||
+    location.pathname === '/reset-password' ||
+    location.pathname === '/verify-email' ||
+    location.pathname === '/verify-2fa'
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-on-background">
@@ -90,9 +96,17 @@ const Header = ({ isAuthenticated, user, logout, totalItems, isDark, toggleTheme
                 <span className="hidden sm:inline text-body-md text-on-background">
                   {user?.name || 'User'}
                 </span>
+                <Link
+                  to="/profile"
+                  className="p-2 rounded-lg hover:bg-surface-dim transition-colors"
+                  title="Profile"
+                >
+                  <Icon name="account_circle" size={24} />
+                </Link>
                 <button
                   onClick={logout}
                   className="p-2 rounded-lg hover:bg-surface-dim transition-colors"
+                  title="Logout"
                 >
                   <Icon name="logout" size={20} />
                 </button>

@@ -9,14 +9,32 @@ export const RegisterPage = () => {
   const { register, isLoading: authLoading, error: authError } = useAuth()
   const [submitError, setSubmitError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [isSuccess, setIsSuccess] = useState(false)
+  const [successMessage, setSuccessMessage] = useState(null)
 
   const form = useFormValidation(
     { fullName: '', email: '', mobileNumber: '', password: '', role: 'Customer', terms: false },
     async (values) => {
-      setSubmitError(null) 
+      setSubmitError(null)
+      setIsSuccess(false)
       try {
-        await register(values.fullName, values.email, values.mobileNumber, values.password, values.role)
-        navigate('/')
+        const result = await register(values.fullName, values.email, values.mobileNumber, values.password, values.role)
+        
+        // Check if account is pending approval (RestaurantPartner/Admin)
+        if (result.isPendingApproval) {
+          setSuccessMessage(result.message)
+          setIsSuccess(true)
+          setTimeout(() => navigate('/login'), 4000)
+        } else if (result.requiresEmailVerification) {
+          // Customer/DeliveryAgent needs email verification
+          navigate('/verify-email', {
+            state: {
+              email: values.email,
+              isAfterRegistration: true,
+              role: values.role
+            }
+          })
+        }
       } catch (error) {
         setSubmitError(error.message || 'Registration failed. Please try again.')
       }
@@ -45,6 +63,14 @@ export const RegisterPage = () => {
             <div className="bg-error-container text-on-error-container p-4 rounded-[16px] flex items-center gap-2">
               <Icon name="error" size={20} />
               <span className="font-body-md">{submitError || authError}</span>
+            </div>
+          )}
+
+          {/* Success Alert - Pending Approval */}
+          {isSuccess && (
+            <div className="bg-tertiary-fixed text-on-tertiary-fixed p-4 rounded-[16px] flex items-center gap-2">
+              <Icon name="check_circle" size={20} />
+              <span className="font-body-md">{successMessage}</span>
             </div>
           )}
 
