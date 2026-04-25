@@ -4,7 +4,7 @@ import { Button } from '../components/atoms/Button'
 import { Card } from '../components/atoms/Card'
 import { useNotification } from '../hooks/useNotification'
 import catalogApi from '../services/catalogApi'
-import orderApi from '../services/orderApi'
+import api from '../services/api'
 
 const STATUS_FLOW = {
   Paid: { label: 'New Order', actionLabel: 'Accept & Prepare', nextStatus: 'Preparing', color: 'text-blue-600 bg-blue-50 border-blue-200' },
@@ -33,7 +33,6 @@ export const OrderQueuePage = () => {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(false)
   const [actioning, setActioning] = useState(null)
-  const [filter, setFilter] = useState('active') // 'active' | 'all'
   const intervalRef = useRef(null)
 
   // Load partner's restaurant
@@ -55,12 +54,12 @@ export const OrderQueuePage = () => {
     return () => { active = false }
   }, [])
 
-  // Fetch orders for the restaurant
-  const fetchOrders = useCallback(async (restaurantId, isActive) => {
+  // Fetch orders via the partner-specific queue endpoint
+  const fetchOrders = useCallback(async () => {
     setLoading(true)
     try {
-      const data = await orderApi.getOrdersByUser(null, isActive, { restaurantId })
-      const arr = Array.isArray(data) ? data : (data?.items || data?.data || [])
+      const data = await api.get('/gateway/orders/queue')
+      const arr = Array.isArray(data.data) ? data.data : (data.data?.items || [])
       setOrders(arr)
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to fetch orders')
@@ -71,20 +70,18 @@ export const OrderQueuePage = () => {
 
   useEffect(() => {
     if (!restaurant?.id) return
-    const isActive = filter === 'active'
-    fetchOrders(restaurant.id, isActive)
+    fetchOrders()
 
     // Auto-refresh every 30 seconds
-    intervalRef.current = setInterval(() => fetchOrders(restaurant.id, isActive), 30000)
+    intervalRef.current = setInterval(() => fetchOrders(), 30000)
     return () => clearInterval(intervalRef.current)
-  }, [restaurant?.id, filter, fetchOrders])
+  }, [restaurant?.id, fetchOrders])
 
-  // Update order status
   const handleAction = async (order, nextStatus) => {
     const id = order.orderId || order.id
     setActioning(id)
     try {
-      await orderApi.updateOrderStatus(id, nextStatus)
+      await api.put(`/gateway/orders/${id}/status`, { orderId: id, targetStatus: nextStatus })
       showSuccess(`Order marked as ${nextStatus}`)
       setOrders(prev => prev.map(o =>
         (o.orderId || o.id) === id ? { ...o, orderStatus: nextStatus } : o
@@ -101,11 +98,9 @@ export const OrderQueuePage = () => {
     const id = order.orderId || order.id
     setActioning(id)
     try {
-      await orderApi.updateOrderStatus(id, 'RestaurantRejected')
+      await api.put(`/gateway/orders/${id}/status`, { orderId: id, targetStatus: 'RestaurantRejected' })
       showSuccess('Order rejected')
-      setOrders(prev => prev.map(o =>
-        (o.orderId || o.id) === id ? { ...o, orderStatus: 'RestaurantRejected' } : o
-      ))
+      setOrders(prev => prev.filter(o => (o.orderId || o.id) !== id))
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to reject order')
     } finally {
@@ -129,9 +124,6 @@ export const OrderQueuePage = () => {
     )
   }
 
-  const visibleOrders = filter === 'active'
-    ? orders.filter(o => ACTIVE_STATUSES.includes(o.orderStatus || o.status))
-    : orders
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -141,33 +133,21 @@ export const OrderQueuePage = () => {
           <Link to="/partner/dashboard" className="text-sm text-on-background/60 hover:text-primary">← Dashboard</Link>
           <h1 className="text-2xl font-bold">Order Queue — {restaurant.name}</h1>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex rounded-xl border border-outline overflow-hidden text-sm">
-            <button
-              onClick={() => setFilter('active')}
-              className={`px-4 py-2 font-medium transition ${filter === 'active' ? 'bg-primary text-on-primary' : 'hover:bg-surface-dim'}`}
-            >Active</button>
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-4 py-2 font-medium transition ${filter === 'all' ? 'bg-primary text-on-primary' : 'hover:bg-surface-dim'}`}
-            >All</button>
-          </div>
-          <Button variant="secondary" onClick={() => fetchOrders(restaurant.id, filter === 'active')}>
-            🔄 Refresh
-          </Button>
-        </div>
+        <Button variant="secondary" onClick={fetchOrders}>
+          🔄 Refresh
+        </Button>
       </div>
 
       {/* Orders */}
       {loading ? (
         <p className="text-sm text-on-background/70">Loading orders...</p>
-      ) : visibleOrders.length === 0 ? (
+      ) : orders.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-outline p-10 text-center text-on-background/60">
-          {filter === 'active' ? 'No active orders right now.' : 'No orders found.'}
+          No active orders right now.
         </div>
       ) : (
         <div className="space-y-4">
-          {visibleOrders.map(order => {
+          {orders.map(order => {
             const id = order.orderId || order.id
             const status = order.orderStatus || order.status || 'Unknown'
             const flow = STATUS_FLOW[status]
