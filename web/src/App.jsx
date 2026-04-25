@@ -8,6 +8,10 @@ import { Layout } from './components/organisms/Layout'
 import { HomePage } from './pages/HomePage'
 import { LoginPage } from './pages/LoginPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { ForgotPasswordPage } from './pages/ForgotPasswordPage'
+import { ResetPasswordPage } from './pages/ResetPasswordPage'
+import { VerifyEmailPage } from './pages/VerifyEmailPage'
+import { VerifyTwoFactorPage } from './pages/VerifyTwoFactorPage'
 import { RestaurantDetailsPage } from './pages/RestaurantDetailsPage'
 import { CartPage } from './pages/CartPage'
 import { CheckoutPage } from './pages/CheckoutPage'
@@ -32,8 +36,16 @@ export default function App() {
               <Routes>
                 {/* Customer Routes */}
                 <Route path="/" element={<HomePage />} />
+                
+                {/* Auth Routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/verify-email" element={<VerifyEmailPage />} />
+                <Route path="/verify-2fa" element={<VerifyTwoFactorPage />} />
+                
+                {/* Customer Main Routes */}
                 <Route path="/restaurant/:id" element={<RestaurantDetailsPage />} />
                 <Route path="/cart" element={<CartPage />} />
                 <Route path="/checkout" element={<CheckoutPage />} />
