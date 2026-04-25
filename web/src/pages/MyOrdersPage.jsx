@@ -9,8 +9,8 @@ const normalizeOrders = (payload) => {
   return raw.map((item) => ({
     id: item.orderId || item.id,
     restaurant: item.restaurantName || item.restaurant?.name || 'Restaurant',
-    amount: Number(item.totalAmount || item.totalPrice || 0),
-    status: item.status || 'Unknown',
+    amount: Number(item.total || item.totalAmount || item.totalPrice || 0),
+    status: item.orderStatus || item.status || 'Unknown',
   }))
 }
 

@@ -223,6 +223,13 @@ export const ProfilePage = () => {
           <h3 className="text-headline-sm font-bold text-on-background mb-4">Account Actions</h3>
           <div className="space-y-3">
             <button
+              onClick={() => navigate('/addresses')}
+              className="w-full px-4 py-3 rounded-[12px] bg-surface-container text-on-surface font-body-md hover:bg-surface-container-high transition-colors flex items-center gap-2"
+            >
+              <Icon name="location_on" size={20} />
+              Manage Addresses
+            </button>
+            <button
               onClick={() => navigate('/delete-account')}
               className="w-full px-4 py-3 rounded-[12px] bg-error-container text-on-error-container font-body-md hover:opacity-90 transition-opacity flex items-center gap-2"
             >

@@ -1,21 +1,22 @@
 import { useMemo, useState, useEffect } from 'react'
 import { Button } from '../atoms/Button'
-import { AddressField } from '../molecules/AddressField'
+import { AddressForm } from './AddressForm'
 import { AddressList } from './AddressList'
 import { StepperIndicator } from '../molecules/StepperIndicator'
-import { TimeSlotSelector } from '../molecules/TimeSlotSelector'
 import orderApi from '../../services/orderApi'
+import { useNotification } from '../../hooks/useNotification'
 
-const steps = ['Address', 'Time Slot', 'Review']
+const steps = ['Address', 'Review']
 
 export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [addresses, setAddresses] = useState([])
   const [selectedAddressId, setSelectedAddressId] = useState(null)
-  const [address, setAddress] = useState('')
   const [selectedSlot, setSelectedSlot] = useState(null)
   const [loadingAddresses, setLoadingAddresses] = useState(true)
-  const [useCustomAddress, setUseCustomAddress] = useState(false)
+  const [showAddressForm, setShowAddressForm] = useState(false)
+  const [isSavingAddress, setIsSavingAddress] = useState(false)
+  const { showSuccess, showError } = useNotification()
 
   useEffect(() => {
     loadAddresses()
@@ -29,39 +30,55 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
       if (data && data.length > 0) {
         const defaultAddress = data.find(a => a.isDefault)
         setSelectedAddressId(defaultAddress?.id || data[0].id)
+      } else {
+        setShowAddressForm(true)
       }
     } catch (error) {
       console.error('Failed to load addresses:', error)
+      showError('Failed to load addresses')
     } finally {
       setLoadingAddresses(false)
     }
   }
 
+  const handleAddressSubmit = async (formData) => {
+    try {
+      setIsSavingAddress(true)
+      const newAddress = await orderApi.createAddress(formData)
+      showSuccess('Address created successfully')
+      
+      const data = await orderApi.getAddresses()
+      setAddresses(data || [])
+      
+      const selectedId = newAddress?.id || (data && data.length > 0 ? data[data.length - 1].id : null)
+      if (selectedId) {
+        setSelectedAddressId(selectedId)
+      }
+      
+      setShowAddressForm(false)
+    } catch (error) {
+      showError(error.message || 'Failed to save address')
+    } finally {
+      setIsSavingAddress(false)
+    }
+  }
+
   const selectedAddressObj = addresses.find(a => a.id === selectedAddressId)
-  const selectedAddressText = selectedAddressObj
+  const finalAddress = selectedAddressObj
     ? `${selectedAddressObj.street}, ${selectedAddressObj.city}, ${selectedAddressObj.state} - ${selectedAddressObj.pinCode}`
     : ''
 
-  const finalAddress = useCustomAddress ? address : selectedAddressText
-
   const canProceed = useMemo(() => {
-    if (currentStep === 0) {
-      if (useCustomAddress) {
-        return address.trim().length > 5
-      } else {
-        return !!selectedAddressId
-      }
-    }
-    if (currentStep === 1) return !!selectedSlot
+    if (currentStep === 0) return !!selectedAddressId && !showAddressForm
     return true
-  }, [currentStep, address, selectedSlot, selectedAddressId, useCustomAddress])
+  }, [currentStep, selectedAddressId, showAddressForm])
 
   const next = () => setCurrentStep((s) => Math.min(s + 1, steps.length - 1))
   const back = () => setCurrentStep((s) => Math.max(s - 1, 0))
 
   const handleSubmit = () => {
     onSubmit?.({ 
-      addressId: useCustomAddress ? null : selectedAddressId,
+      addressId: selectedAddressId,
       address: finalAddress, 
       slot: selectedSlot 
     })
@@ -73,9 +90,14 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
 
       {currentStep === 0 ? (
         <div className="space-y-4">
-          {!loadingAddresses && addresses.length > 0 && !useCustomAddress && (
+          {!loadingAddresses && addresses.length > 0 && !showAddressForm && (
             <div>
-              <h3 className="mb-2 font-semibold">Select a Saved Address</h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold">Select a Saved Address</h3>
+                <Button variant="secondary" onClick={() => setShowAddressForm(true)}>
+                  + Add New
+                </Button>
+              </div>
               <AddressList
                 addresses={addresses}
                 selectable
@@ -85,24 +107,14 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
             </div>
           )}
 
-          {addresses.length > 0 && (
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="customAddress"
-                checked={useCustomAddress}
-                onChange={(e) => setUseCustomAddress(e.target.checked)}
-                className="rounded border-outline"
+          {showAddressForm && !loadingAddresses && (
+            <div className="mb-4">
+              <AddressForm 
+                onSubmit={handleAddressSubmit} 
+                onCancel={addresses.length > 0 ? () => setShowAddressForm(false) : undefined}
+                loading={isSavingAddress} 
               />
-              <label htmlFor="customAddress" className="text-sm">Use different address</label>
             </div>
-          )}
-
-          {(useCustomAddress || addresses.length === 0) && (
-            <AddressField 
-              value={address} 
-              onChange={(e) => setAddress(e.target.value)} 
-            />
           )}
 
           {loadingAddresses && (
@@ -112,13 +124,8 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
       ) : null}
 
       {currentStep === 1 ? (
-        <TimeSlotSelector slots={timeSlots} selected={selectedSlot} onSelect={setSelectedSlot} />
-      ) : null}
-
-      {currentStep === 2 ? (
         <div className="rounded-xl bg-surface-dim p-3 text-sm">
           <p><span className="font-semibold">Address:</span> {finalAddress}</p>
-          <p className="mt-1"><span className="font-semibold">Slot:</span> {selectedSlot?.label || 'Not selected'}</p>
           <p className="mt-2">Payment method: Cash on Delivery</p>
         </div>
       ) : null}

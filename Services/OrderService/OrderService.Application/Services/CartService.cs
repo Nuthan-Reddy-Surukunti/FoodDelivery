@@ -143,7 +143,19 @@ public class CartService : ICartService
         var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(userId, restaurantId, cancellationToken);
         if (cart is null)
         {
-            throw new ResourceNotFoundException("Cart", restaurantId);
+            cart = new Cart
+            {
+                UserId = userId,
+                RestaurantId = restaurantId,
+                Status = CartStatus.Active,
+                AppliedCouponCode = null,
+                TotalAmount = 0,
+                Items = new List<CartItem>(),
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+            await _cartRepository.AddAsync(cart, cancellationToken);
+            return CartMappings.MapToDto(cart);
         }
 
         cart.Items.Clear();

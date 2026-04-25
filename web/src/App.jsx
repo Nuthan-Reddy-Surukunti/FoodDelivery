@@ -18,12 +18,15 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage').then((m
 const VerifyEmailPage = lazy(() => import('./pages/VerifyEmailPage').then((m) => ({ default: m.VerifyEmailPage })))
 const VerifyTwoFactorPage = lazy(() => import('./pages/VerifyTwoFactorPage').then((m) => ({ default: m.VerifyTwoFactorPage })))
 const RestaurantDetailsPage = lazy(() => import('./pages/RestaurantDetailsPage').then((m) => ({ default: m.RestaurantDetailsPage })))
+const ExploreRestaurantsPage = lazy(() => import('./pages/ExploreRestaurantsPage').then((m) => ({ default: m.ExploreRestaurantsPage })))
 const CartPage = lazy(() => import('./pages/CartPage').then((m) => ({ default: m.CartPage })))
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage').then((m) => ({ default: m.CheckoutPage })))
+const AddressManagementPage = lazy(() => import('./pages/AddressManagementPage').then((m) => ({ default: m.AddressManagementPage })))
 const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage').then((m) => ({ default: m.MyOrdersPage })))
 const OrderTrackingPage = lazy(() => import('./pages/OrderTrackingPage').then((m) => ({ default: m.OrderTrackingPage })))
 const PartnerDashboardPage = lazy(() => import('./pages/PartnerDashboardPage').then((m) => ({ default: m.PartnerDashboardPage })))
 const MenuManagementPage = lazy(() => import('./pages/MenuManagementPage').then((m) => ({ default: m.MenuManagementPage })))
+const OrderQueuePage = lazy(() => import('./pages/OrderQueuePage').then((m) => ({ default: m.OrderQueuePage })))
 const AdminOverviewPage = lazy(() => import('./pages/AdminOverviewPage').then((m) => ({ default: m.AdminOverviewPage })))
 const AdminOrdersPage = lazy(() => import('./pages/AdminOrdersPage').then((m) => ({ default: m.AdminOrdersPage })))
 const AdminRestaurantsPage = lazy(() => import('./pages/AdminRestaurantsPage').then((m) => ({ default: m.AdminRestaurantsPage })))
@@ -52,17 +55,20 @@ export default function App() {
                 {/* Customer Routes - Protected */}
                 <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                <Route path="/explore" element={<ProtectedRoute><ExploreRestaurantsPage /></ProtectedRoute>} />
                 <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
                 <Route path="/delete-account" element={<ProtectedRoute><DeleteAccountPage /></ProtectedRoute>} />
                 <Route path="/restaurant/:id" element={<ProtectedRoute><RestaurantDetailsPage /></ProtectedRoute>} />
                 <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
                 <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+                <Route path="/addresses" element={<ProtectedRoute><AddressManagementPage /></ProtectedRoute>} />
                 <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
                 <Route path="/track/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
 
                 {/* Partner Routes - Protected (RestaurantPartner only) */}
                 <Route path="/partner/dashboard" element={<ProtectedRoute requiredRole="RestaurantPartner"><PartnerDashboardPage /></ProtectedRoute>} />
                 <Route path="/partner/menu" element={<ProtectedRoute requiredRole="RestaurantPartner"><MenuManagementPage /></ProtectedRoute>} />
+                <Route path="/partner/queue" element={<ProtectedRoute requiredRole="RestaurantPartner"><OrderQueuePage /></ProtectedRoute>} />
 
                 {/* Admin Routes - Protected (Admin only) */}
                 <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminOverviewPage /></ProtectedRoute>} />
