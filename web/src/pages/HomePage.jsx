@@ -1,30 +1,69 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { SearchBar } from '../components/molecules/SearchBar'
 import { CuisineChip } from '../components/molecules/CuisineChip'
 import { RestaurantList } from '../components/organisms/RestaurantList'
+import catalogApi from '../services/catalogApi'
 
-const restaurantsSeed = [
-  { id: 'r1', name: 'Spice Route Kitchen', cuisine: 'Indian', rating: 4.6, deliveryTime: '28-35 mins' },
-  { id: 'r2', name: 'Tokyo Roll House', cuisine: 'Sushi', rating: 4.4, deliveryTime: '30-40 mins' },
-  { id: 'r3', name: 'Burger Forge', cuisine: 'Burgers', rating: 4.3, deliveryTime: '20-30 mins' },
-  { id: 'r4', name: 'Fire Oven Pizza', cuisine: 'Pizza', rating: 4.7, deliveryTime: '25-35 mins' },
-]
+const cuisines = ['All']
 
-const cuisines = ['All', 'Indian', 'Sushi', 'Burgers', 'Pizza']
+const normalizeRestaurants = (payload) => {
+  const raw = Array.isArray(payload) ? payload : payload?.items || payload?.data || []
+  return raw.map((item) => ({
+    id: item.id,
+    name: item.name,
+    cuisine: item.cuisineTypeName || item.cuisineType || item.cuisine || 'Unknown',
+    rating: Number(item.averageRating || item.rating || 0),
+    deliveryTime: item.estimatedDeliveryTime ? `${item.estimatedDeliveryTime} mins` : 'N/A',
+  }))
+}
 
 export const HomePage = () => {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [activeCuisine, setActiveCuisine] = useState('All')
+  const [restaurantsData, setRestaurantsData] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    let active = true
+
+    const loadRestaurants = async () => {
+      setLoading(true)
+      setError('')
+      try {
+        const response = await catalogApi.getRestaurants()
+        if (!active) return
+        setRestaurantsData(normalizeRestaurants(response))
+      } catch (err) {
+        if (!active) return
+        setError(err.response?.data?.message || err.message || 'Failed to load restaurants')
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadRestaurants()
+    return () => {
+      active = false
+    }
+  }, [])
 
   const restaurants = useMemo(() => {
-    return restaurantsSeed.filter((item) => {
+    return restaurantsData.filter((item) => {
       const cuisineMatch = activeCuisine === 'All' || item.cuisine === activeCuisine
       const queryMatch = !query || item.name.toLowerCase().includes(query.toLowerCase()) || item.cuisine.toLowerCase().includes(query.toLowerCase())
       return cuisineMatch && queryMatch
     })
-  }, [query, activeCuisine])
+  }, [restaurantsData, query, activeCuisine])
+
+  const availableCuisines = useMemo(() => {
+    const distinct = Array.from(new Set(restaurantsData.map((item) => item.cuisine).filter(Boolean)))
+    return [...cuisines, ...distinct]
+  }, [restaurantsData])
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -38,12 +77,16 @@ export const HomePage = () => {
       </section>
 
       <section className="mb-6 flex flex-wrap gap-2">
-        {cuisines.map((item) => (
+        {availableCuisines.map((item) => (
           <CuisineChip key={item} label={item} active={activeCuisine === item} onClick={() => setActiveCuisine(item)} />
         ))}
       </section>
 
-      <RestaurantList restaurants={restaurants} onOpenRestaurant={(restaurant) => navigate(`/restaurant/${restaurant.id}`)} />
+      {loading ? <p className="text-sm text-on-background/70">Loading restaurants...</p> : null}
+      {error ? <p className="text-sm text-error">{error}</p> : null}
+      {!loading && !error ? (
+        <RestaurantList restaurants={restaurants} onOpenRestaurant={(restaurant) => navigate(`/restaurant/${restaurant.id}`)} />
+      ) : null}
     </div>
   )
 }

@@ -1,23 +1,64 @@
 import { useState } from 'react'
+import { useEffect } from 'react'
 import { Button } from '../components/atoms/Button'
 import { Card } from '../components/atoms/Card'
+import adminApi from '../services/adminApi'
 
-const initialOrders = [
-  { id: 'OD-1100', customer: 'Rohan P', restaurant: 'Spice Route Kitchen', status: 'Pending' },
-  { id: 'OD-1098', customer: 'Ava M', restaurant: 'Burger Forge', status: 'Preparing' },
-  { id: 'OD-1095', customer: 'Neha S', restaurant: 'Tokyo Roll House', status: 'Delivered' },
-]
+const normalizeOrders = (payload) => {
+  const raw = Array.isArray(payload) ? payload : payload?.items || payload?.data || []
+  return raw.map((item) => ({
+    id: item.id || item.orderId,
+    customer: item.customerName || item.userName || item.userId || 'Customer',
+    restaurant: item.restaurantName || item.restaurant?.name || 'Restaurant',
+    status: item.status || 'Pending',
+  }))
+}
 
 export const AdminOrdersPage = () => {
-  const [orders, setOrders] = useState(initialOrders)
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const markCompleted = (id) => {
-    setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, status: 'Delivered' } : order)))
+  useEffect(() => {
+    let active = true
+
+    const loadOrders = async () => {
+      setLoading(true)
+      setError('')
+      try {
+        const response = await adminApi.getOrders()
+        if (!active) return
+        setOrders(normalizeOrders(response))
+      } catch (err) {
+        if (!active) return
+        setError(err.response?.data?.message || err.message || 'Failed to load orders')
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadOrders()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const markCompleted = async (id) => {
+    try {
+      await adminApi.updateOrderStatus(id, 'Delivered')
+      setOrders((prev) => prev.map((order) => (order.id === id ? { ...order, status: 'Delivered' } : order)))
+    } catch {
+      // Keep UI stable if status transition fails server-side.
+    }
   }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="mb-5 text-2xl font-bold">Admin Orders</h1>
+      {loading ? <p className="text-sm text-on-background/70">Loading orders...</p> : null}
+      {error ? <p className="text-sm text-error">{error}</p> : null}
       <div className="space-y-3">
         {orders.map((order) => (
           <Card key={order.id} className="flex items-center justify-between">

@@ -1,23 +1,69 @@
 import { useState } from 'react'
+import { useEffect } from 'react'
 import { Button } from '../components/atoms/Button'
 import { Card } from '../components/atoms/Card'
+import adminApi from '../services/adminApi'
 
-const initialRestaurants = [
-  { id: 'RST-77', name: 'Urban Tacos', owner: 'Ravi M', status: 'Pending' },
-  { id: 'RST-72', name: 'Bowl Theory', owner: 'Isha K', status: 'Active' },
-  { id: 'RST-70', name: 'Noodle Nation', owner: 'Arjun T', status: 'Pending' },
-]
+const normalizeRestaurants = (payload) => {
+  const raw = Array.isArray(payload) ? payload : payload?.items || payload?.data || []
+  return raw.map((item) => ({
+    id: item.id,
+    name: item.name,
+    owner: item.ownerName || item.ownerId || 'Owner',
+    status: item.status || 'Pending',
+  }))
+}
 
 export const AdminRestaurantsPage = () => {
-  const [restaurants, setRestaurants] = useState(initialRestaurants)
+  const [restaurants, setRestaurants] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
-  const setStatus = (id, status) => {
-    setRestaurants((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)))
+  useEffect(() => {
+    let active = true
+
+    const loadRestaurants = async () => {
+      setLoading(true)
+      setError('')
+      try {
+        const response = await adminApi.getRestaurants()
+        if (!active) return
+        setRestaurants(normalizeRestaurants(response))
+      } catch (err) {
+        if (!active) return
+        setError(err.response?.data?.message || err.message || 'Failed to load restaurants')
+      } finally {
+        if (active) {
+          setLoading(false)
+        }
+      }
+    }
+
+    loadRestaurants()
+    return () => {
+      active = false
+    }
+  }, [])
+
+  const setStatus = async (id, status) => {
+    try {
+      if (status === 'Active') {
+        await adminApi.approveRestaurant(id)
+      }
+      if (status === 'Rejected') {
+        await adminApi.rejectRestaurant(id, 'Rejected from dashboard')
+      }
+      setRestaurants((prev) => prev.map((item) => (item.id === id ? { ...item, status } : item)))
+    } catch {
+      // Preserve list state if action fails.
+    }
   }
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="mb-5 text-2xl font-bold">Restaurant Management</h1>
+      {loading ? <p className="text-sm text-on-background/70">Loading restaurants...</p> : null}
+      {error ? <p className="text-sm text-error">{error}</p> : null}
       <div className="space-y-3">
         {restaurants.map((restaurant) => (
           <Card key={restaurant.id} className="flex items-center justify-between">
