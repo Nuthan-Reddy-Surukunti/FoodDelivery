@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ThemeProvider } from './context/ThemeContext'
+import { NotificationProvider } from './context/NotificationContext'
 import { Layout } from './components/organisms/Layout'
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute'
 
@@ -36,8 +37,9 @@ export default function App() {
       <ThemeProvider>
         <AuthProvider>
           <CartProvider>
-            <Layout>
-              <Routes>
+            <NotificationProvider>
+              <Layout>
+                <Routes>
                 {/* Auth Routes - Public (redirect to home if already logged in) */}
                 <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
                 <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
@@ -73,8 +75,9 @@ export default function App() {
 
                 {/* 404 */}
                 <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </Layout>
+                </Routes>
+              </Layout>
+            </NotificationProvider>
           </CartProvider>
         </AuthProvider>
       </ThemeProvider>
