@@ -2,7 +2,7 @@ using AutoMapper;
 using AdminService.Application.DTOs.Requests;
 using AdminService.Application.DTOs.Responses;
 using AdminService.Application.Interfaces;
-using FoodDelivery.Shared.Events.Catalog;
+using QuickBite.Shared.Events.Catalog;
 using MassTransit;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;

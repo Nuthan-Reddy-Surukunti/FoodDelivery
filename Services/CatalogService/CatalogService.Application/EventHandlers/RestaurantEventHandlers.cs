@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using FoodDelivery.Shared.Events.Catalog;
+using QuickBite.Shared.Events.Catalog;
 using MassTransit;
 using CatalogService.Domain.Enums;
 using CatalogService.Domain.Interfaces;

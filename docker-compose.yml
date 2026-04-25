@@ -1,7 +1,7 @@
 version: "3.9"
 
 networks:
-  fooddelivery-net:
+  quickbite-net:
     driver: bridge
 
 volumes:
@@ -24,7 +24,7 @@ services:
     volumes:
       - sqlserver-data:/var/opt/mssql
     networks:
-      - fooddelivery-net
+      - quickbite-net
     healthcheck:
       test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Passw0rd' -Q 'SELECT 1'"]
       interval: 10s
@@ -43,7 +43,7 @@ services:
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
-      - fooddelivery-net
+      - quickbite-net
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
@@ -55,7 +55,7 @@ services:
   gateway:
     build:
       context: .
-      dockerfile: Gateway/FoodDelivery.Gateway/Dockerfile
+      dockerfile: Gateway/QuickBite.Gateway/Dockerfile
     container_name: fd-gateway
     ports:
       - "5000:8080"
@@ -67,7 +67,7 @@ services:
       - order-api
       - admin-api
     networks:
-      - fooddelivery-net
+      - quickbite-net
 
   # ─────────────────────────────────────────
   # Auth Service
@@ -90,7 +90,7 @@ services:
       rabbitmq:
         condition: service_healthy
     networks:
-      - fooddelivery-net
+      - quickbite-net
 
   # ─────────────────────────────────────────
   # Catalog Service
@@ -113,7 +113,7 @@ services:
       rabbitmq:
         condition: service_healthy
     networks:
-      - fooddelivery-net
+      - quickbite-net
 
   # ─────────────────────────────────────────
   # Order Service
@@ -136,7 +136,7 @@ services:
       rabbitmq:
         condition: service_healthy
     networks:
-      - fooddelivery-net
+      - quickbite-net
 
   # ─────────────────────────────────────────
   # Admin Service
@@ -159,4 +159,4 @@ services:
       rabbitmq:
         condition: service_healthy
     networks:
-      - fooddelivery-net
+      - quickbite-net

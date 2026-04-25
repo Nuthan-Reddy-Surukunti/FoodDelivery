@@ -1,4 +1,4 @@
-# 📦 Complete Order Flow Guide - FoodDelivery
+# 📦 Complete Order Flow Guide - QuickBite
 
 This guide explains the complete order journey from adding items to cart, through payment, to final delivery.
 

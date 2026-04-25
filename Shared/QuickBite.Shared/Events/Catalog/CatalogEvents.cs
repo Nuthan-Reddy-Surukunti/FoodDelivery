@@ -1,4 +1,4 @@
-namespace FoodDelivery.Shared.Events.Catalog;
+namespace QuickBite.Shared.Events.Catalog;
 
 /// <summary>
 /// Published when a new restaurant is created

@@ -1,7 +1,7 @@
 {
-  "name": "fooddelivery-web",
+  "name": "quickbite-web",
   "version": "1.0.0",
-  "description": "Food Delivery & Restaurant Aggregator - React SPA Frontend",
+  "description": "QuickBite & Restaurant Aggregator - React SPA Frontend",
   "type": "module",
   "scripts": {
     "dev": "vite",

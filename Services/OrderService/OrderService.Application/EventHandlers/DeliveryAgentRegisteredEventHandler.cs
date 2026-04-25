@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using FoodDelivery.Shared.Events.Auth;
+using QuickBite.Shared.Events.Auth;
 using MassTransit;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Interfaces;

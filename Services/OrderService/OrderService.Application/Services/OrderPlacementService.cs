@@ -1,4 +1,4 @@
-using FoodDelivery.Shared.Events.Order;
+using QuickBite.Shared.Events.Order;
 using MassTransit;
 using OrderService.Application.DTOs.Cart;
 using OrderService.Application.DTOs.Order;

@@ -1,4 +1,4 @@
-namespace FoodDelivery.Shared.Events.Auth;
+namespace QuickBite.Shared.Events.Auth;
 
 /// <summary>
 /// Published when a new user registers (Customer, RestaurantPartner, DeliveryAgent)

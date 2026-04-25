@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\AuthService.Application\AuthService.Application.csproj" />
     <ProjectReference Include="..\AuthService.Domain\AuthService.Domain.csproj" />
-  <ProjectReference Include="../../../Shared/FoodDelivery.Shared/FoodDelivery.Shared.csproj" /></ItemGroup>
+  <ProjectReference Include="../../../Shared/QuickBite.Shared/QuickBite.Shared.csproj" /></ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.5" />

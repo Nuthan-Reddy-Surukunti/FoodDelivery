@@ -15,6 +15,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../Shared/FoodDelivery.Shared/FoodDelivery.Shared.csproj" />
+    <ProjectReference Include="../../../Shared/QuickBite.Shared/QuickBite.Shared.csproj" />
   </ItemGroup>
 <ItemGroup><PackageReference Include="MassTransit" Version="8.2.0" /><PackageReference Include="MassTransit.RabbitMQ" Version="8.2.0" /></ItemGroup></Project>

@@ -2,7 +2,7 @@ namespace AdminService.Domain.Enums;
 
 /// <summary>
 /// Represents the approval status of a restaurant.
-/// Values must match FoodDelivery.Shared.Enums.RestaurantStatus for consistency
+/// Values must match QuickBite.Shared.Enums.RestaurantStatus for consistency
 /// in event-driven architecture across all services.
 /// </summary>
 public enum RestaurantStatus

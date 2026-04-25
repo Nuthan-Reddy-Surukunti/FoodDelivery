@@ -306,6 +306,6 @@ public class DeliveryService : IDeliveryService
                $"Assigned At: {assignment.AssignedAt:O}\n" +
                $"Deliver To: {address}\n\n" +
                "Please start pickup and update order status in the app.\n\n" +
-               "- FoodDelivery Order Service";
+               "- QuickBite Order Service";
     }
 }

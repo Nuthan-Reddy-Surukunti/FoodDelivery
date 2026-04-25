@@ -1,4 +1,4 @@
-# 🍔 FoodDelivery — Microservices Solution
+# 🍔 QuickBite — Microservices Solution
 
 A cloud-ready, .NET 10 food delivery platform built with a **Clean Architecture** microservices pattern.  
 Services communicate asynchronously via **RabbitMQ** and are routed through an **Ocelot API Gateway**.
@@ -8,13 +8,13 @@ Services communicate asynchronously via **RabbitMQ** and are routed through an *
 ## 🏗️ Solution Structure
 
 ```
-FoodDelivery.sln
+QuickBite.sln
 │
 ├── Gateway/
-│   └── FoodDelivery.Gateway          ← Ocelot reverse-proxy / API Gateway
+│   └── QuickBite.Gateway          ← Ocelot reverse-proxy / API Gateway
 │
 ├── Shared/
-│   └── FoodDelivery.Shared           ← Shared contracts, events, common utilities
+│   └── QuickBite.Shared           ← Shared contracts, events, common utilities
 │
 ├── Services/
 │   ├── AuthService/                  ← JWT authentication & user management
@@ -82,10 +82,10 @@ docker compose up --build
 
 ```bash
 # Restore all packages
-dotnet restore FoodDelivery.slnx
+dotnet restore QuickBite.slnx
 
 # Build entire solution
-dotnet build FoodDelivery.slnx
+dotnet build QuickBite.slnx
 
 # Run a specific service (example)
 dotnet run --project Services/AuthService/AuthService.API/AuthService.API.csproj
@@ -94,7 +94,7 @@ dotnet run --project Services/AuthService/AuthService.API/AuthService.API.csproj
 ### Run Tests
 
 ```bash
-dotnet test FoodDelivery.slnx
+dotnet test QuickBite.slnx
 ```
 
 ---
@@ -117,7 +117,7 @@ Provides back-office functionality for managing users, restaurants, and platform
 
 ## 📬 Messaging (RabbitMQ Events)
 
-Events are defined in `FoodDelivery.Shared` and consumed across services:
+Events are defined in `QuickBite.Shared` and consumed across services:
 
 | Event | Publisher | Consumer(s) |
 |---|---|---|

@@ -9,7 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="../OrderService.Domain/OrderService.Domain.csproj" />
     <ProjectReference Include="../OrderService.Application/OrderService.Application.csproj" />
-  <ProjectReference Include="../../../Shared/FoodDelivery.Shared/FoodDelivery.Shared.csproj" /></ItemGroup>
+  <ProjectReference Include="../../../Shared/QuickBite.Shared/QuickBite.Shared.csproj" /></ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />

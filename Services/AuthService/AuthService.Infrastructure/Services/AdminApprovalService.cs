@@ -3,7 +3,7 @@ using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
 using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Identity;
-using FoodDelivery.Shared.Events.Auth;
+using QuickBite.Shared.Events.Auth;
 using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

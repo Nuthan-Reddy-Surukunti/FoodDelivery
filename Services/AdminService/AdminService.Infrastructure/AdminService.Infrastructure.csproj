@@ -16,6 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AdminService.Domain\AdminService.Domain.csproj" />
-  <ProjectReference Include="../../../Shared/FoodDelivery.Shared/FoodDelivery.Shared.csproj" /></ItemGroup>
+  <ProjectReference Include="../../../Shared/QuickBite.Shared/QuickBite.Shared.csproj" /></ItemGroup>
 
 <ItemGroup><PackageReference Include="MassTransit" Version="8.2.0" /><PackageReference Include="MassTransit.RabbitMQ" Version="8.2.0" /></ItemGroup></Project>

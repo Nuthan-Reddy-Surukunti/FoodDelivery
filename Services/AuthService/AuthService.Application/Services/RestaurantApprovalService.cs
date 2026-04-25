@@ -2,7 +2,7 @@ using System;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Interfaces;
 using MassTransit;
-using FoodDelivery.Shared.Events.Auth;
+using QuickBite.Shared.Events.Auth;
 using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Services;

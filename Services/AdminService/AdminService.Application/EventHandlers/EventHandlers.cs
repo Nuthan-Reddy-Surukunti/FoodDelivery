@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging;
-using FoodDelivery.Shared.Events.Auth;
-using FoodDelivery.Shared.Events.Catalog;
-using FoodDelivery.Shared.Events.Order;
+using QuickBite.Shared.Events.Auth;
+using QuickBite.Shared.Events.Catalog;
+using QuickBite.Shared.Events.Order;
 using MassTransit;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;

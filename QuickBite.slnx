@@ -1,6 +1,6 @@
 <Solution>
   <Folder Name="/Gateway/">
-    <Project Path="Gateway/FoodDelivery.Gateway/FoodDelivery.Gateway.csproj" />
+    <Project Path="Gateway/QuickBite.Gateway/QuickBite.Gateway.csproj" />
   </Folder>
   <Folder Name="/Services/" />
   <Folder Name="/Services/AdminService/">
@@ -32,6 +32,6 @@
     <Project Path="Services/OrderService/OrderService.Tests/OrderService.Tests.csproj" />
   </Folder>
   <Folder Name="/Shared/">
-    <Project Path="Shared/FoodDelivery.Shared/FoodDelivery.Shared.csproj" />
+    <Project Path="Shared/QuickBite.Shared/QuickBite.Shared.csproj" />
   </Folder>
 </Solution>

@@ -1,4 +1,4 @@
-namespace FoodDelivery.Shared.Events.Order;
+namespace QuickBite.Shared.Events.Order;
 
 /// <summary>
 /// Represents a snapshot of an order item for event publishing

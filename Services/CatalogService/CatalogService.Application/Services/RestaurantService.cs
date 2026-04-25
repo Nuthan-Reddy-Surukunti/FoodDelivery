@@ -4,7 +4,7 @@ using CatalogService.Application.Exceptions;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using CatalogService.Domain.Interfaces;
-using FoodDelivery.Shared.Events.Catalog;
+using QuickBite.Shared.Events.Catalog;
 using MassTransit;
 
 namespace CatalogService.Application.Services;

@@ -1,4 +1,4 @@
-namespace FoodDelivery.Shared.Enums;
+namespace QuickBite.Shared.Enums;
 
 /// <summary>
 /// Unified restaurant status definition used across all services

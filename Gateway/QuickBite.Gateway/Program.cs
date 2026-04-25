@@ -71,7 +71,7 @@ app.MapWhen(context => context.Request.Path == "/", rootApp =>
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(new
         {
-            message = "FoodDelivery Gateway is running",
+            message = "QuickBite Gateway is running",
             hint = "Use /gateway/auth, /gateway/catalog, /gateway/orders, /gateway/admin or visit /swagger"
         });
     });

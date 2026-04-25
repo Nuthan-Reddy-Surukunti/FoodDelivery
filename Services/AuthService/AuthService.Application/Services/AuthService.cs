@@ -6,7 +6,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
 using MassTransit;
-using FoodDelivery.Shared.Events.Auth;
+using QuickBite.Shared.Events.Auth;
 
 namespace AuthService.Application.Services;
 

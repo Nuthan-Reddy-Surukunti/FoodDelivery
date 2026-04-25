@@ -166,4 +166,4 @@ Follow the component patterns and architecture guidelines in [ARCHITECTURE.md](.
 
 ## License
 
-Part of the FoodDelivery project.
+Part of the QuickBite project.
