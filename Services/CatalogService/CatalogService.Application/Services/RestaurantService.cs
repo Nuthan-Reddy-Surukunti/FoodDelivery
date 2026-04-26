@@ -144,6 +144,22 @@ public class RestaurantService : IRestaurantService
         _mapper.Map(dto, restaurant);
         var updatedRestaurant = await _repository.UpdateAsync(restaurant);
         
+        var restaurantUpdatedEvent = new RestaurantUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            RestaurantId = updatedRestaurant.Id,
+            Name = updatedRestaurant.Name,
+            Description = updatedRestaurant.Description ?? string.Empty,
+            City = updatedRestaurant.City ?? string.Empty,
+            CuisineType = updatedRestaurant.CuisineType.ToString(),
+            Address = updatedRestaurant.Address ?? string.Empty,
+            ContactPhone = updatedRestaurant.ContactPhone ?? string.Empty,
+            ContactEmail = updatedRestaurant.ContactEmail ?? string.Empty
+        };
+        await _publishEndpoint.Publish(restaurantUpdatedEvent);
+        
         return _mapper.Map<RestaurantDetailDto>(updatedRestaurant);
     }
 }

@@ -5,6 +5,8 @@ using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Entities;
 using CatalogService.Domain.Enums;
 using CatalogService.Domain.Interfaces;
+using MassTransit;
+using QuickBite.Shared.Events.Catalog;
 
 namespace CatalogService.Application.Services;
 
@@ -13,12 +15,18 @@ public class MenuItemService : IMenuItemService
     private readonly IMenuItemRepository _repository;
     private readonly IRestaurantRepository _restaurantRepository;
     private readonly IMapper _mapper;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public MenuItemService(IMenuItemRepository repository, IRestaurantRepository restaurantRepository, IMapper mapper)
+    public MenuItemService(
+        IMenuItemRepository repository, 
+        IRestaurantRepository restaurantRepository, 
+        IMapper mapper,
+        IPublishEndpoint publishEndpoint)
     {
         _repository = repository;
         _restaurantRepository = restaurantRepository;
         _mapper = mapper;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<MenuItemDto> GetMenuItemByIdAsync(Guid id, string? userRole = null)
@@ -88,6 +96,22 @@ public class MenuItemService : IMenuItemService
         var menuItem = _mapper.Map<MenuItem>(dto);
         var createdItem = await _repository.CreateAsync(menuItem);
         
+        var menuItemCreatedEvent = new MenuItemCreatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            MenuItemId = createdItem.Id,
+            RestaurantId = createdItem.RestaurantId,
+            Name = createdItem.Name,
+            Description = createdItem.Description ?? string.Empty,
+            Price = createdItem.Price,
+            IsVeg = createdItem.IsVeg,
+            AvailabilityStatus = createdItem.AvailabilityStatus.ToString(),
+            CategoryName = createdItem.CategoryName ?? string.Empty
+        };
+        await _publishEndpoint.Publish(menuItemCreatedEvent);
+        
         return _mapper.Map<MenuItemDto>(createdItem);
     }
 
@@ -115,6 +139,22 @@ public class MenuItemService : IMenuItemService
         _mapper.Map(dto, menuItem);
         var updatedItem = await _repository.UpdateAsync(menuItem);
         
+        var menuItemUpdatedEvent = new MenuItemUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            MenuItemId = updatedItem.Id,
+            RestaurantId = updatedItem.RestaurantId,
+            Name = updatedItem.Name,
+            Description = updatedItem.Description ?? string.Empty,
+            Price = updatedItem.Price,
+            IsVeg = updatedItem.IsVeg,
+            AvailabilityStatus = updatedItem.AvailabilityStatus.ToString(),
+            CategoryName = updatedItem.CategoryName ?? string.Empty
+        };
+        await _publishEndpoint.Publish(menuItemUpdatedEvent);
+        
         return _mapper.Map<MenuItemDto>(updatedItem);
     }
 
@@ -133,6 +173,20 @@ public class MenuItemService : IMenuItemService
         if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
             throw new UnauthorizedAccessException("You can only delete items from your own restaurant.");
 
-        return await _repository.DeleteAsync(id);
+        var deleted = await _repository.DeleteAsync(id);
+        if (deleted)
+        {
+            var menuItemDeletedEvent = new MenuItemDeletedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                EventVersion = 1,
+                MenuItemId = id,
+                RestaurantId = menuItem.RestaurantId
+            };
+            await _publishEndpoint.Publish(menuItemDeletedEvent);
+        }
+        
+        return deleted;
     }
 }

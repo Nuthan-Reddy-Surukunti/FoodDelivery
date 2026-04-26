@@ -162,3 +162,54 @@ public class OrderStatusChangedEventHandler : IConsumer<OrderStatusChangedEvent>
         }
     }
 }
+
+// RestaurantUpdatedEventHandler - Syncs restaurant updates from CatalogService to AdminService
+public class RestaurantUpdatedEventHandler : IConsumer<RestaurantUpdatedEvent>
+{
+    private readonly ILogger<RestaurantUpdatedEventHandler> _logger;
+    private readonly IRestaurantRepository _restaurantRepository;
+
+    public RestaurantUpdatedEventHandler(ILogger<RestaurantUpdatedEventHandler> logger, IRestaurantRepository restaurantRepository)
+    {
+        _logger = logger;
+        _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
+    }
+
+    public async Task Consume(ConsumeContext<RestaurantUpdatedEvent> context)
+    {
+        var @event = context.Message;
+        _logger.LogInformation("Processing RestaurantUpdatedEvent: RestaurantId={RestaurantId}, Name={Name}", 
+            @event.RestaurantId, @event.Name);
+
+        try
+        {
+            var restaurant = await _restaurantRepository.GetByIdAsync(@event.RestaurantId, context.CancellationToken);
+            if (restaurant == null)
+            {
+                _logger.LogWarning("Restaurant not found in AdminService for update: RestaurantId={RestaurantId}", @event.RestaurantId);
+                return;
+            }
+
+            restaurant.Name = @event.Name;
+            restaurant.Description = @event.Description;
+            restaurant.City = @event.City;
+            // CuisineType could be mapped if needed, but AdminService Restaurant entity might not have it or just needs basic fields
+            
+            // Wait, does AdminService.Domain.Entities.Restaurant have City, Description? Yes it does.
+            // Let's check what fields we have in Restaurant entity: City, Description, Name.
+            // Update those fields:
+            
+            restaurant.UpdatedAt = DateTime.UtcNow;
+            restaurant.LastSyncedAt = @event.OccurredAt;
+            restaurant.SyncEventId = @event.EventId;
+
+            await _restaurantRepository.UpdateAsync(restaurant, context.CancellationToken);
+            _logger.LogInformation("Restaurant updated successfully in AdminService: RestaurantId={RestaurantId}", @event.RestaurantId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing RestaurantUpdatedEvent: RestaurantId={RestaurantId}", @event.RestaurantId);
+            throw;
+        }
+    }
+}

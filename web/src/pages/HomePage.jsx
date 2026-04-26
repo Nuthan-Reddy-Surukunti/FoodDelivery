@@ -34,7 +34,7 @@ const normalizeRestaurant = (item) => ({
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 const SkeletonCard = ({ className = '' }) => (
-  <div className={`rounded-xl bg-slate-200 animate-pulse ${className}`} />
+  <div className={`rounded-xl skeleton-shimmer ${className}`} />
 )
 
 const StarIcon = () => (
@@ -50,14 +50,14 @@ const SearchDropdown = ({ results, loading, query, onSelectRestaurant, onSelectM
 
   if (loading) {
     return (
-      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden">
+      <div className="absolute top-full left-0 right-0 mt-2 glass-panel-premium rounded-2xl shadow-soft-xl z-50 overflow-hidden animate-fade-in-up">
         <div className="p-4 space-y-3">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-slate-200 animate-pulse flex-shrink-0" />
+              <div className="w-10 h-10 rounded-xl skeleton-shimmer flex-shrink-0" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3 bg-slate-200 animate-pulse rounded w-3/4" />
-                <div className="h-2.5 bg-slate-100 animate-pulse rounded w-1/2" />
+                <div className="h-3 skeleton-shimmer rounded w-3/4" />
+                <div className="h-2.5 skeleton-shimmer rounded w-1/2" />
               </div>
             </div>
           ))}
@@ -68,7 +68,7 @@ const SearchDropdown = ({ results, loading, query, onSelectRestaurant, onSelectM
 
   if (!hasResults && query.length >= 2) {
     return (
-      <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 p-6 text-center">
+      <div className="absolute top-full left-0 right-0 mt-2 glass-panel-premium rounded-2xl shadow-soft-xl z-50 p-6 text-center animate-fade-in-up">
         <span className="material-symbols-outlined text-3xl text-slate-300 block mb-2">search_off</span>
         <p className="text-sm font-medium text-on-surface-variant">No results for "{query}"</p>
       </div>
@@ -78,7 +78,7 @@ const SearchDropdown = ({ results, loading, query, onSelectRestaurant, onSelectM
   if (!hasResults) return null
 
   return (
-    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-100 z-50 overflow-hidden max-h-[420px] overflow-y-auto">
+    <div className="absolute top-full left-0 right-0 mt-2 glass-panel-premium rounded-2xl shadow-soft-xl z-50 overflow-hidden max-h-[420px] overflow-y-auto animate-fade-in-up">
       {/* Restaurants section */}
       {restaurants.length > 0 && (
         <div>
@@ -274,8 +274,8 @@ export const HomePage = () => {
   return (
     <div className="bg-background min-h-screen">
       {/* ── Hero Search Section ── */}
-      <section className="px-6 pt-8 pb-6 max-w-7xl mx-auto">
-        <h1 className="text-[32px] font-bold text-on-surface leading-tight max-w-md mb-6">
+      <section className="px-6 pt-8 pb-6 max-w-7xl mx-auto animate-fade-in-up stagger-1">
+        <h1 className="text-[32px] font-bold text-gradient-primary leading-tight max-w-md mb-6 inline-block">
           What are you craving today?
         </h1>
 
@@ -318,7 +318,7 @@ export const HomePage = () => {
 
       {/* ── Cuisine Carousel ── */}
       {availableCuisines.length > 0 && (
-        <section className="pb-6">
+        <section className="pb-6 animate-fade-in-up stagger-2">
           <div className="px-6 max-w-7xl mx-auto mb-4">
             <h2 className="text-xl font-semibold text-on-surface">Categories</h2>
           </div>
@@ -349,7 +349,7 @@ export const HomePage = () => {
       )}
 
       {/* ── Main Content ── */}
-      <section className="px-6 pb-16 max-w-7xl mx-auto">
+      <section className="px-6 pb-16 max-w-7xl mx-auto animate-fade-in-up stagger-3">
         <div className="flex justify-between items-end mb-6">
           <h2 className="text-2xl font-bold text-on-surface">Popular Near You</h2>
           <button
@@ -391,7 +391,7 @@ export const HomePage = () => {
               {featured && (
                 <div
                   onClick={() => goToRestaurant(featured.id)}
-                  className="md:col-span-2 relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer h-[300px]"
+                  className="md:col-span-2 relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer hover-lift h-[300px]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-slate-900/60" />
                   {featured.imageUrl ? (
@@ -430,7 +430,7 @@ export const HomePage = () => {
                     <div
                       key={r.id}
                       onClick={() => goToRestaurant(r.id)}
-                      className="flex-1 relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer"
+                      className="flex-1 relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer hover-lift"
                     >
                       {r.imageUrl ? (
                         <img src={r.imageUrl} alt={r.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -461,7 +461,7 @@ export const HomePage = () => {
                   <div
                     key={r.id}
                     onClick={() => goToRestaurant(r.id)}
-                    className="relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer h-[180px]"
+                    className="relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer hover-lift h-[180px]"
                   >
                     {r.imageUrl ? (
                       <img src={r.imageUrl} alt={r.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />

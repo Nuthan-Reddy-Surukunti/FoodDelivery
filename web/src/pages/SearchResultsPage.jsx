@@ -14,11 +14,10 @@ const StarIcon = () => (
   <span className="material-symbols-outlined text-yellow-400" style={{ fontSize: 13, fontVariationSettings: "'FILL' 1" }}>star</span>
 )
 
-// ── Restaurant result card
 const RestaurantCard = ({ r, onClick }) => (
   <div
     onClick={onClick}
-    className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden group cursor-pointer hover:shadow-md hover:border-primary/30 transition-all"
+    className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden group cursor-pointer hover-lift transition-all animate-fade-in-up"
   >
     <div className="relative h-36 bg-slate-100">
       {r.imageUrl ? (
@@ -43,11 +42,10 @@ const RestaurantCard = ({ r, onClick }) => (
   </div>
 )
 
-// ── Menu item result card
 const MenuItemCard = ({ item, onClick }) => (
   <div
     onClick={onClick}
-    className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden group cursor-pointer hover:shadow-md hover:border-primary/30 transition-all flex items-center gap-4 p-4"
+    className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden group cursor-pointer hover-lift transition-all flex items-center gap-4 p-4 animate-fade-in-up"
   >
     <div className="w-16 h-16 rounded-xl bg-slate-100 flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden">
       {item.imageUrl
@@ -211,10 +209,10 @@ export const SearchResultsPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className="bg-white rounded-xl border border-slate-100 overflow-hidden">
-                <div className="h-36 bg-slate-200 animate-pulse" />
+                <div className="h-36 skeleton-shimmer" />
                 <div className="p-4 space-y-2">
-                  <div className="h-3 bg-slate-200 animate-pulse rounded w-3/4" />
-                  <div className="h-3 bg-slate-100 animate-pulse rounded w-1/2" />
+                  <div className="h-3 skeleton-shimmer rounded w-3/4" />
+                  <div className="h-3 skeleton-shimmer rounded w-1/2" />
                 </div>
               </div>
             ))}

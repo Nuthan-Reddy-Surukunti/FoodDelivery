@@ -12,6 +12,7 @@ public class AdminServiceDbContext : DbContext
     }
 
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<Report> Reports => Set<Report>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
@@ -22,6 +23,7 @@ public class AdminServiceDbContext : DbContext
 
         // Apply entity configurations
         modelBuilder.ApplyConfiguration(new RestaurantConfiguration());
+        modelBuilder.ApplyConfiguration(new MenuItemConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
         modelBuilder.ApplyConfiguration(new ReportConfiguration());
         modelBuilder.ApplyConfiguration(new AuditLogConfiguration());

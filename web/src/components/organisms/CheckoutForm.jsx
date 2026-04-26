@@ -8,7 +8,7 @@ import { useNotification } from '../../hooks/useNotification'
 
 const steps = ['Address', 'Review']
 
-export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
+export const CheckoutForm = ({ timeSlots = [], onSubmit, loading = false }) => {
   const [currentStep, setCurrentStep] = useState(0)
   const [addresses, setAddresses] = useState([])
   const [selectedAddressId, setSelectedAddressId] = useState(null)
@@ -77,6 +77,7 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
   const back = () => setCurrentStep((s) => Math.max(s - 1, 0))
 
   const handleSubmit = () => {
+    if (loading) return
     onSubmit?.({ 
       addressId: selectedAddressId,
       address: finalAddress, 
@@ -131,11 +132,13 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit }) => {
       ) : null}
 
       <div className="flex justify-between">
-        <Button variant="secondary" onClick={back} disabled={currentStep === 0}>Back</Button>
+        <Button variant="secondary" onClick={back} disabled={currentStep === 0 || loading}>Back</Button>
         {currentStep < steps.length - 1 ? (
           <Button onClick={next} disabled={!canProceed}>Next</Button>
         ) : (
-          <Button onClick={handleSubmit}>Place Order</Button>
+          <Button onClick={handleSubmit} disabled={loading}>
+            {loading ? 'Placing Order...' : 'Place Order'}
+          </Button>
         )}
       </div>
     </div>
