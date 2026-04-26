@@ -132,7 +132,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new() { Title = "Admin Service API", Version = "v1" });
+    options.SwaggerDoc("v1", new() { Title = "QuickBite Admin Service API", Version = "v1" });
     
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
     {

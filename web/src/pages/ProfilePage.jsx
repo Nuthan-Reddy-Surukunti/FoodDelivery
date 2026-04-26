@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Icon } from '../components/atoms/Icon'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/authApi'
 
@@ -55,196 +54,238 @@ export const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div className="min-h-screen bg-slate-50/50">
+      {/* ── Background Mesh ── */}
+      <div className="fixed inset-0 bg-gradient-mesh opacity-20 pointer-events-none" />
+
+      <div className="relative max-w-4xl mx-auto px-6 py-12">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-display-md font-bold text-on-background mb-2">My Profile</h1>
-          <p className="text-body-md text-on-surface-variant">Manage your account settings and preferences</p>
-        </div>
+        <header className="mb-10 animate-fade-in-up">
+          <h1 className="text-4xl font-black text-gradient-primary leading-tight mb-2">Account Settings</h1>
+          <p className="text-slate-500 font-medium">Manage your personal information, security, and preferences</p>
+        </header>
 
         {/* Message Alert */}
         {message && (
-          <div className={`mb-6 p-4 rounded-[16px] flex items-center gap-3 ${
+          <div className={`mb-8 p-4 rounded-2xl flex items-center gap-3 border shadow-sm animate-fade-in ${
             message.type === 'success' 
-              ? 'bg-tertiary-fixed text-on-tertiary-fixed' 
-              : 'bg-error-container text-on-error-container'
+              ? 'bg-emerald-50 border-emerald-100 text-emerald-700' 
+              : 'bg-rose-50 border-rose-100 text-rose-700'
           }`}>
-            <Icon name={message.type === 'success' ? 'check_circle' : 'error'} size={20} />
-            <span className="font-body-md">{message.text}</span>
+            <span className="material-symbols-outlined text-xl">
+              {message.type === 'success' ? 'check_circle' : 'error'}
+            </span>
+            <span className="text-sm font-semibold">{message.text}</span>
           </div>
         )}
 
-        {/* Profile Card */}
-        <div className="bg-surface rounded-[20px] p-6 shadow-ambient border border-outline mb-6">
-          {/* Profile Header */}
-          <div className="flex items-center gap-4 mb-8 pb-6 border-b border-outline">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center text-on-primary text-display-sm font-bold">
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-            <div>
-              <h2 className="text-headline-md font-bold text-on-background">{user?.name || 'User'}</h2>
-              <p className="text-body-md text-on-surface-variant">{user?.role || 'Customer'}</p>
-            </div>
-            <button
-              onClick={() => setIsEditing(!isEditing)}
-              className="ml-auto px-4 py-2 rounded-[12px] bg-primary text-on-primary font-body-md hover:bg-surface-tint transition-colors"
-            >
-              {isEditing ? 'Cancel' : 'Edit Profile'}
-            </button>
-          </div>
-
-          {/* Profile Details - View Mode */}
-          {!isEditing && (
-            <div className="space-y-4 mb-8">
-              <div className="flex items-start gap-4">
-                <Icon name="person" size={24} className="text-primary mt-1" />
-                <div>
-                  <p className="text-label-md text-on-surface-variant uppercase">Full Name</p>
-                  <p className="text-body-md text-on-background font-medium">{user?.name || 'Not set'}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* ── Left Sidebar: Profile Summary ── */}
+          <div className="lg:col-span-1 space-y-6 animate-fade-in-up stagger-1">
+            <div className="glass-panel-premium rounded-3xl p-8 text-center border-white/60 shadow-soft-xl overflow-hidden relative group">
+              <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-primary to-primary-container opacity-10" />
+              
+              <div className="relative mb-6">
+                <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-primary to-primary-container p-1 shadow-glow-sm">
+                  <div className="w-full h-full rounded-full bg-white flex items-center justify-center text-3xl font-black text-primary">
+                    {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+                  </div>
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-emerald-500 border-4 border-white shadow-sm flex items-center justify-center">
+                  <span className="material-symbols-outlined text-white text-[14px]">verified</span>
                 </div>
               </div>
-              <div className="flex items-start gap-4">
-                <Icon name="mail" size={24} className="text-primary mt-1" />
-                <div>
-                  <p className="text-label-md text-on-surface-variant uppercase">Email</p>
-                  <p className="text-body-md text-on-background font-medium">{user?.email || 'Not set'}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <Icon name="call" size={24} className="text-primary mt-1" />
-                <div>
-                  <p className="text-label-md text-on-surface-variant uppercase">Phone</p>
-                  <p className="text-body-md text-on-background font-medium">{user?.phone || 'Not set'}</p>
-                </div>
-              </div>
-              <div className="flex items-start gap-4">
-                <Icon name="tag" size={24} className="text-primary mt-1" />
-                <div>
-                  <p className="text-label-md text-on-surface-variant uppercase">Account Type</p>
-                  <p className="text-body-md text-on-background font-medium">{user?.role || 'Customer'}</p>
-                </div>
-              </div>
-            </div>
-          )}
 
-          {/* Profile Details - Edit Mode */}
-          {isEditing && (
-            <div className="space-y-4 mb-8">
-              <div>
-                <label className="block text-label-md text-on-surface font-medium mb-2">Full Name</label>
-                <input
-                  type="text"
-                  name="fullName"
-                  value={editForm.fullName}
-                  onChange={handleEditChange}
-                  className="w-full px-4 py-3 rounded-[12px] bg-surface-container-low border border-outline focus:border-primary focus:ring-2 focus:ring-primary/20 text-body-md"
-                />
-              </div>
-              <div>
-                <label className="block text-label-md text-on-surface font-medium mb-2">Phone</label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={editForm.phone}
-                  onChange={handleEditChange}
-                  className="w-full px-4 py-3 rounded-[12px] bg-surface-container-low border border-outline focus:border-primary focus:ring-2 focus:ring-primary/20 text-body-md"
-                />
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={isSaving}
-                  className="flex-1 px-4 py-3 rounded-[12px] bg-primary text-on-primary font-body-md hover:bg-surface-tint transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSaving ? 'Saving...' : 'Save Changes'}
-                </button>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  disabled={isSaving}
-                  className="flex-1 px-4 py-3 rounded-[12px] bg-surface-container text-on-surface font-body-md border border-outline hover:bg-surface-container-high transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Security Settings */}
-        <div className="bg-surface rounded-[20px] p-6 shadow-ambient border border-outline mb-6">
-          <h3 className="text-headline-sm font-bold text-on-background mb-6 flex items-center gap-2">
-            <Icon name="security" size={24} className="text-primary" />
-            Security Settings
-          </h3>
-
-          {/* 2FA Toggle */}
-          <div className="flex items-center justify-between p-4 bg-surface-container rounded-[12px] mb-4">
-            <div className="flex-1">
-              <p className="text-body-md font-medium text-on-background">Two-Factor Authentication</p>
-              <p className="text-caption-md text-on-surface-variant mt-1">
-                {twoFactorEnabled 
-                  ? 'When you login, you will receive an email OTP to verify your identity'
-                  : 'Add an extra layer of security to your account by receiving an OTP via email during login'
-                }
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">{user?.name || 'User'}</h2>
+              <p className="text-sm font-semibold text-primary/80 uppercase tracking-wider mb-6">
+                {user?.role || 'Customer'}
               </p>
+
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="w-full py-3 rounded-2xl bg-primary text-white text-sm font-bold shadow-ambient hover:shadow-glow hover:bg-primary-container active:scale-95 transition-all flex items-center justify-center gap-2"
+              >
+                <span className="material-symbols-outlined text-lg">{isEditing ? 'close' : 'edit_square'}</span>
+                {isEditing ? 'Cancel Editing' : 'Edit Profile'}
+              </button>
             </div>
-            <button
-              onClick={handleToggle2FA}
-              disabled={isTogglingTwoFactor}
-              className={`relative ml-4 flex-shrink-0 w-12 h-6 rounded-full transition-colors ${
-                twoFactorEnabled ? 'bg-success' : 'bg-outline'
-              } disabled:opacity-50`}
-            >
-              <div
-                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  twoFactorEnabled ? 'translate-x-6' : ''
-                }`}
-              />
-            </button>
+
+            {/* Quick Stats/Badges */}
+            <div className="glass-panel-premium rounded-3xl p-6 border-white/60">
+              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Account Stats</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-slate-400">calendar_today</span>
+                    <span className="text-sm text-slate-600 font-medium">Joined</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-900">Oct 2024</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-slate-400">shopping_bag</span>
+                    <span className="text-sm text-slate-600 font-medium">Total Orders</span>
+                  </div>
+                  <span className="text-sm font-bold text-slate-900">12</span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Password Change */}
-          <div className="flex items-center justify-between p-4 bg-surface-container rounded-[12px] mt-4">
-            <div>
-              <p className="text-body-md font-medium text-on-background">Change Password</p>
-              <p className="text-caption-md text-on-surface-variant mt-1">Update your password regularly to keep your account secure</p>
-            </div>
-            <button 
-              onClick={() => navigate('/change-password')}
-              className="px-4 py-2 rounded-[12px] bg-outline text-on-background font-body-md hover:bg-outline/80 transition-colors">
-              Change
-            </button>
-          </div>
-        </div>
+          {/* ── Main Content: Details & Security ── */}
+          <div className="lg:col-span-2 space-y-8 animate-fade-in-up stagger-2">
+            
+            {/* Personal Information */}
+            <section className="glass-panel-premium rounded-3xl p-8 border-white/60 shadow-soft-xl">
+              <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-primary">person</span>
+                </span>
+                Personal Information
+              </h3>
 
-        {/* Account Actions */}
-        <div className="bg-surface rounded-[20px] p-6 shadow-ambient border border-outline">
-          <h3 className="text-headline-sm font-bold text-on-background mb-4">Account Actions</h3>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate('/addresses')}
-              className="w-full px-4 py-3 rounded-[12px] bg-surface-container text-on-surface font-body-md hover:bg-surface-container-high transition-colors flex items-center gap-2"
-            >
-              <Icon name="location_on" size={20} />
-              Manage Addresses
-            </button>
-            <button
-              onClick={() => navigate('/delete-account')}
-              className="w-full px-4 py-3 rounded-[12px] bg-error-container text-on-error-container font-body-md hover:opacity-90 transition-opacity flex items-center gap-2"
-            >
-              <Icon name="delete_account" size={20} />
-              Delete Account
-            </button>
-            <button
-              onClick={() => {
-                logout()
-              }}
-              className="w-full px-4 py-3 rounded-[12px] bg-outline text-on-background font-body-md hover:bg-outline/80 transition-colors flex items-center justify-center gap-2"
-            >
-              <Icon name="logout" size={20} />
-              Logout
-            </button>
+              {!isEditing ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Full Name</label>
+                    <p className="text-base font-semibold text-slate-900">{user?.name || 'Not set'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Email Address</label>
+                    <p className="text-base font-semibold text-slate-900">{user?.email || 'Not set'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Phone Number</label>
+                    <p className="text-base font-semibold text-slate-900">{user?.phone || 'Not set'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Service Zone</label>
+                    <p className="text-base font-semibold text-slate-900">Downtown Bangalore</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700">Full Name</label>
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={editForm.fullName}
+                        onChange={handleEditChange}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-bold text-slate-700">Phone Number</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={editForm.phone}
+                        onChange={handleEditChange}
+                        className="w-full px-5 py-3.5 rounded-2xl bg-white border border-slate-200 focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none transition-all font-medium"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-4 pt-4">
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={isSaving}
+                      className="flex-1 py-4 rounded-2xl bg-primary text-white font-bold shadow-ambient hover:bg-primary-container transition-all disabled:opacity-50"
+                    >
+                      {isSaving ? 'Saving Changes...' : 'Save Profile'}
+                    </button>
+                    <button
+                      onClick={() => setIsEditing(false)}
+                      className="px-8 py-4 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </section>
+
+            {/* Security & Settings */}
+            <section className="glass-panel-premium rounded-3xl p-8 border-white/60 shadow-soft-xl">
+              <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
+                <span className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-emerald-600">security</span>
+                </span>
+                Security & Authentication
+              </h3>
+
+              <div className="space-y-4">
+                {/* 2FA Card */}
+                <div className="p-6 rounded-2xl bg-white/50 border border-slate-100 flex items-center justify-between hover:border-primary/20 transition-colors">
+                  <div className="flex gap-4 min-w-0">
+                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${twoFactorEnabled ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}>
+                      <span className="material-symbols-outlined">{twoFactorEnabled ? 'lock' : 'lock_open'}</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Two-Factor Authentication</h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed max-w-sm">
+                        Enhance your account security with email verification codes during login.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleToggle2FA}
+                    disabled={isTogglingTwoFactor}
+                    className={`relative w-14 h-7 rounded-full shrink-0 transition-all ${twoFactorEnabled ? 'bg-emerald-500' : 'bg-slate-300'}`}
+                  >
+                    <div className={`absolute top-1 left-1 w-5 h-5 bg-white rounded-full transition-transform ${twoFactorEnabled ? 'translate-x-7' : ''}`} />
+                  </button>
+                </div>
+
+                {/* Password Change Card */}
+                <div className="p-6 rounded-2xl bg-white/50 border border-slate-100 flex items-center justify-between hover:border-primary/20 transition-colors group">
+                  <div className="flex gap-4">
+                    <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                      <span className="material-symbols-outlined">key</span>
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900">Account Password</h4>
+                      <p className="text-xs text-slate-500 mt-1">Last changed 3 months ago</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => navigate('/change-password')}
+                    className="px-6 py-2.5 rounded-xl border border-indigo-200 text-indigo-600 text-xs font-bold hover:bg-indigo-50 transition-colors"
+                  >
+                    Change
+                  </button>
+                </div>
+              </div>
+            </section>
+
+            {/* Quick Actions Footer */}
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={() => navigate('/addresses')}
+                className="flex-1 min-w-[200px] p-4 glass-panel-premium rounded-2xl border-white/60 flex items-center gap-3 hover:bg-white transition-all group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined">location_on</span>
+                </div>
+                <span className="text-sm font-bold text-slate-700">Manage Addresses</span>
+              </button>
+
+              <button
+                onClick={() => logout()}
+                className="p-4 rounded-2xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center gap-3 hover:bg-rose-100 transition-all group"
+              >
+                <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">logout</span>
+                <span className="text-sm font-bold">Logout</span>
+              </button>
+              
+              <button
+                onClick={() => navigate('/delete-account')}
+                className="p-4 rounded-2xl bg-slate-100 text-slate-500 border border-slate-200 flex items-center gap-2 hover:bg-slate-200 transition-all"
+              >
+                <span className="material-symbols-outlined text-[18px]">delete_forever</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -49,12 +49,12 @@ export const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col">
-      {/* ── Horizon TopNavBar ── */}
+      {/* ── QuickBite TopNavBar ── */}
       <nav className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 w-full z-50 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
           <div className="flex items-center gap-6 min-w-0">
             <Link to="/" className="text-xl font-bold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
-              Horizon Food
+              QuickBite
             </Link>
 
             <form onSubmit={handleSearchSubmit} className="hidden md:flex relative">

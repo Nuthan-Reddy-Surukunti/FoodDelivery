@@ -91,7 +91,7 @@ public class SearchService : ISearchService
             FeaturedRestaurants = featuredDtos,
             NearbyRestaurants = new List<RestaurantDto>(),
             PopularCuisines = popularCuisines,
-            BannerMessage = "Welcome to Food Delivery - Order from your favorite restaurants!",
+            BannerMessage = "Welcome to QuickBite - Order from your favorite restaurants!",
             PromoMessage = "Get 20% off on your first order with code WELCOME20"
         };
     }

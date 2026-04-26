@@ -22,7 +22,7 @@ builder.Services.AddControllers()
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new() { Title = "Auth Service", Version = "v1" });
+    options.SwaggerDoc("v1", new() { Title = "QuickBite Auth Service API", Version = "v1" });
 
     // Add JWT support in Swagger UI
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()

@@ -26,7 +26,7 @@ export const AgentLayout = ({ children, title = '' }) => {
             {(user?.email?.[0] || 'A').toUpperCase()}
           </div>
           <div>
-            <h1 className="text-sm font-black text-blue-700 dark:text-blue-400 tracking-tight">Horizon Eats</h1>
+            <h1 className="text-sm font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h1>
             <p className="text-[11px] text-slate-500">Delivery Dashboard</p>
           </div>
         </div>
@@ -80,7 +80,7 @@ export const AgentLayout = ({ children, title = '' }) => {
             <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold">
               {(user?.email?.[0] || 'A').toUpperCase()}
             </div>
-            <h2 className="text-lg font-black text-blue-700 dark:text-blue-400 tracking-tight">Horizon Eats</h2>
+            <h2 className="text-lg font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h2>
           </div>
           <div className="flex items-center gap-4">
             <button className="bg-primary text-on-primary text-sm font-medium px-4 py-2 rounded-full flex items-center gap-2 shadow-sm active:scale-95 transition-transform">

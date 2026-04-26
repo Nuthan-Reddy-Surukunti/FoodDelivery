@@ -101,7 +101,7 @@ builder.Services.AddAuthentication(options =>
 // === 4. Swagger/OpenAPI ===
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new() { Title = "Catalog Service", Version = "v1" });
+    options.SwaggerDoc("v1", new() { Title = "QuickBite Catalog Service API", Version = "v1" });
 
     // Add JWT support in Swagger UI
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme

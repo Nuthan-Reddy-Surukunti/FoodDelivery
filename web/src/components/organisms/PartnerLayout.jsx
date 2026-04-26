@@ -32,7 +32,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
             <span className="material-symbols-outlined text-white text-xl">storefront</span>
           </div>
           <div>
-            <h1 className="text-sm font-bold text-primary">Horizon Partner</h1>
+            <h1 className="text-sm font-bold text-primary">QuickBite Partner</h1>
             <p className="text-[11px] text-slate-500">Restaurant Dashboard</p>
           </div>
         </div>
@@ -98,7 +98,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
             <div className="md:hidden">
               <span className="material-symbols-outlined text-slate-600 cursor-pointer hover:text-blue-500 transition-colors">menu</span>
             </div>
-            <h2 className="text-lg font-black text-blue-700 dark:text-blue-400 tracking-tight">Horizon Eats</h2>
+            <h2 className="text-lg font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h2>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center bg-slate-100 rounded-full p-1 border border-slate-200/70">

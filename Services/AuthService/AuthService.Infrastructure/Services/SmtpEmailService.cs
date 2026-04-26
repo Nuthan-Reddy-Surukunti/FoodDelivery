@@ -23,7 +23,7 @@ public class SmtpEmailService : IEmailService
             var smtpPort = int.Parse(emailSettings["SmtpPort"] ?? "587");
             var senderEmail = emailSettings["SenderEmail"] ?? throw new InvalidOperationException("SenderEmail not configured");
             var senderPassword = emailSettings["SenderPassword"] ?? throw new InvalidOperationException("SenderPassword not configured");
-            var senderName = emailSettings["SenderName"] ?? "Food Delivery App";
+            var senderName = emailSettings["SenderName"] ?? "QuickBite App";
 
             using (var client = new SmtpClient(smtpServer, smtpPort))
             {

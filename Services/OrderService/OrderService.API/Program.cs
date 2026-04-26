@@ -73,7 +73,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddSwaggerGen(options =>
 {
-    options.SwaggerDoc("v1", new() { Title = "Order Service", Version = "v1" });
+    options.SwaggerDoc("v1", new() { Title = "QuickBite Order Service API", Version = "v1" });
 
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
