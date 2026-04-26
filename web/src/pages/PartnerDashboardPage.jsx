@@ -2,8 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PartnerLayout } from '../components/organisms/PartnerLayout'
 import { useNotification } from '../hooks/useNotification'
+import api from '../services/api'
 import catalogApi from '../services/catalogApi'
 import orderApi from '../services/orderApi'
+import partnerApi from '../services/partnerApi'
 
 const CUISINE_OPTIONS = [
   { label: 'Italian', value: 1 }, { label: 'Chinese', value: 2 }, { label: 'Indian', value: 3 },
@@ -139,6 +141,7 @@ export const PartnerDashboardPage = () => {
   const [form, setForm] = useState(emptyForm)
   const [recentOrders, setRecentOrders] = useState([])
   const [ordersLoading, setOrdersLoading] = useState(false)
+  const [stats, setStats] = useState(null)
 
   useEffect(() => {
     let active = true
@@ -151,14 +154,18 @@ export const PartnerDashboardPage = () => {
         // Load recent orders
         if (response?.id) {
           setOrdersLoading(true)
-          orderApi.getRestaurantOrders(response.id)
-            .then(res => {
-              if (!active) return
-              const raw = Array.isArray(res) ? res : (res?.items || res?.data || [])
-              setRecentOrders(raw.slice(0, 5))
-            })
-            .catch(() => {})
-            .finally(() => { if (active) setOrdersLoading(false) })
+          // Load recent orders queue for the preview list
+          Promise.all([
+            orderApi.getOrdersByUser
+              ? api.get('/gateway/orders/queue').catch(() => ({ data: [] }))
+              : Promise.resolve({ data: [] }),
+            partnerApi.getDashboardStats(response.id).catch(() => null),
+          ]).then(([ordersRes, statsRes]) => {
+            if (!active) return
+            const raw = Array.isArray(ordersRes?.data) ? ordersRes.data : (ordersRes?.data?.items || [])
+            setRecentOrders(raw.slice(0, 5))
+            if (statsRes) setStats(statsRes)
+          }).catch(() => {}).finally(() => { if (active) setOrdersLoading(false) })
         }
       } catch (err) {
         if (!active) return
@@ -269,13 +276,13 @@ export const PartnerDashboardPage = () => {
   const cuisineLabel = CUISINE_OPTIONS.find(c => c.value === Number(restaurant.cuisineType))?.label || restaurant.cuisineType
   const today = new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })
 
-  // Derived stats from recent orders
-  const todayOrders = recentOrders.filter(o => {
+  // Use server stats if available, otherwise derive from recent orders as fallback
+  const todayOrderCount = stats?.todayOrders ?? recentOrders.filter(o => {
     const d = new Date(o.createdAt || o.placedAt || 0)
-    const now = new Date()
-    return d.toDateString() === now.toDateString()
-  })
-  const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total || o.totalAmount || 0), 0)
+    return d.toDateString() === new Date().toDateString()
+  }).length
+  const todayRevenue = stats?.todayRevenue ?? recentOrders.reduce((s, o) => s + Number(o.total || o.totalAmount || 0), 0)
+  const pendingCount = stats?.pendingOrders ?? recentOrders.filter(o => o.orderStatus === 'Paid' || o.orderStatus === 'CheckoutStarted').length
 
   return (
     <PartnerLayout title="">
@@ -294,10 +301,10 @@ export const PartnerDashboardPage = () => {
       {/* KPI bento grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: "Today's Orders", value: todayOrders.length, icon: 'receipt_long' },
-          { label: "Today's Revenue", value: `₹${todayRevenue.toLocaleString()}`, icon: 'payments' },
-          { label: 'Cuisine', value: cuisineLabel, icon: 'local_pizza' },
-          { label: 'Delivery Time', value: restaurant.deliveryTime ? `${restaurant.deliveryTime} min` : 'N/A', icon: 'timer' },
+          { label: "Today's Orders", value: ordersLoading ? '…' : todayOrderCount, icon: 'receipt_long' },
+          { label: "Today's Revenue", value: ordersLoading ? '…' : `₹${Number(todayRevenue).toLocaleString('en-IN')}`, icon: 'payments' },
+          { label: 'Pending', value: ordersLoading ? '…' : pendingCount, icon: 'hourglass_empty' },
+          { label: 'Total Orders', value: ordersLoading ? '…' : (stats?.totalOrders ?? recentOrders.length), icon: 'bar_chart' },
         ].map(({ label, value, icon }) => (
           <div key={label} className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">

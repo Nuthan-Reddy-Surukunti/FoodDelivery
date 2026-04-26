@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { AdminLayout } from '../components/organisms/AdminLayout'
+import { useNotification } from '../hooks/useNotification'
 import adminApi from '../services/adminApi'
+import api from '../services/api'
 
 const ROLE_CONFIG = {
   Admin: { icon: 'shield', color: 'bg-red-50 text-red-600' },
@@ -9,35 +11,145 @@ const ROLE_CONFIG = {
   Customer: { icon: 'person', color: 'bg-blue-50 text-blue-600' },
 }
 
+const emptyAdminForm = { fullName: '', email: '', password: '', confirmPassword: '' }
+
+// ── Create Admin Modal ──────────────────────────────────────────────────────
+const CreateAdminModal = ({ onClose, onCreated }) => {
+  const { showSuccess, showError } = useNotification()
+  const [form, setForm] = useState(emptyAdminForm)
+  const [submitting, setSubmitting] = useState(false)
+  const [fieldError, setFieldError] = useState('')
+
+  const handleChange = (e) => {
+    setForm(f => ({ ...f, [e.target.name]: e.target.value }))
+    setFieldError('')
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (form.password !== form.confirmPassword) {
+      setFieldError('Passwords do not match')
+      return
+    }
+    if (form.password.length < 8) {
+      setFieldError('Password must be at least 8 characters')
+      return
+    }
+    setSubmitting(true)
+    try {
+      await api.post('/gateway/auth/admin/create', {
+        fullName: form.fullName,
+        email: form.email,
+        password: form.password,
+      })
+      showSuccess(`Admin account created for ${form.email}`)
+      onCreated()
+      onClose()
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to create admin')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors"
+        >
+          <span className="material-symbols-outlined">close</span>
+        </button>
+
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-11 h-11 rounded-xl bg-red-50 text-red-600 flex items-center justify-center">
+            <span className="material-symbols-outlined">admin_panel_settings</span>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold text-on-surface">Create Admin</h2>
+            <p className="text-xs text-on-surface-variant">Grant full portal access</p>
+          </div>
+        </div>
+
+        {fieldError && (
+          <div className="bg-error-container text-on-error-container text-sm px-4 py-3 rounded-xl mb-4">
+            {fieldError}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {[
+            { label: 'Full Name', name: 'fullName', type: 'text', placeholder: 'Jane Doe' },
+            { label: 'Email Address', name: 'email', type: 'email', placeholder: 'jane@example.com' },
+            { label: 'Password', name: 'password', type: 'password', placeholder: '••••••••' },
+            { label: 'Confirm Password', name: 'confirmPassword', type: 'password', placeholder: '••••••••' },
+          ].map(({ label, name, type, placeholder }) => (
+            <div key={name}>
+              <label className="block text-sm font-medium text-on-surface mb-1.5">{label}</label>
+              <input
+                type={type}
+                name={name}
+                value={form[name]}
+                onChange={handleChange}
+                placeholder={placeholder}
+                required
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+              />
+            </div>
+          ))}
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 bg-slate-100 hover:bg-slate-200 text-on-surface text-sm font-semibold py-2.5 rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 bg-primary text-on-primary text-sm font-semibold py-2.5 rounded-xl hover:bg-primary-container transition-colors disabled:opacity-60"
+            >
+              {submitting ? 'Creating...' : 'Create Admin'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 export const AdminUsersPage = () => {
   const [users, setUsers] = useState(null)
   const [partners, setPartners] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showCreateAdmin, setShowCreateAdmin] = useState(false)
 
-  useEffect(() => {
+  const loadData = async () => {
     let active = true
-    const load = async () => {
-      setLoading(true)
-      setError('')
-      try {
-        const [usersRes, partnersRes] = await Promise.all([
-          adminApi.getUserAnalytics(),
-          adminApi.getPartnersReport().catch(() => null),
-        ])
-        if (!active) return
-        setUsers(usersRes)
-        setPartners(partnersRes)
-      } catch (err) {
-        if (!active) return
-        setError(err.response?.data?.message || err.message || 'Failed to load analytics')
-      } finally {
-        if (active) setLoading(false)
-      }
+    setLoading(true)
+    setError('')
+    try {
+      const [usersRes, partnersRes] = await Promise.all([
+        adminApi.getUserAnalytics(),
+        adminApi.getPartnersReport().catch(() => null),
+      ])
+      if (!active) return
+      setUsers(usersRes)
+      setPartners(partnersRes)
+    } catch (err) {
+      if (!active) return
+      setError(err.response?.data?.message || err.message || 'Failed to load analytics')
+    } finally {
+      if (active) setLoading(false)
     }
-    load()
     return () => { active = false }
-  }, [])
+  }
+
+  useEffect(() => { loadData() }, [])
 
   const usersByRole = users?.usersByRole
     ? Object.entries(users.usersByRole).map(([role, count]) => ({ role, count }))
@@ -45,6 +157,26 @@ export const AdminUsersPage = () => {
 
   return (
     <AdminLayout title="Users & Analytics" searchPlaceholder="Search users...">
+      {showCreateAdmin && (
+        <CreateAdminModal
+          onClose={() => setShowCreateAdmin(false)}
+          onCreated={loadData}
+        />
+      )}
+
+      {/* Header row with action */}
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-sm text-on-surface-variant">Manage portal access and view user metrics</p>
+        <button
+          id="create-admin-btn"
+          onClick={() => setShowCreateAdmin(true)}
+          className="bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-primary-container transition-colors"
+        >
+          <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
+          Create Admin
+        </button>
+      </div>
+
       {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm">{error}</div>}
 
       {loading && (

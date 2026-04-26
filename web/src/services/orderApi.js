@@ -28,6 +28,21 @@ const orderApi = {
     return response.data
   },
 
+  async reorderFromHistory(orderId) {
+    const response = await api.post(`/gateway/orders/${orderId}/reorder`)
+    return response.data
+  },
+
+  async calculateTotals(payload) {
+    const response = await api.post('/gateway/carts/calculate-totals', payload)
+    return response.data
+  },
+
+  async applyCoupon(payload) {
+    const response = await api.post('/gateway/carts/apply-coupon', payload)
+    return response.data
+  },
+
 	// Cart Operations
 	async clearCart(userId, restaurantId) {
 		const response = await api.delete('/gateway/carts', { params: { userId, restaurantId } })

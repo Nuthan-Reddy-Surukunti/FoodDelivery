@@ -155,4 +155,32 @@ public class OrderPlacementService : IOrderPlacementService
 
         return OrderMappings.MapToDto(original);
     }
+
+    public async Task<PartnerStatsDto> GetPartnerStatsAsync(Guid restaurantId, CancellationToken cancellationToken = default)
+    {
+        var orders = await _orderRepository.GetByRestaurantIdAsync(restaurantId, cancellationToken);
+        var today = DateTime.UtcNow.Date;
+
+        var pending = orders.Count(o => o.OrderStatus == OrderStatus.Paid || o.OrderStatus == OrderStatus.CheckoutStarted);
+        var preparing = orders.Count(o => o.OrderStatus == OrderStatus.RestaurantAccepted || o.OrderStatus == OrderStatus.Preparing);
+        var completed = orders.Count(o => o.OrderStatus == OrderStatus.Delivered);
+        var cancelled = orders.Count(o => o.OrderStatus == OrderStatus.CancelRequestedByCustomer || o.OrderStatus == OrderStatus.Refunded);
+
+        var completedOrders = orders.Where(o => o.OrderStatus == OrderStatus.Delivered);
+        var totalRevenue = completedOrders.Sum(o => o.TotalAmount);
+        var todayOrders = orders.Where(o => o.CreatedAt.Date == today).ToList();
+        var todayRevenue = todayOrders.Where(o => o.OrderStatus == OrderStatus.Delivered).Sum(o => o.TotalAmount);
+
+        return new PartnerStatsDto
+        {
+            TotalOrders = orders.Count,
+            PendingOrders = pending,
+            PreparingOrders = preparing,
+            CompletedOrders = completed,
+            CancelledOrders = cancelled,
+            TotalRevenue = totalRevenue,
+            TodayRevenue = todayRevenue,
+            TodayOrders = todayOrders.Count,
+        };
+    }
 }

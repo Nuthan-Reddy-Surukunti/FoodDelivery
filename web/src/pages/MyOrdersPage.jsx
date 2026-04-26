@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useNotification } from '../hooks/useNotification'
 import orderApi from '../services/orderApi'
 
 // Status → badge config
@@ -50,10 +51,25 @@ const normalizeOrder = (item) => ({
 export const MyOrdersPage = () => {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { showSuccess, showError } = useNotification()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [tab, setTab] = useState('all') // all | active | past
+  const [reordering, setReordering] = useState(null)
+
+  const handleReorder = async (orderId) => {
+    setReordering(orderId)
+    try {
+      await orderApi.reorderFromHistory(orderId)
+      showSuccess('Items added! Redirecting to checkout...')
+      navigate('/checkout')
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to reorder')
+    } finally {
+      setReordering(null)
+    }
+  }
 
   useEffect(() => {
     if (!user?.id) { setLoading(false); return }
@@ -176,12 +192,23 @@ export const MyOrdersPage = () => {
                       Track Order
                     </Link>
                   ) : cancelled ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => order.restaurantId && navigate(`/restaurant/${order.restaurantId}`)}
+                        className="bg-slate-100 hover:bg-slate-200 text-on-surface text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      >
+                        <span className="material-symbols-outlined text-sm">restaurant_menu</span>
+                        View Menu
+                      </button>
+                    </div>
+                  ) : order.status === 'Delivered' ? (
                     <button
-                      onClick={() => order.restaurantId && navigate(`/restaurant/${order.restaurantId}`)}
-                      className="bg-slate-100 hover:bg-slate-200 text-on-surface text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      onClick={() => handleReorder(order.id)}
+                      disabled={reordering === order.id}
+                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60"
                     >
-                      <span className="material-symbols-outlined text-sm">restaurant_menu</span>
-                      View Menu
+                      <span className="material-symbols-outlined text-sm">replay</span>
+                      {reordering === order.id ? 'Reordering...' : 'Reorder'}
                     </button>
                   ) : (
                     <Link

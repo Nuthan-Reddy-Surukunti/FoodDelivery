@@ -165,5 +165,24 @@ public class OrdersController : ControllerBase
         var deliveries = await _deliveryService.GetAssignedDeliveriesAsync(currentUserId.ToString(), cancellationToken);
         return Ok(deliveries);
     }
-}
 
+    [HttpGet("deliveries/earnings")]
+    [Authorize(Roles = "DeliveryAgent")]
+    public async Task<IActionResult> GetAgentEarnings(CancellationToken cancellationToken)
+    {
+        var currentUserId = this.GetCurrentUserId();
+        if (currentUserId == Guid.Empty)
+            return Unauthorized();
+
+        var summary = await _deliveryService.GetEarningsSummaryAsync(currentUserId.ToString(), cancellationToken);
+        return Ok(summary);
+    }
+
+    [HttpGet("partner/{restaurantId:guid}/stats")]
+    [Authorize(Roles = "Admin,RestaurantPartner")]
+    public async Task<IActionResult> GetPartnerStats([FromRoute] Guid restaurantId, CancellationToken cancellationToken)
+    {
+        var stats = await _orderPlacementService.GetPartnerStatsAsync(restaurantId, cancellationToken);
+        return Ok(stats);
+    }
+}

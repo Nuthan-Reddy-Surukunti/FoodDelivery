@@ -15,4 +15,6 @@ public interface IOrderRepository
     Task<IReadOnlyList<Order>> GetActiveOrdersAsync(CancellationToken cancellationToken = default);
 
     Task<Order?> GetOrderByIdWithItemsAsync(Guid orderId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Order>> GetByRestaurantIdAsync(Guid restaurantId, CancellationToken cancellationToken = default);
 }

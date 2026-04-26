@@ -70,4 +70,14 @@ public class OrderRepository : IOrderRepository
             .OrderByDescending(order => order.UpdatedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Order>> GetByRestaurantIdAsync(Guid restaurantId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Orders
+            .Include(order => order.OrderItems)
+            .Include(order => order.Payment)
+            .Where(order => order.RestaurantId == restaurantId)
+            .OrderByDescending(order => order.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }

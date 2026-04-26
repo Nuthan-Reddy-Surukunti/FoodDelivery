@@ -57,6 +57,56 @@ public class DeliveryService : IDeliveryService
         return active.Select(assignment => MapToDto(assignment)).ToList().AsReadOnly();
     }
 
+    public async Task<AgentEarningsSummaryDto> GetEarningsSummaryAsync(string authUserId, CancellationToken cancellationToken = default)
+    {
+        var agent = await _deliveryAgentRepository.GetByAuthUserIdAsync(authUserId, cancellationToken);
+        if (agent is null)
+            return new AgentEarningsSummaryDto();
+
+        var assignments = await _deliveryAssignmentRepository.GetAssignmentsByAgentIdAsync(agent.Id, cancellationToken);
+        var delivered = assignments.Where(a => a.CurrentStatus == DeliveryStatus.Delivered).ToList();
+
+        var today = DateTime.UtcNow.Date;
+        var history = new List<AgentDeliveryRecordDto>();
+        decimal totalValue = 0;
+        decimal todayValue = 0;
+        int todayCount = 0;
+
+        foreach (var assignment in delivered)
+        {
+            var order = await _orderRepository.GetOrderByIdWithItemsAsync(assignment.OrderId, cancellationToken);
+            if (order is null) continue;
+
+            var orderTotal = order.TotalAmount;
+            totalValue += orderTotal;
+
+            var deliveredDate = assignment.DeliveredAt?.Date ?? assignment.AssignedAt.Date;
+            if (deliveredDate == today)
+            {
+                todayValue += orderTotal;
+                todayCount++;
+            }
+
+            history.Add(new AgentDeliveryRecordDto
+            {
+                OrderId = order.Id,
+                RestaurantId = order.RestaurantId.ToString(),
+                OrderTotal = orderTotal,
+                ItemCount = order.OrderItems.Count,
+                DeliveredAt = assignment.DeliveredAt,
+            });
+        }
+
+        return new AgentEarningsSummaryDto
+        {
+            TotalDeliveries = delivered.Count,
+            TodayDeliveries = todayCount,
+            TotalOrderValue = totalValue,
+            TodayOrderValue = todayValue,
+            History = history,
+        };
+    }
+
     public async Task<PaymentResponseDto> ProcessPaymentAsync(Guid orderId, ProcessPaymentRequestDto request, CancellationToken cancellationToken = default)
     {
         if (request.PaymentMethod != PaymentMethod.CashOnDelivery)
