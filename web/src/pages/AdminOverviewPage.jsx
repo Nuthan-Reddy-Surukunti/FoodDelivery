@@ -47,7 +47,7 @@ export const AdminOverviewPage = () => {
       try {
         const [kpiRes, ordersRes] = await Promise.all([
           adminApi.getDashboardKpis(),
-          adminApi.getAllOrders({ page: 1, pageSize: 5 }).catch(() => null),
+          adminApi.getOrders().catch(() => null),
         ])
         if (!active) return
         setKpis(kpiRes)

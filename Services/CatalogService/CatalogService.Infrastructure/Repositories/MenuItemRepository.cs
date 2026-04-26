@@ -32,6 +32,23 @@ public class MenuItemRepository : IMenuItemRepository
         return items;
     }
 
+    public async Task<List<MenuItem>> SearchAsync(string query)
+    {
+        var lower = query.ToLower();
+        return await _context.MenuItems
+            .Include(m => m.Category)
+            .Include(m => m.Restaurant)
+            .Where(m =>
+                m.AvailabilityStatus == Domain.Enums.ItemAvailabilityStatus.Available &&
+                m.Restaurant != null &&
+                m.Restaurant.Status == Domain.Enums.RestaurantStatus.Active &&
+                (m.Name.ToLower().Contains(lower) ||
+                 (m.Description != null && m.Description.ToLower().Contains(lower))))
+            .OrderBy(m => m.Name)
+            .Take(20)
+            .ToListAsync();
+    }
+
     public async Task<MenuItem> CreateAsync(MenuItem menuItem)
     {
         menuItem.CreatedAt = DateTime.UtcNow;

@@ -100,4 +100,24 @@ public class SearchController : ControllerBase
             return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
         }
     }
+
+    /// <summary>
+    /// Universal search for menu items across all active restaurants
+    /// </summary>
+    [HttpGet("menuItems")]
+    public async Task<ActionResult> SearchMenuItems([FromQuery] string? query)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+            return BadRequest("Query must be at least 2 characters.");
+
+        try
+        {
+            var result = await _searchService.SearchMenuItemsAsync(query);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+        }
+    }
 }

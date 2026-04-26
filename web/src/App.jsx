@@ -33,6 +33,7 @@ const AdminRestaurantsPage = lazy(() => import('./pages/AdminRestaurantsPage').t
 const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage').then((m) => ({ default: m.AdminUsersPage })))
 const AgentActivePage = lazy(() => import('./pages/AgentActivePage').then((m) => ({ default: m.AgentActivePage })))
 const AgentEarningsPage = lazy(() => import('./pages/AgentEarningsPage').then((m) => ({ default: m.AgentEarningsPage })))
+const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage').then((m) => ({ default: m.SearchResultsPage })))
 
 export default function App() {
   return (
@@ -54,6 +55,7 @@ export default function App() {
                 
                 {/* Customer Routes - Protected */}
                 <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                <Route path="/search" element={<ProtectedRoute><SearchResultsPage /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                 <Route path="/explore" element={<ProtectedRoute><ExploreRestaurantsPage /></ProtectedRoute>} />
                 <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />

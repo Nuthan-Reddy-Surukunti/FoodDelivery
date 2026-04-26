@@ -9,6 +9,8 @@ public interface IMenuItemRepository
 
     Task<List<MenuItem>> GetByRestaurantAsync(Guid restaurantId);
 
+    Task<List<MenuItem>> SearchAsync(string query);
+
     Task<MenuItem> CreateAsync(MenuItem menuItem);
 
     Task<MenuItem> UpdateAsync(MenuItem menuItem);
@@ -17,3 +19,4 @@ public interface IMenuItemRepository
 
     Task<bool> ExistsAsync(Guid id);
 }
+

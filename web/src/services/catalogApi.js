@@ -80,6 +80,31 @@ const catalogApi = {
     })
     return response.data
   },
+
+  async searchRestaurants(query) {
+    const response = await api.get('/gateway/catalog/search/restaurants', {
+      params: { query },
+    })
+    return response.data
+  },
+
+  async searchMenuItems(query) {
+    const response = await api.get('/gateway/catalog/search/menuItems', {
+      params: { query },
+    })
+    return response.data
+  },
+
+  async searchAll(query) {
+    const [restaurants, menuItems] = await Promise.allSettled([
+      api.get('/gateway/catalog/search/restaurants', { params: { query } }),
+      api.get('/gateway/catalog/search/menuItems', { params: { query } }),
+    ])
+    return {
+      restaurants: restaurants.status === 'fulfilled' ? (restaurants.value.data || []) : [],
+      menuItems: menuItems.status === 'fulfilled' ? (menuItems.value.data || []) : [],
+    }
+  },
 }
 
 export default catalogApi
