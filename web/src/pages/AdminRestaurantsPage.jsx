@@ -1,15 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '../components/atoms/Button'
-import { Card } from '../components/atoms/Card'
+import { AdminLayout } from '../components/organisms/AdminLayout'
 import { useNotification } from '../hooks/useNotification'
 import adminApi from '../services/adminApi'
 
-const STATUS_COLORS = {
-  Active: 'text-green-600 bg-green-50 border-green-200',
-  PendingApproval: 'text-amber-600 bg-amber-50 border-amber-200',
-  Pending: 'text-amber-600 bg-amber-50 border-amber-200',
-  Rejected: 'text-red-600 bg-red-50 border-red-200',
-  Inactive: 'text-gray-500 bg-gray-50 border-gray-200',
+const STATUS_BADGE = {
+  Active: 'bg-emerald-100 text-emerald-800',
+  PendingApproval: 'bg-amber-100 text-amber-800',
+  Pending: 'bg-amber-100 text-amber-800',
+  Rejected: 'bg-red-100 text-red-800',
+  Inactive: 'bg-slate-100 text-slate-600',
 }
 
 const normalize = (payload) => {
@@ -18,9 +17,10 @@ const normalize = (payload) => {
     id: item.id,
     name: item.name,
     city: item.city || '',
-    status: item.status ?? 'Unknown',
+    status: String(item.status ?? 'Unknown'),
     ownerEmail: item.contactEmail || item.ownerEmail || '',
     cuisine: item.cuisineTypeName || item.cuisineType || '',
+    phone: item.contactPhone || '',
   }))
 }
 
@@ -29,7 +29,7 @@ export const AdminRestaurantsPage = () => {
   const [restaurants, setRestaurants] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState('all') // 'all' | 'pending'
+  const [tab, setTab] = useState('all')
   const [actioning, setActioning] = useState(null)
 
   const load = useCallback(async () => {
@@ -57,9 +57,7 @@ export const AdminRestaurantsPage = () => {
       setRestaurants(prev => prev.map(r => r.id === id ? { ...r, status: 'Active' } : r))
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to approve')
-    } finally {
-      setActioning(null)
-    }
+    } finally { setActioning(null) }
   }
 
   const handleReject = async (id) => {
@@ -72,9 +70,7 @@ export const AdminRestaurantsPage = () => {
       setRestaurants(prev => prev.map(r => r.id === id ? { ...r, status: 'Rejected' } : r))
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to reject')
-    } finally {
-      setActioning(null)
-    }
+    } finally { setActioning(null) }
   }
 
   const handleDelete = async (id, name) => {
@@ -86,104 +82,107 @@ export const AdminRestaurantsPage = () => {
       setRestaurants(prev => prev.filter(r => r.id !== id))
     } catch (err) {
       showError(err.response?.data?.message || 'Failed to delete')
-    } finally {
-      setActioning(null)
-    }
+    } finally { setActioning(null) }
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-5 text-2xl font-bold">Restaurant Management</h1>
+    <AdminLayout title="Restaurant Management" searchPlaceholder="Search restaurants...">
+      {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm">{error}</div>}
 
       {/* Tabs */}
-      <div className="mb-6 flex gap-2">
+      <div className="flex gap-1 border-b border-slate-200">
         <button
           onClick={() => setTab('all')}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium border transition ${tab === 'all' ? 'bg-primary text-on-primary border-primary' : 'border-outline hover:bg-surface-dim'}`}
+          className={`px-5 py-2.5 text-sm font-medium transition-colors ${tab === 'all' ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-on-surface'}`}
         >
           All Restaurants
         </button>
         <button
           onClick={() => setTab('pending')}
-          className={`rounded-full px-4 py-1.5 text-sm font-medium border transition ${tab === 'pending' ? 'bg-amber-500 text-white border-amber-500' : 'border-outline hover:bg-surface-dim'}`}
+          className={`px-5 py-2.5 text-sm font-medium transition-colors flex items-center gap-2 ${tab === 'pending' ? 'text-amber-600 border-b-2 border-amber-500' : 'text-slate-500 hover:text-on-surface'}`}
         >
-          ⏳ Pending Approvals
+          <span className="material-symbols-outlined text-sm">pending</span>
+          Pending Approvals
         </button>
       </div>
 
-      {loading && <p className="text-sm text-on-background/70">Loading restaurants...</p>}
-      {error && <p className="text-sm text-error">{error}</p>}
+      {/* Table */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1,2,3,4].map(i => <div key={i} className="h-16 bg-slate-100 animate-pulse rounded-xl" />)}
+          </div>
+        ) : restaurants.length === 0 ? (
+          <div className="py-16 text-center text-on-surface-variant text-sm">
+            {tab === 'pending' ? 'No pending approvals.' : 'No restaurants found.'}
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-50">
+            {restaurants.map(r => {
+              const badgeClass = STATUS_BADGE[r.status] || 'bg-slate-100 text-slate-600'
+              const isPending = r.status === 'Pending' || r.status === 'PendingApproval'
+              const isActive = r.status === 'Active'
 
-      <div className="space-y-3">
-        {restaurants.map(restaurant => {
-          const statusKey = String(restaurant.status)
-          const statusCls = STATUS_COLORS[statusKey] || STATUS_COLORS.Inactive
-          const isActive = statusKey === 'Active'
-          const isPending = statusKey === 'Pending' || statusKey === 'PendingApproval'
-          const actionId = restaurant.id
-          return (
-            <Card key={restaurant.id} className="p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold">{restaurant.name}</p>
-                  <div className="flex flex-wrap gap-3 mt-1 text-xs text-on-background/60">
-                    {restaurant.city && <span>📍 {restaurant.city}</span>}
-                    {restaurant.cuisine && <span>🍽️ {restaurant.cuisine}</span>}
-                    {restaurant.ownerEmail && <span>✉️ {restaurant.ownerEmail}</span>}
+              return (
+                <div key={r.id} className="p-5 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    {/* Restaurant icon */}
+                    <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center shrink-0 border border-slate-200">
+                      <span className="material-symbols-outlined text-slate-500 text-xl">storefront</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-on-surface">{r.name}</h4>
+                      <div className="flex flex-wrap items-center gap-3 mt-0.5 text-xs text-on-surface-variant">
+                        {r.city && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">location_on</span>{r.city}</span>}
+                        {r.cuisine && <span>{r.cuisine}</span>}
+                        {r.ownerEmail && <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-sm">email</span>{r.ownerEmail}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className={`${badgeClass} text-xs font-semibold px-3 py-1 rounded-full`}>{r.status}</span>
+                    {isPending && (
+                      <>
+                        <button
+                          disabled={actioning === r.id + '-approve'}
+                          onClick={() => handleApprove(r.id)}
+                          className="bg-primary text-on-primary text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-primary-container transition-colors disabled:opacity-50"
+                        >
+                          {actioning === r.id + '-approve' ? '...' : 'Approve'}
+                        </button>
+                        <button
+                          disabled={actioning === r.id + '-reject'}
+                          onClick={() => handleReject(r.id)}
+                          className="border border-red-300 text-red-600 text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                    {isActive && (
+                      <button
+                        disabled={actioning === r.id + '-reject'}
+                        onClick={() => handleReject(r.id)}
+                        className="border border-slate-300 text-slate-600 text-xs font-semibold px-4 py-1.5 rounded-lg hover:bg-slate-100 transition-colors disabled:opacity-50"
+                      >
+                        Deactivate
+                      </button>
+                    )}
+                    <button
+                      disabled={actioning === r.id + '-delete'}
+                      onClick={() => handleDelete(r.id, r.name)}
+                      className="border border-red-200 text-red-500 text-xs font-semibold px-3 py-1.5 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-base">delete</span>
+                    </button>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusCls}`}>
-                    {statusKey}
-                  </span>
-                  {isPending && (
-                    <>
-                      <Button
-                        size="sm"
-                        disabled={actioning === actionId + '-approve'}
-                        onClick={() => handleApprove(actionId)}
-                      >
-                        Approve
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="tertiary"
-                        disabled={actioning === actionId + '-reject'}
-                        onClick={() => handleReject(actionId)}
-                      >
-                        Reject
-                      </Button>
-                    </>
-                  )}
-                  {isActive && (
-                    <Button
-                      size="sm"
-                      variant="tertiary"
-                      disabled={actioning === actionId + '-reject'}
-                      onClick={() => handleReject(actionId)}
-                    >
-                      Deactivate
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="tertiary"
-                    disabled={actioning === actionId + '-delete'}
-                    onClick={() => handleDelete(actionId, restaurant.name)}
-                  >
-                    🗑️
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          )
-        })}
-        {!loading && restaurants.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-outline p-10 text-center text-on-background/60">
-            {tab === 'pending' ? 'No pending approvals.' : 'No restaurants found.'}
+              )
+            })}
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   )
 }

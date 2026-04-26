@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Button } from '../components/atoms/Button'
-import { Card } from '../components/atoms/Card'
+import { AgentLayout } from '../components/organisms/AgentLayout'
 import { useNotification } from '../hooks/useNotification'
 import api from '../services/api'
 import catalogApi from '../services/catalogApi'
@@ -158,25 +157,30 @@ export const AgentActivePage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Deliveries</h1>
-        <Button variant="secondary" onClick={fetchDeliveries} disabled={loading}>
-          🔄 Refresh
-        </Button>
+    <AgentLayout title="Active Deliveries">
+      {/* Refresh */}
+      <div className="flex justify-end">
+        <button
+          onClick={fetchDeliveries}
+          disabled={loading}
+          className="flex items-center gap-2 text-sm font-medium text-primary border border-primary/30 px-4 py-2 rounded-xl hover:bg-primary/5 transition-colors disabled:opacity-50"
+        >
+          <span className="material-symbols-outlined text-base">refresh</span>
+          Refresh
+        </button>
       </div>
 
       {loading ? (
         <div className="space-y-4">
           {[1, 2].map(i => (
-            <div key={i} className="h-64 animate-pulse rounded-2xl border border-outline bg-surface-dim" />
+            <div key={i} className="h-64 animate-pulse rounded-xl bg-slate-200" />
           ))}
         </div>
       ) : deliveries.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-outline p-12 text-center">
-          <p className="text-3xl mb-2">🛵</p>
-          <p className="font-semibold">No active deliveries</p>
-          <p className="text-sm text-on-background/60 mt-1">You'll see new assignments here as they arrive.</p>
+        <div className="bg-white border border-dashed border-slate-300 rounded-xl p-12 text-center">
+          <p className="text-5xl mb-3">🛵</p>
+          <p className="text-lg font-semibold text-on-surface">No active deliveries</p>
+          <p className="text-sm text-on-surface-variant mt-1">You'll see new assignments here as they arrive.</p>
         </div>
       ) : (
         <div className="space-y-5">
@@ -219,9 +223,9 @@ export const AgentActivePage = () => {
             const total = order?.total ?? order?.totalAmount ?? 0
 
             return (
-              <Card key={orderId} className="overflow-hidden p-0">
+              <div key={orderId} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden hover:border-primary/30 transition-colors">
                 {/* ── Status banner ── */}
-                <div className={`px-5 py-3 flex items-center justify-between ${flow.badge} border-b border-inherit`}>
+                <div className={`px-5 py-3 flex items-center justify-between border-b ${flow.badge}`}>
                   <span className="font-semibold text-sm">{flow.label}</span>
                   <span className="text-xs opacity-70">
                     Assigned {fmt(assignment.assignedAt || assignment.AssignedAt)}
@@ -232,113 +236,110 @@ export const AgentActivePage = () => {
                   {/* ── Pick Up From ── */}
                   {restaurant ? (
                     <section>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-on-background/50 mb-2">
-                        🏪 Pick Up From
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-sm">storefront</span> Pick Up From
                       </p>
-                      <p className="font-bold text-base">{restaurant.name}</p>
+                      <p className="font-bold text-base text-on-surface">{restaurant.name}</p>
                       {restaurant.address && (
-                        <p className="text-sm text-on-background/70 mt-0.5">
+                        <p className="text-sm text-on-surface-variant mt-0.5">
                           {restaurant.address}{restaurant.city ? `, ${restaurant.city}` : ''}
                         </p>
                       )}
-                      <div className="mt-2 flex flex-wrap gap-3">
-                        {restaurant.contactPhone && (
-                          <a
-                            href={`tel:${restaurant.contactPhone}`}
-                            className="inline-flex items-center gap-1.5 rounded-lg bg-surface-dim border border-outline px-3 py-1.5 text-sm font-medium hover:border-primary transition"
-                          >
-                            📞 {restaurant.contactPhone}
-                          </a>
-                        )}
-                      </div>
+                      {restaurant.contactPhone && (
+                        <a
+                          href={`tel:${restaurant.contactPhone}`}
+                          className="mt-2 inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium hover:border-primary transition"
+                        >
+                          <span className="material-symbols-outlined text-sm">call</span>
+                          {restaurant.contactPhone}
+                        </a>
+                      )}
                     </section>
                   ) : (
                     <section>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-on-background/50 mb-1">🏪 Pick Up From</p>
-                      <p className="text-sm text-on-background/50">Restaurant info not available</p>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1">Pick Up From</p>
+                      <p className="text-sm text-on-surface-variant">Restaurant info not available</p>
                     </section>
                   )}
 
-                  <div className="border-t border-outline" />
+                  <div className="border-t border-slate-100" />
 
                   {/* ── Order Items ── */}
                   <section>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-on-background/50 mb-2">
-                      🧾 Order Items
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">receipt_long</span> Order Items
                     </p>
-                    <div className="space-y-2">
+                    <div className="bg-slate-50 rounded-xl p-4 space-y-2">
                       {items.length > 0 ? items.map((item, idx) => (
                         <div key={item.orderItemId || idx} className="flex items-center justify-between gap-2 text-sm">
                           <div className="flex items-center gap-2 min-w-0">
-                            {/* Veg / Non-veg indicator */}
                             {item.isVeg !== null && (
-                              <span
-                                className={`shrink-0 h-3.5 w-3.5 rounded-sm border-2 flex items-center justify-center ${item.isVeg ? 'border-green-600' : 'border-red-600'}`}
-                              >
+                              <span className={`shrink-0 h-3.5 w-3.5 rounded-sm border-2 flex items-center justify-center ${item.isVeg ? 'border-green-600' : 'border-red-600'}`}>
                                 <span className={`h-1.5 w-1.5 rounded-full ${item.isVeg ? 'bg-green-600' : 'bg-red-600'}`} />
                               </span>
                             )}
-                            <span className="font-medium">{item.quantity}×</span>
-                            <span className="truncate">{item.resolvedName}</span>
+                            <span className="font-medium text-on-surface">{item.quantity}×</span>
+                            <span className="truncate text-on-surface">{item.resolvedName}</span>
                           </div>
-                          <span className="shrink-0 text-on-background/60">
+                          <span className="shrink-0 font-medium text-on-surface">
                             ₹{(item.subtotal ?? item.unitPriceSnapshot * item.quantity ?? 0).toFixed(2)}
                           </span>
                         </div>
                       )) : (
-                        <p className="text-sm text-on-background/50">Items unavailable</p>
+                        <p className="text-sm text-on-surface-variant">Items unavailable</p>
                       )}
                     </div>
 
-                    {/* COD Total — big and prominent */}
-                    <div className="mt-3 flex items-center justify-between rounded-xl bg-surface-dim px-4 py-3 border border-outline">
+                    {/* COD Total */}
+                    <div className="mt-3 flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
                       <div>
-                        <p className="text-xs text-on-background/60">Collect on Delivery (COD)</p>
-                        <p className="text-2xl font-bold mt-0.5">₹{Number(total).toFixed(2)}</p>
+                        <p className="text-xs text-primary/80 font-medium">Collect on Delivery (COD)</p>
+                        <p className="text-2xl font-bold text-on-surface mt-0.5">₹{Number(total).toFixed(2)}</p>
                       </div>
-                      <span className="text-3xl">💵</span>
+                      <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
                     </div>
                   </section>
 
-                  <div className="border-t border-outline" />
+                  <div className="border-t border-slate-100" />
 
                   {/* ── Deliver To ── */}
                   <section>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-on-background/50 mb-2">
-                      📍 Deliver To
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-2 flex items-center gap-1">
+                      <span className="material-symbols-outlined text-sm">location_on</span> Deliver To
                     </p>
                     {addressLines.length > 0 ? (
                       <>
-                        <p className="font-medium">{addressLines[0]}</p>
+                        <p className="font-semibold text-on-surface">{addressLines[0]}</p>
                         {addressLines.slice(1).map((line, i) => (
-                          <p key={i} className="text-sm text-on-background/70">{line}</p>
+                          <p key={i} className="text-sm text-on-surface-variant">{line}</p>
                         ))}
                         {addr?.latitude && addr?.longitude && (
                           <a
                             href={`https://maps.google.com/?q=${addr.latitude},${addr.longitude}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-surface-dim border border-outline px-3 py-1.5 text-sm font-medium hover:border-primary transition"
+                            className="mt-2 inline-flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium hover:border-primary transition"
                           >
-                            🗺️ Open in Maps
+                            <span className="material-symbols-outlined text-sm">map</span>
+                            Open in Maps
                           </a>
                         )}
                       </>
                     ) : (
-                      <p className="text-sm text-on-background/50">Address not available</p>
+                      <p className="text-sm text-on-surface-variant">Address not available</p>
                     )}
                   </section>
 
                   {/* ── Notes ── */}
                   {items.some(i => i.customizationNotes) && (
                     <>
-                      <div className="border-t border-outline" />
+                      <div className="border-t border-slate-100" />
                       <section>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-on-background/50 mb-1">
-                          📝 Notes
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-1 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-sm">edit_note</span> Notes
                         </p>
                         {items.filter(i => i.customizationNotes).map((item, idx) => (
-                          <p key={idx} className="text-sm text-on-background/70">
+                          <p key={idx} className="text-sm text-on-surface-variant">
                             {item.resolvedName}: {item.customizationNotes}
                           </p>
                         ))}
@@ -348,29 +349,28 @@ export const AgentActivePage = () => {
 
                   {/* ── Action button ── */}
                   {flow.next !== null && (
-                    <Button
-                      className="w-full"
+                    <button
                       disabled={isActioning}
                       onClick={() => handleAdvance(orderId, assignment, flow.next, flow.action)}
+                      className="w-full bg-primary text-on-primary py-3 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
+                      <span className="material-symbols-outlined text-base">check_circle</span>
                       {isActioning ? 'Updating...' : flow.action}
-                    </Button>
+                    </button>
                   )}
 
-                  {/* Order timestamp footer */}
-                  <p className="text-center text-xs text-on-background/40">
-                    Order placed {fmtDateTime(order?.createdAt)}
-                    {' · '}
-                    #{String(orderId).split('-')[0].toUpperCase()}
+                  {/* Order footer */}
+                  <p className="text-center text-xs text-slate-400">
+                    Order placed {fmtDateTime(order?.createdAt)} · #{String(orderId).split('-')[0].toUpperCase()}
                   </p>
                 </div>
-              </Card>
+              </div>
             )
           })}
         </div>
       )}
 
-      <p className="mt-6 text-center text-xs text-on-background/40">Auto-refreshes every 30 seconds</p>
-    </div>
+      <p className="text-center text-xs text-slate-400">Auto-refreshes every 30 seconds</p>
+    </AgentLayout>
   )
 }

@@ -1,14 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Card } from '../components/atoms/Card'
+import { AdminLayout } from '../components/organisms/AdminLayout'
 import adminApi from '../services/adminApi'
 
-const StatCard = ({ label, value, sub }) => (
-  <Card className="p-4">
-    <p className="text-xs text-on-background/60">{label}</p>
-    <p className="mt-2 text-2xl font-bold">{value ?? '—'}</p>
-    {sub && <p className="mt-1 text-xs text-on-background/50">{sub}</p>}
-  </Card>
-)
+const ROLE_CONFIG = {
+  Admin: { icon: 'shield', color: 'bg-red-50 text-red-600' },
+  RestaurantPartner: { icon: 'storefront', color: 'bg-purple-50 text-purple-600' },
+  DeliveryAgent: { icon: 'two_wheeler', color: 'bg-indigo-50 text-indigo-600' },
+  Customer: { icon: 'person', color: 'bg-blue-50 text-blue-600' },
+}
 
 export const AdminUsersPage = () => {
   const [users, setUsers] = useState(null)
@@ -40,78 +39,100 @@ export const AdminUsersPage = () => {
     return () => { active = false }
   }, [])
 
-  const usersByRole = (() => {
-    if (!users?.usersByRole) return []
-    return Object.entries(users.usersByRole).map(([role, count]) => ({ role, count }))
-  })()
+  const usersByRole = users?.usersByRole
+    ? Object.entries(users.usersByRole).map(([role, count]) => ({ role, count }))
+    : []
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Users & Analytics</h1>
+    <AdminLayout title="Users & Analytics" searchPlaceholder="Search users...">
+      {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-      {loading && <p className="text-sm text-on-background/70">Loading analytics...</p>}
-      {error && <p className="text-sm text-error">{error}</p>}
+      {loading && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[1,2,3].map(i => <div key={i} className="h-28 bg-slate-200 animate-pulse rounded-xl" />)}
+        </div>
+      )}
 
       {users && (
         <>
-          {/* User summary cards */}
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <StatCard
-              label="Total Registered Users"
-              value={users.totalUsersRegistered ?? users.totalUsers ?? '—'}
-            />
-            <StatCard
-              label="Active Users"
-              value={users.activeUsers ?? '—'}
-            />
-            <StatCard
-              label="New This Month"
-              value={users.newUsersThisMonth ?? '—'}
-            />
+          {/* Summary stat cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[
+              { label: 'Total Registered Users', value: users.totalUsersRegistered ?? users.totalUsers, icon: 'group', color: 'bg-blue-50 text-blue-600' },
+              { label: 'Active Users', value: users.activeUsers, icon: 'verified_user', color: 'bg-emerald-50 text-emerald-600' },
+              { label: 'New This Month', value: users.newUsersThisMonth, icon: 'person_add', color: 'bg-violet-50 text-violet-600' },
+            ].map(({ label, value, icon, color }) => (
+              <div key={label} className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm flex items-start gap-4">
+                <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
+                  <span className="material-symbols-outlined text-xl">{icon}</span>
+                </div>
+                <div>
+                  <p className="text-sm text-on-surface-variant mb-1">{label}</p>
+                  <p className="text-3xl font-bold text-on-surface">{value ?? '—'}</p>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Users by role */}
           {usersByRole.length > 0 && (
-            <Card className="mb-6 p-5">
-              <h2 className="mb-4 text-lg font-semibold">Users by Role</h2>
-              <div className="space-y-3">
-                {usersByRole.map(entry => (
-                  <div key={entry.role} className="flex items-center justify-between rounded-xl border border-outline px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">
-                        {entry.role === 'Admin' ? '🛡️' : entry.role === 'RestaurantPartner' ? '🏪' : entry.role === 'DeliveryAgent' ? '🛵' : '👤'}
-                      </span>
-                      <p className="font-medium">{entry.role}</p>
-                    </div>
-                    <p className="text-xl font-bold">{entry.count}</p>
-                  </div>
-                ))}
+            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+              <div className="p-5 border-b border-slate-100">
+                <h3 className="text-lg font-semibold text-on-surface flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary">people</span>
+                  Users by Role
+                </h3>
               </div>
-            </Card>
+              <div className="divide-y divide-slate-50">
+                {usersByRole.map(({ role, count }) => {
+                  const cfg = ROLE_CONFIG[role] || { icon: 'person', color: 'bg-slate-50 text-slate-600' }
+                  const total = usersByRole.reduce((s, r) => s + Number(r.count || 0), 0)
+                  const pct = total > 0 ? Math.round((Number(count) / total) * 100) : 0
+                  return (
+                    <div key={role} className="p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+                      <div className={`w-10 h-10 rounded-xl ${cfg.color} flex items-center justify-center flex-shrink-0`}>
+                        <span className="material-symbols-outlined text-lg">{cfg.icon}</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex justify-between items-center mb-1.5">
+                          <span className="text-sm font-semibold text-on-surface">{role}</span>
+                          <span className="text-sm font-bold text-on-surface">{count}</span>
+                        </div>
+                        <div className="w-full bg-slate-100 rounded-full h-1.5">
+                          <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                        </div>
+                        <p className="text-xs text-on-surface-variant mt-1">{pct}% of total users</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           )}
         </>
       )}
 
-      {/* Partners report */}
+      {/* Partners analytics */}
       {partners && (
-        <Card className="p-5">
-          <h2 className="mb-4 text-lg font-semibold">Partner Analytics</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div>
-              <p className="text-xs text-on-background/60">Total Partners</p>
-              <p className="text-xl font-bold mt-1">{partners.totalPartners ?? partners.total ?? '—'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-on-background/60">Active Partners</p>
-              <p className="text-xl font-bold mt-1">{partners.activePartners ?? partners.active ?? '—'}</p>
-            </div>
-            <div>
-              <p className="text-xs text-on-background/60">Pending Approval</p>
-              <p className="text-xl font-bold mt-1">{partners.pendingPartners ?? partners.pending ?? '—'}</p>
-            </div>
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
+          <h3 className="text-lg font-semibold text-on-surface mb-5 flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">storefront</span>
+            Partner Analytics
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {[
+              { label: 'Total Partners', value: partners.totalPartners ?? partners.total },
+              { label: 'Active Partners', value: partners.activePartners ?? partners.active },
+              { label: 'Pending Approval', value: partners.pendingPartners ?? partners.pending },
+            ].map(({ label, value }) => (
+              <div key={label} className="border border-slate-100 rounded-xl p-4">
+                <p className="text-xs font-medium text-on-surface-variant mb-2">{label}</p>
+                <p className="text-3xl font-bold text-on-surface">{value ?? '—'}</p>
+              </div>
+            ))}
           </div>
-        </Card>
+        </div>
       )}
-    </div>
+    </AdminLayout>
   )
 }

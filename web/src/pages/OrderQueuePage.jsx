@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Button } from '../components/atoms/Button'
 import { Card } from '../components/atoms/Card'
+import { PartnerLayout } from '../components/organisms/PartnerLayout'
 import { useNotification } from '../hooks/useNotification'
 import catalogApi from '../services/catalogApi'
 import api from '../services/api'
@@ -120,42 +121,53 @@ export const OrderQueuePage = () => {
   // ── Guards ───────────────────────────────────────────────────────────────────
 
   if (loadingRestaurant) {
-    return <div className="mx-auto max-w-5xl px-4 py-8"><p className="text-sm text-on-background/70">Loading order queue...</p></div>
+    return (
+      <PartnerLayout title="Order Queue">
+        <div className="space-y-4">
+          {[1,2,3].map(i => <div key={i} className="h-36 bg-slate-200 animate-pulse rounded-xl" />)}
+        </div>
+      </PartnerLayout>
+    )
   }
 
   if (!restaurant) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <Card className="p-5">
-          <p className="text-on-background/70">No restaurant found. <Link to="/partner/dashboard" className="text-primary font-semibold">Complete setup →</Link></p>
-        </Card>
-      </div>
+      <PartnerLayout title="Order Queue">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-amber-800 text-sm">
+          No restaurant found. <Link to="/partner/dashboard" className="text-primary font-semibold">Complete setup →</Link>
+        </div>
+      </PartnerLayout>
     )
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link to="/partner/dashboard" className="text-sm text-on-background/60 hover:text-primary">← Dashboard</Link>
-          <h1 className="text-2xl font-bold">Order Queue — {restaurant.name}</h1>
-        </div>
-        <Button variant="secondary" onClick={fetchOrders}>🔄 Refresh</Button>
+    <PartnerLayout title={`Order Queue — ${restaurant.name}`}>
+      {/* Refresh header */}
+      <div className="flex justify-end">
+        <button
+          onClick={fetchOrders}
+          className="flex items-center gap-2 text-sm font-medium text-primary hover:text-primary-container transition-colors border border-primary/30 px-4 py-2 rounded-xl"
+        >
+          <span className="material-symbols-outlined text-base">refresh</span>
+          Refresh
+        </button>
       </div>
 
       {/* Orders */}
       {loading ? (
-        <p className="text-sm text-on-background/70">Loading orders...</p>
+        <div className="space-y-4">
+          {[1,2,3].map(i => <div key={i} className="h-36 bg-slate-200 animate-pulse rounded-xl" />)}
+        </div>
       ) : orders.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-outline p-10 text-center text-on-background/60">
-          No active orders right now.
+        <div className="bg-white border border-dashed border-slate-300 rounded-xl p-12 text-center">
+          <p className="text-4xl mb-3">📋</p>
+          <p className="text-lg font-semibold text-on-surface">No active orders</p>
+          <p className="text-sm text-on-surface-variant mt-1">Auto-refreshes every 30 seconds</p>
         </div>
       ) : (
         <div className="space-y-4">
           {orders.map(order => {
             const id = order.orderId || order.id
-            // orderStatus is an integer enum from the backend
             const statusKey = order.orderStatus ?? order.status ?? 0
             const flow = STATUS_FLOW[statusKey]
             const isActioning = actioning === id
@@ -167,56 +179,74 @@ export const OrderQueuePage = () => {
               : 'Address not available'
 
             return (
-              <Card key={id} className="p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
-                  <div>
-                    <p className="font-semibold text-sm text-on-background/60">Order #{String(id).split('-')[0].toUpperCase()}</p>
-                    <p className="text-xs text-on-background/50 mt-0.5">{formatTime(order.createdAt)}</p>
+              <div key={id} className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden hover:border-primary/30 transition-colors">
+                <div className="flex flex-wrap items-center justify-between gap-3 p-5 border-b border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-slate-100 h-11 w-11 rounded-lg flex items-center justify-center border border-slate-200 text-xs font-bold text-slate-500">
+                      #{String(id).split('-')[0].slice(0, 3).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-on-surface text-sm">
+                        {order.customerName || order.customerEmail || 'Customer'}
+                      </p>
+                      <p className="text-xs text-on-surface-variant mt-0.5">{formatTime(order.createdAt)}</p>
+                    </div>
                   </div>
                   <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${flow?.color || 'text-gray-600 bg-gray-50 border-gray-200'}`}>
                     {flow?.label || String(statusKey)}
                   </span>
                 </div>
 
-                {/* Items */}
-                {items.length > 0 && (
-                  <div className="mb-4 rounded-xl bg-surface-dim p-3 space-y-1">
-                    {items.map((item, idx) => (
-                      <div key={item.orderItemId || idx} className="flex justify-between text-sm">
-                        <span>{item.quantity}× {item.menuItemName || item.name || item.menuItemId?.split('-')[0]}</span>
-                        <span className="text-on-background/70">₹{item.subtotal || (item.unitPriceSnapshot * item.quantity) || 0}</span>
+                <div className="p-5">
+                  {/* Items */}
+                  {items.length > 0 && (
+                    <div className="mb-4 bg-slate-50 rounded-xl p-4 space-y-1.5">
+                      {items.map((item, idx) => (
+                        <div key={item.orderItemId || idx} className="flex justify-between text-sm">
+                          <span className="text-on-surface">{item.quantity}× {item.menuItemName || item.name || item.menuItemId?.split('-')[0]}</span>
+                          <span className="font-medium text-on-surface">₹{item.subtotal || (item.unitPriceSnapshot * item.quantity) || 0}</span>
+                        </div>
+                      ))}
+                      <div className="border-t border-slate-200 mt-2 pt-2 flex justify-between font-semibold text-sm">
+                        <span>Total</span><span>₹{total}</span>
                       </div>
-                    ))}
-                    <div className="border-t border-outline mt-2 pt-2 flex justify-between font-semibold text-sm">
-                      <span>Total</span>
-                      <span>₹{total}</span>
                     </div>
+                  )}
+
+                  {/* Address */}
+                  <p className="text-xs text-on-surface-variant mb-4 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">location_on</span>{addrStr}
+                  </p>
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2">
+                    {flow?.nextStatus != null && (
+                      <button
+                        disabled={isActioning}
+                        onClick={() => handleAction(order, flow.nextStatus)}
+                        className="bg-primary text-on-primary text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary-container transition-colors disabled:opacity-50"
+                      >
+                        {isActioning ? 'Updating...' : flow.actionLabel}
+                      </button>
+                    )}
+                    {flow?.canReject && (
+                      <button
+                        disabled={isActioning}
+                        onClick={() => handleReject(order)}
+                        className="border border-red-300 text-red-600 text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-red-50 transition-colors disabled:opacity-50"
+                      >
+                        Reject
+                      </button>
+                    )}
                   </div>
-                )}
-
-                {/* Address */}
-                <p className="text-xs text-on-background/60 mb-4">📍 {addrStr}</p>
-
-                {/* Actions */}
-                <div className="flex flex-wrap gap-2">
-                  {flow?.nextStatus != null && (
-                    <Button size="sm" disabled={isActioning} onClick={() => handleAction(order, flow.nextStatus)}>
-                      {isActioning ? 'Updating...' : flow.actionLabel}
-                    </Button>
-                  )}
-                  {flow?.canReject && (
-                    <Button size="sm" variant="tertiary" disabled={isActioning} onClick={() => handleReject(order)}>
-                      Reject
-                    </Button>
-                  )}
                 </div>
-              </Card>
+              </div>
             )
           })}
         </div>
       )}
 
-      <p className="mt-4 text-center text-xs text-on-background/50">Auto-refreshes every 30 seconds</p>
-    </div>
+      <p className="text-center text-xs text-on-surface-variant">Auto-refreshes every 30 seconds</p>
+    </PartnerLayout>
   )
 }

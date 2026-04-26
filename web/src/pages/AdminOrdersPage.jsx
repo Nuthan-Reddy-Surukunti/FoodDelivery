@@ -1,22 +1,22 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Button } from '../components/atoms/Button'
-import { Card } from '../components/atoms/Card'
+import { AdminLayout } from '../components/organisms/AdminLayout'
 import { useNotification } from '../hooks/useNotification'
 import adminApi from '../services/adminApi'
 
 const STATUS_FILTERS = ['All', 'Paid', 'Preparing', 'ReadyForPickup', 'OutForDelivery', 'Delivered', 'Cancelled']
 
-const STATUS_COLORS = {
-  Paid: 'text-blue-600 bg-blue-50',
-  RestaurantAccepted: 'text-indigo-600 bg-indigo-50',
-  Preparing: 'text-amber-600 bg-amber-50',
-  ReadyForPickup: 'text-orange-600 bg-orange-50',
-  PickedUp: 'text-teal-600 bg-teal-50',
-  OutForDelivery: 'text-cyan-600 bg-cyan-50',
-  Delivered: 'text-green-600 bg-green-50',
-  Cancelled: 'text-red-600 bg-red-50',
-  RestaurantRejected: 'text-red-600 bg-red-50',
-  CancelRequestedByCustomer: 'text-rose-600 bg-rose-50',
+const STATUS_BADGE = {
+  Paid: 'bg-sky-100 text-sky-800',
+  RestaurantAccepted: 'bg-teal-100 text-teal-800',
+  Preparing: 'bg-amber-100 text-amber-800',
+  ReadyForPickup: 'bg-orange-100 text-orange-800',
+  PickedUp: 'bg-indigo-100 text-indigo-800',
+  OutForDelivery: 'bg-purple-100 text-purple-800',
+  Delivered: 'bg-emerald-100 text-emerald-800',
+  Cancelled: 'bg-red-100 text-red-800',
+  RestaurantRejected: 'bg-red-100 text-red-800',
+  CancelRequestedByCustomer: 'bg-rose-100 text-rose-800',
+  CheckoutStarted: 'bg-slate-100 text-slate-700',
 }
 
 const normalize = (payload) => {
@@ -25,12 +25,15 @@ const normalize = (payload) => {
     id: item.orderId || item.id,
     restaurant: item.restaurantName || item.restaurant?.name || 'Restaurant',
     userId: item.userId,
+    customerEmail: item.customerEmail || item.userId || '',
     status: item.orderStatus || item.status || 'Unknown',
     total: Number(item.total || item.totalAmount || 0),
     createdAt: item.createdAt,
-    itemCount: item.items?.length ?? 0,
+    itemCount: item.items?.length ?? item.itemCount ?? 0,
   }))
 }
+
+const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : ''
 
 export const AdminOrdersPage = () => {
   const { showSuccess, showError } = useNotification()
@@ -53,9 +56,7 @@ export const AdminOrdersPage = () => {
     }
   }, [])
 
-  useEffect(() => {
-    loadOrders(activeFilter)
-  }, [activeFilter, loadOrders])
+  useEffect(() => { loadOrders(activeFilter) }, [activeFilter, loadOrders])
 
   const handleMarkDelivered = async (id) => {
     setActioning(id)
@@ -71,61 +72,74 @@ export const AdminOrdersPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <h1 className="mb-5 text-2xl font-bold">Orders Management</h1>
+    <AdminLayout title="Orders Management" searchPlaceholder="Search orders...">
+      {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm">{error}</div>}
 
-      {/* Status filter tabs */}
-      <div className="mb-6 flex flex-wrap gap-2">
+      {/* Filter tabs */}
+      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto no-scrollbar">
         {STATUS_FILTERS.map(f => (
           <button
             key={f}
             onClick={() => setActiveFilter(f)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium border transition ${activeFilter === f ? 'bg-primary text-on-primary border-primary' : 'border-outline hover:bg-surface-dim'}`}
+            className={`px-4 py-2.5 text-sm font-medium whitespace-nowrap transition-colors ${activeFilter === f ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-on-surface'}`}
           >
             {f}
           </button>
         ))}
       </div>
 
-      {loading && <p className="text-sm text-on-background/70">Loading orders...</p>}
-      {error && <p className="text-sm text-error">{error}</p>}
+      {/* Orders table */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        {loading ? (
+          <div className="p-6 space-y-3">
+            {[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-slate-100 animate-pulse rounded-xl" />)}
+          </div>
+        ) : orders.length === 0 ? (
+          <div className="py-16 text-center text-on-surface-variant text-sm">
+            No orders{activeFilter !== 'All' ? ` with status "${activeFilter}"` : ''}.
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-50">
+            {orders.map(order => {
+              const badgeClass = STATUS_BADGE[order.status] || 'bg-slate-100 text-slate-700'
+              const isActioning = actioning === order.id
+              const canForce = !['Delivered', 'Cancelled', 'RestaurantRejected'].includes(order.status)
 
-      <div className="space-y-3">
-        {orders.map(order => {
-          const statusCls = STATUS_COLORS[order.status] || 'text-gray-600 bg-gray-50'
-          const isActioning = actioning === order.id
-          return (
-            <Card key={order.id} className="p-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">#{order.id.split('-')[0].toUpperCase()}</p>
-                  <p className="text-sm text-on-background/70 mt-0.5">{order.restaurant}</p>
-                  <div className="flex flex-wrap gap-3 mt-2 text-xs text-on-background/60">
-                    {order.itemCount > 0 && <span>{order.itemCount} items</span>}
-                    <span className="font-semibold text-on-background">₹{order.total.toLocaleString()}</span>
-                    {order.createdAt && (
-                      <span>{new Date(order.createdAt).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}</span>
+              return (
+                <div key={order.id} className="p-5 hover:bg-slate-50 transition-colors flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="bg-slate-100 h-11 w-11 rounded-lg flex items-center justify-center shrink-0 border border-slate-200">
+                      <span className="text-xs font-bold text-slate-500">#{String(order.id).split('-')[0].slice(0, 4).toUpperCase()}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-on-surface text-sm">{order.restaurant}</h4>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        {order.customerEmail && `${order.customerEmail} · `}{fmtDate(order.createdAt)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {order.itemCount > 0 && <span className="text-xs text-slate-400">{order.itemCount} items</span>}
+                        <span className="text-xs font-semibold text-on-surface">₹{order.total.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className={`${badgeClass} text-xs font-semibold px-3 py-1 rounded-full`}>{order.status}</span>
+                    {canForce && (
+                      <button
+                        disabled={isActioning}
+                        onClick={() => handleMarkDelivered(order.id)}
+                        className="text-xs font-medium text-primary border border-primary px-3 py-1.5 rounded-lg hover:bg-primary hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        {isActioning ? '...' : 'Force Deliver'}
+                      </button>
                     )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusCls}`}>{order.status}</span>
-                  {order.status !== 'Delivered' && order.status !== 'Cancelled' && (
-                    <Button size="sm" variant="secondary" disabled={isActioning} onClick={() => handleMarkDelivered(order.id)}>
-                      {isActioning ? '...' : 'Force Deliver'}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
-          )
-        })}
-        {!loading && orders.length === 0 && (
-          <div className="rounded-2xl border border-dashed border-outline p-10 text-center text-on-background/60">
-            No orders found{activeFilter !== 'All' ? ` with status "${activeFilter}"` : ''}.
+              )
+            })}
           </div>
         )}
       </div>
-    </div>
+    </AdminLayout>
   )
 }

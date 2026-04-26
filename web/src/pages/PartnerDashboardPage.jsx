@@ -1,32 +1,35 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Button } from '../components/atoms/Button'
-import { Card } from '../components/atoms/Card'
-import { FormField } from '../components/molecules/FormField'
+import { Link, useNavigate } from 'react-router-dom'
+import { PartnerLayout } from '../components/organisms/PartnerLayout'
 import { useNotification } from '../hooks/useNotification'
 import catalogApi from '../services/catalogApi'
+import orderApi from '../services/orderApi'
 
 const CUISINE_OPTIONS = [
-  { label: 'Italian', value: 1 },
-  { label: 'Chinese', value: 2 },
-  { label: 'Indian', value: 3 },
-  { label: 'Mexican', value: 4 },
-  { label: 'American', value: 5 },
-  { label: 'Thai', value: 6 },
-  { label: 'Japanese', value: 7 },
-  { label: 'Continental', value: 8 },
-  { label: 'Fast Food', value: 9 },
-  { label: 'Vegan', value: 10 },
-  { label: 'Mediterranean', value: 11 },
-  { label: 'Other', value: 12 },
+  { label: 'Italian', value: 1 }, { label: 'Chinese', value: 2 }, { label: 'Indian', value: 3 },
+  { label: 'Mexican', value: 4 }, { label: 'American', value: 5 }, { label: 'Thai', value: 6 },
+  { label: 'Japanese', value: 7 }, { label: 'Continental', value: 8 }, { label: 'Fast Food', value: 9 },
+  { label: 'Vegan', value: 10 }, { label: 'Mediterranean', value: 11 }, { label: 'Other', value: 12 },
 ]
 
-const STATUS_COLORS = {
-  Active: 'text-green-600 bg-green-50 border-green-200',
-  Pending: 'text-amber-600 bg-amber-50 border-amber-200',
-  PendingApproval: 'text-amber-600 bg-amber-50 border-amber-200',
-  Rejected: 'text-red-600 bg-red-50 border-red-200',
-  Inactive: 'text-gray-600 bg-gray-50 border-gray-200',
+const STATUS_BADGE = {
+  Active: 'bg-emerald-100 text-emerald-800',
+  Pending: 'bg-amber-100 text-amber-800',
+  PendingApproval: 'bg-amber-100 text-amber-800',
+  Rejected: 'bg-red-100 text-red-800',
+  Inactive: 'bg-slate-100 text-slate-600',
+}
+
+const ORDER_BADGE = {
+  CheckoutStarted: 'bg-amber-100 text-amber-800',
+  Paid: 'bg-sky-100 text-sky-800',
+  RestaurantAccepted: 'bg-teal-100 text-teal-800',
+  Preparing: 'bg-blue-100 text-blue-800',
+  ReadyForPickup: 'bg-orange-100 text-orange-800',
+  OutForDelivery: 'bg-purple-100 text-purple-800',
+  Delivered: 'bg-emerald-100 text-emerald-800',
+  Cancelled: 'bg-red-100 text-red-800',
+  RestaurantRejected: 'bg-red-100 text-red-800',
 }
 
 const emptyForm = {
@@ -35,13 +38,107 @@ const emptyForm = {
   contactEmail: '', minOrderValue: '', deliveryTime: '',
 }
 
+// ── Restaurant Form ──────────────────────────────────────────────────────────
+const RestaurantForm = ({ form, onChange, onSubmit, submitting, submitLabel, onCancel }) => (
+  <form onSubmit={onSubmit} className="bg-white rounded-xl border border-slate-100 shadow-sm p-6 space-y-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      {[
+        { label: 'Restaurant Name', name: 'name', required: true },
+        { label: 'City', name: 'city', required: true },
+      ].map(({ label, name, required }) => (
+        <div key={name}>
+          <label className="block text-sm font-medium text-on-surface mb-1.5">{label}</label>
+          <input
+            name={name} value={form[name]} onChange={onChange} required={required}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+          />
+        </div>
+      ))}
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-on-surface mb-1.5">Description</label>
+      <textarea name="description" value={form.description} onChange={onChange} rows={2}
+        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition resize-none"
+      />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-on-surface mb-1.5">Address</label>
+      <input name="address" value={form.address} onChange={onChange} required
+        className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+      />
+    </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Service Zone ID</label>
+        <input name="serviceZoneId" value={form.serviceZoneId} onChange={onChange} required
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Cuisine Type</label>
+        <select name="cuisineType" value={form.cuisineType} onChange={onChange}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        >
+          {CUISINE_OPTIONS.map(o => <option key={o.value} value={String(o.value)}>{o.label}</option>)}
+        </select>
+      </div>
+    </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Contact Phone</label>
+        <input name="contactPhone" value={form.contactPhone} onChange={onChange}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Contact Email</label>
+        <input name="contactEmail" type="email" value={form.contactEmail} onChange={onChange}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        />
+      </div>
+    </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Min Order Value (₹)</label>
+        <input name="minOrderValue" type="number" value={form.minOrderValue} onChange={onChange}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Delivery Time (mins)</label>
+        <input name="deliveryTime" type="number" value={form.deliveryTime} onChange={onChange}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        />
+      </div>
+    </div>
+    <div className="flex gap-3 pt-2">
+      <button type="submit" disabled={submitting}
+        className="bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors disabled:opacity-50"
+      >
+        {submitting ? 'Saving...' : submitLabel}
+      </button>
+      {onCancel && (
+        <button type="button" onClick={onCancel}
+          className="border border-slate-200 text-on-surface px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-colors"
+        >
+          Cancel
+        </button>
+      )}
+    </div>
+  </form>
+)
+
+// ── Main Component ────────────────────────────────────────────────────────────
 export const PartnerDashboardPage = () => {
   const { showSuccess, showError } = useNotification()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [restaurant, setRestaurant] = useState(null)
   const [editMode, setEditMode] = useState(false)
   const [form, setForm] = useState(emptyForm)
+  const [recentOrders, setRecentOrders] = useState([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
 
   useEffect(() => {
     let active = true
@@ -51,6 +148,18 @@ export const PartnerDashboardPage = () => {
         const response = await catalogApi.getMyRestaurant()
         if (!active) return
         setRestaurant(response)
+        // Load recent orders
+        if (response?.id) {
+          setOrdersLoading(true)
+          orderApi.getRestaurantOrders(response.id)
+            .then(res => {
+              if (!active) return
+              const raw = Array.isArray(res) ? res : (res?.items || res?.data || [])
+              setRecentOrders(raw.slice(0, 5))
+            })
+            .catch(() => {})
+            .finally(() => { if (active) setOrdersLoading(false) })
+        }
       } catch (err) {
         if (!active) return
         if (err?.response?.status !== 404) {
@@ -66,16 +175,11 @@ export const PartnerDashboardPage = () => {
 
   const openEdit = () => {
     setForm({
-      name: restaurant.name || '',
-      description: restaurant.description || '',
-      address: restaurant.address || '',
-      city: restaurant.city || '',
-      serviceZoneId: restaurant.serviceZoneId || '',
-      cuisineType: String(restaurant.cuisineType ?? 3),
-      contactPhone: restaurant.contactPhone || '',
-      contactEmail: restaurant.contactEmail || '',
-      minOrderValue: restaurant.minOrderValue ?? '',
-      deliveryTime: restaurant.deliveryTime ?? '',
+      name: restaurant.name || '', description: restaurant.description || '',
+      address: restaurant.address || '', city: restaurant.city || '',
+      serviceZoneId: restaurant.serviceZoneId || '', cuisineType: String(restaurant.cuisineType ?? 3),
+      contactPhone: restaurant.contactPhone || '', contactEmail: restaurant.contactEmail || '',
+      minOrderValue: restaurant.minOrderValue ?? '', deliveryTime: restaurant.deliveryTime ?? '',
     })
     setEditMode(true)
   }
@@ -102,9 +206,7 @@ export const PartnerDashboardPage = () => {
       showSuccess('Restaurant profile created. Awaiting admin approval.')
     } catch (err) {
       showError(err.response?.data?.message || err.message || 'Failed to create restaurant')
-    } finally {
-      setSubmitting(false)
-    }
+    } finally { setSubmitting(false) }
   }
 
   const handleUpdate = async (e) => {
@@ -125,146 +227,202 @@ export const PartnerDashboardPage = () => {
       showSuccess('Restaurant updated successfully.')
     } catch (err) {
       showError(err.response?.data?.message || err.message || 'Failed to update restaurant')
-    } finally {
-      setSubmitting(false)
-    }
+    } finally { setSubmitting(false) }
   }
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-6xl px-4 py-8">
-        <p className="text-sm text-on-background/70">Loading partner setup...</p>
-      </div>
+      <PartnerLayout title="">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+          {[1,2,3,4].map(i => <div key={i} className="h-28 animate-pulse bg-slate-200 rounded-xl" />)}
+        </div>
+      </PartnerLayout>
     )
   }
 
-  // ── Create form ─────────────────────────────────────────────────────────────
   if (!restaurant) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <h1 className="mb-2 text-2xl font-bold">Complete Partner Setup</h1>
-        <p className="mb-6 text-sm text-on-background/70">
-          Create your restaurant profile to continue with menu management and incoming orders.
+      <PartnerLayout title="Complete Partner Setup">
+        <p className="text-on-surface-variant text-sm mb-6">
+          Create your restaurant profile to start receiving orders and managing your menu.
         </p>
         <RestaurantForm form={form} onChange={updateField} onSubmit={handleCreate} submitting={submitting} submitLabel="Create Restaurant" />
-      </div>
+      </PartnerLayout>
+    )
+  }
+
+  if (editMode) {
+    return (
+      <PartnerLayout title="Edit Restaurant">
+        <RestaurantForm
+          form={form} onChange={updateField} onSubmit={handleUpdate}
+          submitting={submitting} submitLabel="Save Changes"
+          onCancel={() => setEditMode(false)}
+        />
+      </PartnerLayout>
     )
   }
 
   const statusKey = String(restaurant.status)
-  const statusColor = STATUS_COLORS[statusKey] || STATUS_COLORS.Inactive
+  const badgeClass = STATUS_BADGE[statusKey] || 'bg-slate-100 text-slate-600'
   const isActive = statusKey.toLowerCase() === 'active'
   const cuisineLabel = CUISINE_OPTIONS.find(c => c.value === Number(restaurant.cuisineType))?.label || restaurant.cuisineType
+  const today = new Date().toLocaleDateString('en-IN', { dateStyle: 'long' })
 
-  // ── Edit form ───────────────────────────────────────────────────────────────
-  if (editMode) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-6 flex items-center gap-3">
-          <button onClick={() => setEditMode(false)} className="text-sm text-on-background/60 hover:text-primary">← Back</button>
-          <h1 className="text-2xl font-bold">Edit Restaurant</h1>
-        </div>
-        <RestaurantForm form={form} onChange={updateField} onSubmit={handleUpdate} submitting={submitting} submitLabel="Save Changes" />
-      </div>
-    )
-  }
+  // Derived stats from recent orders
+  const todayOrders = recentOrders.filter(o => {
+    const d = new Date(o.createdAt || o.placedAt || 0)
+    const now = new Date()
+    return d.toDateString() === now.toDateString()
+  })
+  const todayRevenue = todayOrders.reduce((s, o) => s + Number(o.total || o.totalAmount || 0), 0)
 
-  // ── Dashboard ───────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">Partner Dashboard</h1>
-        <Button variant="secondary" onClick={openEdit}>Edit Restaurant</Button>
+    <PartnerLayout title="">
+      {/* Header row */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-[28px] font-bold text-on-background tracking-tight">Overview</h2>
+          <p className="text-on-surface-variant text-sm mt-1">Here's what's happening at your restaurant today.</p>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-secondary bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
+          <span className="material-symbols-outlined text-lg">calendar_today</span>
+          {today}
+        </div>
       </div>
 
-      {/* Restaurant card */}
-      <Card className="mb-6 p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-semibold">{restaurant.name}</h2>
-            {restaurant.description && <p className="mt-1 text-sm text-on-background/70">{restaurant.description}</p>}
-            <p className="mt-2 text-sm text-on-background/70">{restaurant.address}, {restaurant.city}</p>
+      {/* KPI bento grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[
+          { label: "Today's Orders", value: todayOrders.length, icon: 'receipt_long' },
+          { label: "Today's Revenue", value: `₹${todayRevenue.toLocaleString()}`, icon: 'payments' },
+          { label: 'Cuisine', value: cuisineLabel, icon: 'local_pizza' },
+          { label: 'Delivery Time', value: restaurant.deliveryTime ? `${restaurant.deliveryTime} min` : 'N/A', icon: 'timer' },
+        ].map(({ label, value, icon }) => (
+          <div key={label} className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
+            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+              <span className="material-symbols-outlined text-5xl text-primary">{icon}</span>
+            </div>
+            <p className="text-sm font-medium text-on-surface-variant mb-2">{label}</p>
+            <h3 className="text-2xl font-bold text-on-surface">{value ?? '—'}</h3>
           </div>
-          <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${statusColor}`}>
-            {statusKey}
-          </span>
+        ))}
+      </div>
+
+      {/* Restaurant info card */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-on-surface">{restaurant.name}</h3>
+            <span className={`${badgeClass} text-xs font-semibold px-2.5 py-1 rounded-full`}>{statusKey}</span>
+          </div>
+          <button onClick={openEdit} className="text-sm font-medium text-primary flex items-center gap-1 hover:text-primary-container transition-colors">
+            <span className="material-symbols-outlined text-sm">edit</span> Edit
+          </button>
         </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat label="Cuisine" value={cuisineLabel} />
-          <Stat label="Rating" value={`${Number(restaurant.rating ?? 0).toFixed(1)} ★`} />
-          <Stat label="Delivery Time" value={restaurant.deliveryTime ? `${restaurant.deliveryTime} mins` : 'N/A'} />
-          <Stat label="Min Order" value={restaurant.minOrderValue ? `₹${restaurant.minOrderValue}` : 'N/A'} />
+        <div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Address', value: `${restaurant.address}, ${restaurant.city}` },
+            { label: 'Rating', value: `${Number(restaurant.rating ?? 0).toFixed(1)} ★` },
+            { label: 'Min Order', value: restaurant.minOrderValue ? `₹${restaurant.minOrderValue}` : 'N/A' },
+            { label: 'Phone', value: restaurant.contactPhone || 'N/A' },
+          ].map(({ label, value }) => (
+            <div key={label} className="bg-slate-50 rounded-xl p-3">
+              <p className="text-xs text-on-surface-variant mb-1">{label}</p>
+              <p className="text-sm font-semibold text-on-surface">{value}</p>
+            </div>
+          ))}
         </div>
-
-        {restaurant.contactPhone && (
-          <p className="mt-3 text-sm text-on-background/70">📞 {restaurant.contactPhone}</p>
-        )}
-        {restaurant.contactEmail && (
-          <p className="text-sm text-on-background/70">✉️ {restaurant.contactEmail}</p>
-        )}
-
         {!isActive && (
-          <p className="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-            ⚠️ Your restaurant is <strong>{statusKey}</strong> and awaiting admin approval. Menu editing and live orders will be available once approved.
-          </p>
+          <div className="mx-5 mb-5 bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-2">
+            <span className="material-symbols-outlined text-amber-600 text-xl mt-0.5">warning</span>
+            <p className="text-sm text-amber-800">
+              Your restaurant is <strong>{statusKey}</strong> — awaiting admin approval. Menu editing and live orders will be enabled once approved.
+            </p>
+          </div>
         )}
-      </Card>
+      </div>
+
+      {/* Active orders list */}
+      <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        <div className="p-5 border-b border-slate-100 flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-on-surface flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary">list_alt</span>
+            Active Orders
+          </h3>
+          <Link to="/partner/queue" className="text-sm font-medium text-primary flex items-center gap-1 hover:text-primary-container transition-colors">
+            View All <span className="material-symbols-outlined text-base">chevron_right</span>
+          </Link>
+        </div>
+
+        {ordersLoading ? (
+          <div className="p-5 space-y-3">
+            {[1,2,3].map(i => <div key={i} className="h-14 bg-slate-100 animate-pulse rounded-xl" />)}
+          </div>
+        ) : recentOrders.length === 0 ? (
+          <div className="py-12 text-center text-on-surface-variant text-sm">No active orders</div>
+        ) : (
+          <div className="divide-y divide-slate-50">
+            {recentOrders.map(order => {
+              const status = order.orderStatus || order.status || ''
+              const badgeCls = ORDER_BADGE[status] || 'bg-slate-100 text-slate-700'
+              const isNew = status === 'Paid' || status === 'CheckoutStarted'
+              return (
+                <div key={order.orderId || order.id} className="p-5 hover:bg-slate-50 transition-colors flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div className="bg-slate-100 h-11 w-11 rounded-lg flex items-center justify-center shrink-0 border border-slate-200 text-xs font-bold text-slate-500">
+                      #{String(order.orderId || order.id || '').split('-')[0].slice(0, 3).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-on-surface text-sm">{order.customerName || order.customerEmail || 'Customer'}</h4>
+                      <p className="text-xs text-on-surface-variant mt-0.5">
+                        {order.items?.map(i => `${i.quantity}× ${i.menuItemName || 'Item'}`).join(', ') || 'Order items'}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <span className={`${badgeCls} text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1`}>
+                          {isNew && <span className="material-symbols-outlined text-xs">new_releases</span>}
+                          {status}
+                        </span>
+                        <span className="text-xs text-slate-400 flex items-center gap-0.5">
+                          <span className="material-symbols-outlined text-xs">schedule</span>
+                          {order.createdAt ? new Date(order.createdAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : ''}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-bold text-on-surface">₹{Number(order.total || order.totalAmount || 0).toFixed(2)}</span>
+                    {isNew && (
+                      <Link to="/partner/queue" className="bg-primary text-on-primary text-xs font-semibold px-4 py-2 rounded-lg hover:bg-primary-container transition-colors">
+                        Accept Order
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Quick links */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <QuickLink to="/partner/menu" icon="🍽️" title="Menu Management" desc="Add, edit & remove menu items and categories" />
-        <QuickLink to="/partner/queue" icon="📋" title="Order Queue" desc="View and manage incoming customer orders" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {[
+          { to: '/partner/menu', icon: 'restaurant_menu', label: 'Menu Management', desc: 'Add, edit & remove menu items and categories', color: 'bg-blue-50 text-blue-600' },
+          { to: '/partner/queue', icon: 'receipt_long', label: 'Order Queue', desc: 'View and manage incoming customer orders', color: 'bg-purple-50 text-purple-600' },
+        ].map(({ to, icon, label, desc, color }) => (
+          <Link key={to} to={to} className="bg-white border border-slate-100 rounded-xl p-5 hover:border-primary/30 hover:shadow-md transition-all flex items-center gap-4 group">
+            <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
+              <span className="material-symbols-outlined text-xl">{icon}</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-on-surface group-hover:text-primary transition-colors">{label}</p>
+              <p className="text-xs text-on-surface-variant mt-0.5">{desc}</p>
+            </div>
+            <span className="material-symbols-outlined text-slate-300 ml-auto">arrow_forward</span>
+          </Link>
+        ))}
       </div>
-    </div>
+    </PartnerLayout>
   )
 }
-
-const Stat = ({ label, value }) => (
-  <div className="rounded-xl bg-surface-dim p-3">
-    <p className="text-xs text-on-background/60">{label}</p>
-    <p className="mt-1 font-semibold">{value}</p>
-  </div>
-)
-
-const QuickLink = ({ to, icon, title, desc }) => (
-  <Link to={to} className="block rounded-2xl border border-outline bg-surface p-5 transition hover:border-primary hover:shadow-md">
-    <div className="text-3xl mb-2">{icon}</div>
-    <p className="font-semibold">{title}</p>
-    <p className="mt-1 text-xs text-on-background/60">{desc}</p>
-  </Link>
-)
-
-const RestaurantForm = ({ form, onChange, onSubmit, submitting, submitLabel }) => (
-  <form onSubmit={onSubmit} className="space-y-4 rounded-2xl border border-outline bg-surface p-5">
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <FormField label="Restaurant Name" name="name" value={form.name} onChange={onChange} required />
-      <FormField label="City" name="city" value={form.city} onChange={onChange} required />
-    </div>
-    <FormField label="Description" name="description" value={form.description} onChange={onChange} />
-    <FormField label="Address" name="address" value={form.address} onChange={onChange} required />
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <FormField label="Service Zone ID" name="serviceZoneId" value={form.serviceZoneId} onChange={onChange} required />
-      <div>
-        <label htmlFor="cuisineType" className="mb-1 block text-sm font-medium text-on-background">Cuisine Type</label>
-        <select
-          id="cuisineType" name="cuisineType" value={form.cuisineType} onChange={onChange}
-          className="w-full rounded-2xl border-2 border-outline bg-surface px-4 py-3 text-sm text-on-background"
-        >
-          {[{ label: 'Italian', value: 1 }, { label: 'Chinese', value: 2 }, { label: 'Indian', value: 3 }, { label: 'Mexican', value: 4 }, { label: 'American', value: 5 }, { label: 'Thai', value: 6 }, { label: 'Japanese', value: 7 }, { label: 'Continental', value: 8 }, { label: 'Fast Food', value: 9 }, { label: 'Vegan', value: 10 }, { label: 'Mediterranean', value: 11 }, { label: 'Other', value: 12 }].map(o => (
-            <option key={o.value} value={String(o.value)}>{o.label}</option>
-          ))}
-        </select>
-      </div>
-    </div>
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <FormField label="Contact Phone" name="contactPhone" value={form.contactPhone} onChange={onChange} />
-      <FormField label="Contact Email" name="contactEmail" type="email" value={form.contactEmail} onChange={onChange} />
-    </div>
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      <FormField label="Min Order Value (₹)" name="minOrderValue" type="number" value={form.minOrderValue} onChange={onChange} />
-      <FormField label="Delivery Time (mins)" name="deliveryTime" type="number" value={form.deliveryTime} onChange={onChange} />
-    </div>
-    <Button type="submit" disabled={submitting}>{submitting ? 'Saving...' : submitLabel}</Button>
-  </form>
-)

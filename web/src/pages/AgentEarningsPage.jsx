@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Card } from '../components/atoms/Card'
+import { AgentLayout } from '../components/organisms/AgentLayout'
 import { useNotification } from '../hooks/useNotification'
 import api from '../services/api'
 import catalogApi from '../services/catalogApi'
@@ -30,13 +30,11 @@ export const AgentEarningsPage = () => {
         const res = await api.get('/gateway/orders/deliveries/assigned')
         const all = Array.isArray(res.data) ? res.data : (res.data?.items || [])
 
-        // Filter to delivered-only assignments
         const delivered = all.filter(a => {
           const s = a.currentStatus || a.CurrentStatus || ''
           return s === 'Delivered'
         })
 
-        // Enrich each with order + restaurant info
         const enriched = await Promise.allSettled(
           delivered.map(async (assignment) => {
             const orderId = assignment.orderId || assignment.OrderId
@@ -74,43 +72,51 @@ export const AgentEarningsPage = () => {
   const totalAmount = deliveries.reduce((s, d) => s + Number(d.order?.total ?? d.order?.totalAmount ?? 0), 0)
   const todayAmount = todayDeliveries.reduce((s, d) => s + Number(d.order?.total ?? d.order?.totalAmount ?? 0), 0)
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Earnings</h1>
+  const statCards = [
+    { label: "Today's Deliveries", value: todayDeliveries.length, icon: 'local_shipping', color: 'text-blue-600 bg-blue-50' },
+    { label: "Today's Value", value: `₹${todayAmount.toFixed(2)}`, icon: 'payments', color: 'text-emerald-600 bg-emerald-50' },
+    { label: 'Total Deliveries', value: deliveries.length, icon: 'inventory_2', color: 'text-purple-600 bg-purple-50' },
+    { label: 'Total COD Value', value: `₹${totalAmount.toFixed(2)}`, icon: 'account_balance_wallet', color: 'text-amber-600 bg-amber-50' },
+  ]
 
+  return (
+    <AgentLayout title="Earnings">
       {loading ? (
         <div className="space-y-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-16 animate-pulse rounded-2xl border border-outline bg-surface-dim" />
-          ))}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-28 bg-slate-200 animate-pulse rounded-xl" />)}
+          </div>
+          <div className="h-48 bg-slate-200 animate-pulse rounded-xl" />
         </div>
       ) : (
         <>
-          {/* Summary cards */}
-          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {[
-              { label: "Today's Deliveries", value: todayDeliveries.length },
-              { label: "Today's Value", value: `₹${todayAmount.toFixed(2)}` },
-              { label: 'Total Deliveries', value: deliveries.length },
-              { label: 'Total Value', value: `₹${totalAmount.toFixed(2)}` },
-            ].map(c => (
-              <Card key={c.label} className="p-4 text-center">
-                <p className="text-xs text-on-background/60">{c.label}</p>
-                <p className="mt-2 text-xl font-bold">{c.value}</p>
-              </Card>
+          {/* KPI cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {statCards.map(({ label, value, icon, color }) => (
+              <div key={label} className="bg-white rounded-xl p-5 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
+                <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <span className={`material-symbols-outlined text-5xl ${color.split(' ')[0]}`}>{icon}</span>
+                </div>
+                <p className="text-xs font-medium text-on-surface-variant mb-2">{label}</p>
+                <p className="text-2xl font-bold text-on-surface">{value}</p>
+              </div>
             ))}
           </div>
 
           {/* History table */}
-          <Card className="p-5">
-            <h2 className="mb-4 text-lg font-semibold">Delivery History</h2>
+          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+            <div className="p-5 border-b border-slate-100 flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary">list_alt</span>
+              <h2 className="text-lg font-semibold text-on-surface">Delivery History</h2>
+            </div>
+
             {deliveries.length === 0 ? (
-              <div className="py-8 text-center text-on-background/50">
-                <p className="text-3xl mb-2">📦</p>
-                <p>No completed deliveries yet.</p>
+              <div className="py-16 text-center text-on-surface-variant">
+                <p className="text-4xl mb-3">📦</p>
+                <p className="text-lg font-semibold">No completed deliveries yet</p>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="divide-y divide-slate-50">
                 {deliveries.map(({ assignment, order, restaurant }) => {
                   const orderId = assignment.orderId || assignment.OrderId
                   const deliveredAt = assignment.deliveredAt || assignment.DeliveredAt || order?.updatedAt
@@ -119,37 +125,41 @@ export const AgentEarningsPage = () => {
                   return (
                     <div
                       key={orderId}
-                      className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-outline px-4 py-3"
+                      className="flex flex-wrap items-center justify-between gap-3 px-5 py-4 hover:bg-slate-50 transition-colors"
                     >
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-sm">
-                            #{String(orderId).split('-')[0].toUpperCase()}
-                          </span>
-                          {restaurant?.name && (
-                            <span className="rounded-full bg-surface-dim px-2 py-0.5 text-xs text-on-background/70">
-                              {restaurant.name}
-                            </span>
-                          )}
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                          <span className="material-symbols-outlined text-slate-500 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                         </div>
-                        <p className="mt-0.5 text-xs text-on-background/50">
-                          {itemCount > 0 ? `${itemCount} item${itemCount > 1 ? 's' : ''}` : ''}{' · '}
-                          {fmtDate(deliveredAt)}
-                        </p>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="font-semibold text-sm text-on-surface">
+                              #{String(orderId).split('-')[0].toUpperCase()}
+                            </span>
+                            {restaurant?.name && (
+                              <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                                {restaurant.name}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-on-surface-variant mt-0.5">
+                            {itemCount > 0 ? `${itemCount} item${itemCount > 1 ? 's' : ''} · ` : ''}{fmtDate(deliveredAt)}
+                          </p>
+                        </div>
                       </div>
-                      <span className="font-bold text-green-600">₹{total.toFixed(2)}</span>
+                      <span className="font-bold text-emerald-600 text-sm">₹{total.toFixed(2)}</span>
                     </div>
                   )
                 })}
               </div>
             )}
-          </Card>
+          </div>
 
-          <p className="mt-4 text-center text-xs text-on-background/50">
+          <p className="text-center text-xs text-on-surface-variant">
             Values shown are total order values (COD basis)
           </p>
         </>
       )}
-    </div>
+    </AgentLayout>
   )
 }

@@ -4,6 +4,7 @@ import { Button } from '../components/atoms/Button'
 import { Card } from '../components/atoms/Card'
 import { Modal } from '../components/atoms/Modal'
 import { FormField } from '../components/molecules/FormField'
+import { PartnerLayout } from '../components/organisms/PartnerLayout'
 import { useNotification } from '../hooks/useNotification'
 import catalogApi from '../services/catalogApi'
 
@@ -161,33 +162,37 @@ export const MenuManagementPage = () => {
   // ── Guards ───────────────────────────────────────────────────────────────────
 
   if (loadingRestaurant) {
-    return <div className="mx-auto max-w-5xl px-4 py-8"><p className="text-sm text-on-background/70">Loading menu setup...</p></div>
+    return (
+      <PartnerLayout title="Menu Management">
+        <div className="space-y-4">
+          {[1,2,3].map(i => <div key={i} className="h-24 bg-slate-200 animate-pulse rounded-xl" />)}
+        </div>
+      </PartnerLayout>
+    )
   }
 
   if (!restaurant) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <Card className="p-5">
-          <h1 className="text-2xl font-bold">Menu Management</h1>
-          <p className="mt-2 text-sm text-on-background/70">You need to create your restaurant profile first.</p>
-          <Link to="/partner/dashboard" className="mt-3 inline-block text-sm font-semibold text-primary">Complete restaurant setup →</Link>
-        </Card>
-      </div>
+      <PartnerLayout title="Menu Management">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5 text-amber-800 text-sm">
+          You need to create your restaurant profile first.
+          <Link to="/partner/dashboard" className="ml-2 text-primary font-semibold">Complete restaurant setup →</Link>
+        </div>
+      </PartnerLayout>
     )
   }
 
   const statusLower = String(restaurant.status).toLowerCase()
   if (statusLower !== 'active') {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <Card className="p-5">
-          <h1 className="text-2xl font-bold">Menu Management</h1>
-          <p className="mt-2 text-sm text-amber-700">
+      <PartnerLayout title="Menu Management">
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-5">
+          <p className="text-sm text-amber-800">
             Your restaurant is <strong>{restaurant.status}</strong> and awaiting admin approval. Menu editing will be available after approval.
           </p>
           <Link to="/partner/dashboard" className="mt-3 inline-block text-sm font-semibold text-primary">← Back to Dashboard</Link>
-        </Card>
-      </div>
+        </div>
+      </PartnerLayout>
     )
   }
 
@@ -288,14 +293,15 @@ export const MenuManagementPage = () => {
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <Link to="/partner/dashboard" className="text-sm text-on-background/60 hover:text-primary">← Dashboard</Link>
-          <h1 className="text-2xl font-bold">{restaurant.name} — Menu</h1>
-        </div>
-        <Button onClick={() => setItemModal({ open: true, item: null })}>+ Add Item</Button>
+    <PartnerLayout title={`${restaurant.name} — Menu`}>
+      {/* Add Item button */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setItemModal({ open: true, item: null })}
+          className="bg-primary text-on-primary px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors flex items-center gap-2"
+        >
+          <span className="material-symbols-outlined text-sm">add</span> Add Item
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
@@ -389,6 +395,6 @@ export const MenuManagementPage = () => {
         onSave={handleSaveCategory}
         initial={catModal.cat}
       />
-    </div>
+    </PartnerLayout>
   )
 }
