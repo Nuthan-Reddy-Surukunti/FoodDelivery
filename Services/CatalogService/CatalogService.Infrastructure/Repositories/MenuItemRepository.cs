@@ -67,6 +67,9 @@ public class MenuItemRepository : IMenuItemRepository
         _context.MenuItems.Update(menuItem);
         await _context.SaveChangesAsync();
 
+        // Ensure navigation property is populated for subsequent event emission
+        await _context.Entry(menuItem).Reference(m => m.Category).LoadAsync();
+
         return menuItem;
     }
 

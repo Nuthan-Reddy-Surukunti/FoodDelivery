@@ -25,4 +25,6 @@ public class UpdateMenuItemDto
     public string? ImageUrl { get; set; }
 
     public ItemAvailabilityStatus? AvailabilityStatus { get; set; }
+
+    public Guid? CategoryId { get; set; }
 }
