@@ -308,7 +308,13 @@ export const OrderTrackingPage = () => {
               </section>
 
               {/* Delivery agent card */}
-              {orderData.deliveryAssignment && (
+              {(() => {
+                const isAgentVisible = orderData.deliveryAssignment && 
+                  ['PickedUp', 'OutForDelivery', 'Delivered'].includes(orderData.orderStatus)
+                  
+                if (!isAgentVisible) return null
+
+                return (
                 <section className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
                   <p className="text-xs font-semibold uppercase tracking-wide text-slate-400 mb-3 flex items-center gap-1.5">
                     <span className="material-symbols-outlined text-sm">delivery_dining</span>
@@ -338,7 +344,8 @@ export const OrderTrackingPage = () => {
                     )}
                   </div>
                 </section>
-              )}
+                )
+              })()}
             </div>
 
             {/* Right — order summary */}
