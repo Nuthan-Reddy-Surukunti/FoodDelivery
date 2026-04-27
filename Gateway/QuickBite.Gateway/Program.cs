@@ -60,6 +60,17 @@ builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
 var app = builder.Build();
 
+// Cookie to Bearer Token Middleware
+app.Use(async (context, next) =>
+{
+    var token = context.Request.Cookies["jwt"];
+    if (!string.IsNullOrEmpty(token) && !context.Request.Headers.ContainsKey("Authorization"))
+    {
+        context.Request.Headers.Add("Authorization", "Bearer " + token);
+    }
+    await next();
+});
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowLocalhost");

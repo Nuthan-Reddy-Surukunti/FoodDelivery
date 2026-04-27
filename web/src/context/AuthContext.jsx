@@ -5,20 +5,15 @@ export const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
-  const [token, setToken] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  // Load token from localStorage on mount
+  // Load user from localStorage on mount
   useEffect(() => {
-    const savedToken = localStorage.getItem('token')
     const savedUser = localStorage.getItem('user')
     
-    if (savedToken) {
-      setToken(savedToken)
-      if (savedUser) {
-        setUser(JSON.parse(savedUser))
-      }
+    if (savedUser) {
+      setUser(JSON.parse(savedUser))
     }
   }, [])
 
@@ -49,14 +44,11 @@ export const AuthProvider = ({ children }) => {
       } else if (response.token) {
         // Direct login successful
         setUser(response.user)
-        setToken(response.token)
-        localStorage.setItem('token', response.token)
         localStorage.setItem('user', JSON.stringify(response.user))
         
         return {
           status: 'SUCCESS',
-          user: response.user,
-          token: response.token
+          user: response.user
         }
       }
       
@@ -91,29 +83,31 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    setUser(null)
-    setToken(null)
-    authApi.logout()
+  const logout = useCallback(async () => {
+    try {
+      await authApi.logout()
+    } catch (err) {
+      console.error('Logout error:', err)
+    } finally {
+      setUser(null)
+      localStorage.removeItem('user')
+    }
   }, [])
 
-  const setAuthUser = useCallback((userData, authToken) => {
+  const setAuthUser = useCallback((userData) => {
     setUser(userData)
-    setToken(authToken)
-    localStorage.setItem('token', authToken)
     localStorage.setItem('user', JSON.stringify(userData))
   }, [])
 
   const value = {
     user,
-    token,
     isLoading,
     error,
     login,
     register,
     logout,
     setAuthUser,
-    isAuthenticated: !!token
+    isAuthenticated: !!user
   }
 
   return (

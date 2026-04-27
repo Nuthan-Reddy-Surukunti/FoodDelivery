@@ -264,9 +264,13 @@ export const authApi = {
   /**
    * Logout user (client-side only)
    */
-  logout: () => {
-    localStorage.removeItem('token')
+  logout: async () => {
     localStorage.removeItem('user')
+    try {
+      await api.post('/gateway/auth/logout', {})
+    } catch (error) {
+      console.error('Logout failed on backend:', error)
+    }
   },
 
   /**

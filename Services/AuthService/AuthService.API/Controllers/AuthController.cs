@@ -15,6 +15,18 @@ namespace AuthService.API.Controllers
         private readonly IAdminApprovalService _adminApprovalService;
         private readonly IRestaurantApprovalService _restaurantApprovalService;
 
+        private void SetTokenCookie(string token)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = true, // Set to true for HTTPS or cross-origin environments
+                SameSite = SameSiteMode.Lax,
+                Expires = DateTime.UtcNow.AddDays(7)
+            };
+            Response.Cookies.Append("jwt", token, cookieOptions);
+        }
+
         public AuthController(
             IAuthService authService,
             IOtpService otpService,
@@ -45,6 +57,12 @@ namespace AuthService.API.Controllers
             var result = await _authService.VerifyEmailOtpAsync(dto);
             if (!result.Success)
                 return BadRequest(result);
+            
+            if (!string.IsNullOrEmpty(result.Token))
+            {
+                SetTokenCookie(result.Token);
+            }
+            
             return Ok(result);
         }
 
@@ -54,6 +72,12 @@ namespace AuthService.API.Controllers
             var result = await _authService.LoginAsync(dto);
             if (!result.Success)
                 return BadRequest(result);
+            
+            if (!string.IsNullOrEmpty(result.Token))
+            {
+                SetTokenCookie(result.Token);
+            }
+            
             return Ok(result);
         }
 
@@ -63,6 +87,12 @@ namespace AuthService.API.Controllers
             var result = await _authService.VerifyTwoFactorOtpAsync(dto);
             if (!result.Success)
                 return BadRequest(result);
+            
+            if (!string.IsNullOrEmpty(result.Token))
+            {
+                SetTokenCookie(result.Token);
+            }
+            
             return Ok(result);
         }
 
@@ -79,6 +109,10 @@ namespace AuthService.API.Controllers
         public async Task<IActionResult> Logout([FromBody] RefreshTokenDto dto)
         {
             var result = await _authService.LogoutAsync(dto);
+            
+            // Clear the cookie regardless of the auth service result
+            Response.Cookies.Delete("jwt");
+            
             if (!result.Success)
                 return BadRequest(result);
             return Ok(result);
