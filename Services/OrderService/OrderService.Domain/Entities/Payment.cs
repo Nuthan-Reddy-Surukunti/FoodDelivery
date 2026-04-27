@@ -9,7 +9,7 @@ public class Payment : BaseEntity
 
     public decimal Amount { get; set; }
 
-    public PaymentMethod PaymentMethod { get; set; }
+    public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.CashOnDelivery;
 
     public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
 
@@ -20,6 +20,13 @@ public class Payment : BaseEntity
     public DateTime? ProcessedAt { get; set; }
 
     public decimal? RefundedAmount { get; set; }
+
+    // Card payment details (null for non-card methods)
+    public string? MaskedCardNumber { get; set; }  // e.g. "**** **** **** 4242"
+    public string? CardHolderName { get; set; }
+
+    // Wallet payment details (null for non-wallet methods)
+    public string? WalletId { get; set; }
 
     public Order? Order { get; set; }
 }

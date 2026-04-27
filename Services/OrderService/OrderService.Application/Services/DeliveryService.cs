@@ -138,12 +138,32 @@ public class DeliveryService : IDeliveryService
             CreatedAt = DateTime.UtcNow
         };
 
-        payment.PaymentMethod = PaymentMethod.CashOnDelivery;
+        payment.PaymentMethod = request.PaymentMethod;
         payment.Amount = request.Amount > 0 ? request.Amount : order.TotalAmount;
-        payment.PaymentStatus = PaymentStatus.Success;
+        payment.PaymentStatus = PaymentStatus.Success;  // All methods auto-succeed (simulated gateway)
         payment.ProcessedAt = DateTime.UtcNow;
         payment.UpdatedAt = DateTime.UtcNow;
         payment.TransactionId ??= Guid.NewGuid().ToString();
+
+        // Store masked payment details based on method
+        switch (request.PaymentMethod)
+        {
+            case PaymentMethod.Card:
+                if (!string.IsNullOrWhiteSpace(request.CardNumber))
+                {
+                    var digits = new string(request.CardNumber.Where(char.IsDigit).ToArray());
+                    var last4 = digits.Length >= 4 ? digits[^4..] : digits;
+                    payment.MaskedCardNumber = $"**** **** **** {last4}";
+                }
+                payment.CardHolderName = request.CardHolderName;
+                break;
+
+            case PaymentMethod.Wallet:
+                payment.WalletId = request.WalletId;
+                break;
+
+            // CashOnDelivery — no extra details to store
+        }
 
         // Add or update based on whether it's new
         if (isNewPayment)
