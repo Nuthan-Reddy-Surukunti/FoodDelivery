@@ -4,37 +4,34 @@ import { useNotification } from '../hooks/useNotification'
 import api from '../services/api'
 import catalogApi from '../services/catalogApi'
 
-// Backend OrderStatus enum integers
-const STATUS_INT = { PickedUp: 8, OutForDelivery: 9, Delivered: 10 }
+// Backend OrderStatus enum integers — must match OrderService.Domain.Enums.OrderStatus exactly
+const STATUS_INT = { ReadyForPickup: 7, PickedUp: 8, OutForDelivery: 9, Delivered: 10 }
 
-// Delivery flow keyed by DeliveryStatus string from the assignment
+// Delivery flow keyed by order status integer (source of truth from backend)
 const FLOW = {
-  PickupPending: {
-    label: 'Awaiting Pickup',
-    badge: 'text-blue-700 bg-blue-50 border-blue-200',
-    action: 'Mark Picked Up',
-    next: STATUS_INT.PickedUp,
-  },
-  OutForDelivery: {
-    // Order gets OutForDelivery immediately on payment — agent still needs to pick it up
+  // Order is ready — agent must pick up from restaurant
+  [STATUS_INT.ReadyForPickup]: {
     label: 'Ready for Pickup',
     badge: 'text-amber-700 bg-amber-50 border-amber-200',
     action: 'Mark Picked Up',
     next: STATUS_INT.PickedUp,
   },
-  PickedUp: {
-    label: 'Picked Up',
+  // Agent has picked up the order from restaurant
+  [STATUS_INT.PickedUp]: {
+    label: 'Picked Up ✓',
     badge: 'text-indigo-700 bg-indigo-50 border-indigo-200',
     action: 'Mark Out for Delivery',
     next: STATUS_INT.OutForDelivery,
   },
-  ReadyForDelivery: {
+  // Agent is en route to customer
+  [STATUS_INT.OutForDelivery]: {
     label: 'Out for Delivery',
     badge: 'text-violet-700 bg-violet-50 border-violet-200',
     action: 'Mark Delivered',
     next: STATUS_INT.Delivered,
   },
-  Delivered: {
+  // Terminal state
+  [STATUS_INT.Delivered]: {
     label: 'Delivered ✓',
     badge: 'text-green-700 bg-green-50 border-green-200',
     action: null,
@@ -42,13 +39,12 @@ const FLOW = {
   },
 }
 
-// Map integer OrderStatus → display flow key
-const ORDER_INT_TO_FLOW = {
-  4: 'PickupPending',
-  7: 'PickupPending',
-  8: 'PickedUp',
-  9: 'ReadyForDelivery',
-  10: 'Delivered',
+// Fallback for unexpected states
+const DEFAULT_FLOW = {
+  label: 'Awaiting Pickup',
+  badge: 'text-blue-700 bg-blue-50 border-blue-200',
+  action: null,
+  next: null,
 }
 
 const fmt = (iso) => iso
@@ -124,7 +120,7 @@ export const AgentActivePage = () => {
     return () => clearInterval(intervalRef.current)
   }, [fetchDeliveries])
 
-  const handleAdvance = async (orderId, assignment, nextInt, nextLabel) => {
+  const handleAdvance = async (orderId, nextInt, nextLabel) => {
     setActioning(orderId)
     try {
       await api.put(`/gateway/orders/${orderId}/status`, {
@@ -132,20 +128,12 @@ export const AgentActivePage = () => {
         targetStatus: nextInt,
       })
       showSuccess(`✓ ${nextLabel}`)
-      // Map nextInt back to a delivery status string for optimistic update
-      const newDeliveryStatus = nextInt === STATUS_INT.PickedUp ? 'PickedUp'
-        : nextInt === STATUS_INT.OutForDelivery ? 'ReadyForDelivery'
-        : 'Delivered'
+      // Optimistic update: set orderStatus to the new integer so the FLOW map resolves instantly
       setDeliveries(prev => prev.map(d => {
         const dId = d.assignment.orderId || d.assignment.OrderId
         if (dId !== orderId) return d
         return {
           ...d,
-          assignment: {
-            ...d.assignment,
-            currentStatus: newDeliveryStatus,
-            CurrentStatus: newDeliveryStatus,
-          },
           order: d.order ? { ...d.order, orderStatus: nextInt } : d.order,
         }
       }))
@@ -188,13 +176,9 @@ export const AgentActivePage = () => {
             const orderId = assignment.orderId || assignment.OrderId
             const isActioning = actioning === orderId
 
-            // Resolve flow
-            const deliveryStatusRaw = assignment.currentStatus || assignment.CurrentStatus || ''
+            // Resolve flow using orderStatus integer as the single source of truth
             const orderStatusInt = typeof order?.orderStatus === 'number' ? order.orderStatus : null
-            const flowKey = FLOW[deliveryStatusRaw]
-              ? deliveryStatusRaw
-              : (orderStatusInt !== null ? ORDER_INT_TO_FLOW[orderStatusInt] : 'PickupPending')
-            const flow = FLOW[flowKey] || FLOW.PickupPending
+            const flow = (orderStatusInt !== null ? FLOW[orderStatusInt] : null) || DEFAULT_FLOW
 
             // Build item name lookup from restaurant menu
             const menuItemMap = {}
@@ -351,7 +335,7 @@ export const AgentActivePage = () => {
                   {flow.next !== null && (
                     <button
                       disabled={isActioning}
-                      onClick={() => handleAdvance(orderId, assignment, flow.next, flow.action)}
+                      onClick={() => handleAdvance(orderId, flow.next, flow.action)}
                       className="w-full bg-primary text-on-primary py-3 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-base">check_circle</span>

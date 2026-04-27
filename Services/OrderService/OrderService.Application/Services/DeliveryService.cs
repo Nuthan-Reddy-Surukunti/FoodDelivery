@@ -53,8 +53,25 @@ public class DeliveryService : IDeliveryService
         }
 
         var assignments = await _deliveryAssignmentRepository.GetAssignmentsByAgentIdAsync(agent.Id, cancellationToken);
-        var active = assignments.Where(a => a.CurrentStatus != DeliveryStatus.Delivered).ToList();
-        return active.Select(assignment => MapToDto(assignment)).ToList().AsReadOnly();
+        
+        // Only show the agent orders that are actionable (ReadyForPickup or beyond).
+        // Orders still being prepared by the restaurant are not yet visible to the agent.
+        var actionableAssignments = new List<DeliveryAssignment>();
+        foreach (var assignment in assignments)
+        {
+            if (assignment.CurrentStatus == DeliveryStatus.Delivered) continue;
+            
+            var order = await _orderRepository.GetByIdAsync(assignment.OrderId, cancellationToken);
+            if (order is null) continue;
+            
+            // Agent sees the order once it's ReadyForPickup, PickedUp, OutForDelivery, or Delivered
+            if (order.OrderStatus >= OrderService.Domain.Enums.OrderStatus.ReadyForPickup)
+            {
+                actionableAssignments.Add(assignment);
+            }
+        }
+        
+        return actionableAssignments.Select(assignment => MapToDto(assignment)).ToList().AsReadOnly();
     }
 
     public async Task<AgentEarningsSummaryDto> GetEarningsSummaryAsync(string authUserId, CancellationToken cancellationToken = default)
