@@ -37,6 +37,32 @@ const FLOW = {
     action: null,
     next: null,
   },
+  
+  // String fallbacks because backend serializes enums as strings
+  ReadyForPickup: {
+    label: 'Ready for Pickup',
+    badge: 'text-amber-700 bg-amber-50 border-amber-200',
+    action: 'Mark Picked Up',
+    next: STATUS_INT.PickedUp,
+  },
+  PickedUp: {
+    label: 'Picked Up ✓',
+    badge: 'text-indigo-700 bg-indigo-50 border-indigo-200',
+    action: 'Mark Out for Delivery',
+    next: STATUS_INT.OutForDelivery,
+  },
+  OutForDelivery: {
+    label: 'Out for Delivery',
+    badge: 'text-violet-700 bg-violet-50 border-violet-200',
+    action: 'Mark Delivered',
+    next: STATUS_INT.Delivered,
+  },
+  Delivered: {
+    label: 'Delivered ✓',
+    badge: 'text-green-700 bg-green-50 border-green-200',
+    action: null,
+    next: null,
+  },
 }
 
 // Fallback for unexpected states
@@ -176,9 +202,9 @@ export const AgentActivePage = () => {
             const orderId = assignment.orderId || assignment.OrderId
             const isActioning = actioning === orderId
 
-            // Resolve flow using orderStatus integer as the single source of truth
-            const orderStatusInt = typeof order?.orderStatus === 'number' ? order.orderStatus : null
-            const flow = (orderStatusInt !== null ? FLOW[orderStatusInt] : null) || DEFAULT_FLOW
+            // Resolve flow using orderStatus integer or string as the single source of truth
+            const statusKey = order?.orderStatus
+            const flow = (statusKey !== null && statusKey !== undefined ? FLOW[statusKey] : null) || DEFAULT_FLOW
 
             // Build item name lookup from restaurant menu
             const menuItemMap = {}
