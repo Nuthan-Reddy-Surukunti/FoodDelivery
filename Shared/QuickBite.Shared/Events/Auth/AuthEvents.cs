@@ -44,3 +44,17 @@ public class RestaurantRejectedEvent
     public DateTime RejectedAt { get; set; }
     public string? RejectionReason { get; set; }
 }
+
+/// <summary>
+/// Published when a user account is deleted
+/// </summary>
+public class UserDeletedEvent
+{
+    public Guid EventId { get; set; } = Guid.NewGuid();
+    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
+    public int EventVersion { get; set; } = 1;
+
+    public Guid UserId { get; set; }
+    public string Email { get; set; } = string.Empty;
+    public string Role { get; set; } = string.Empty;
+}

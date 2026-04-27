@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import authApi from '../services/authApi'
+import { PartnerLayout } from '../components/organisms/PartnerLayout'
+import { AdminLayout } from '../components/organisms/AdminLayout'
+import { AgentLayout } from '../components/organisms/AgentLayout'
 
 export const DeleteAccountPage = () => {
   const navigate = useNavigate()
@@ -73,99 +76,115 @@ export const DeleteAccountPage = () => {
     )
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      <div className="w-full max-w-md">
-        <div className="bg-surface rounded-2xl shadow-lg p-8">
-          <h1 className="text-headline-md font-bold text-on-background mb-2 text-center">Delete Account</h1>
-          <p className="text-body-md text-on-background/70 text-center mb-8">
-            This action cannot be undone. Please enter your password to confirm deletion.
-          </p>
+  const deleteContent = (
+    <div className="w-full max-w-md mx-auto">
+      <div className={`${user?.role === 'Customer' ? 'bg-surface' : ''} rounded-2xl p-8`}>
+        <h1 className="text-headline-md font-bold text-on-background mb-2 text-center">Delete Account</h1>
+        <p className="text-body-md text-on-background/70 text-center mb-8">
+          This action cannot be undone. Please enter your password to confirm deletion.
+        </p>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Display (Read-only) */}
-            <div>
-              <label className="block text-label-md text-on-surface font-medium mb-2">Email</label>
-              <div className="px-4 py-3 bg-surface-variant/30 rounded-lg border border-outline/20">
-                <p className="text-body-md text-on-background font-medium">{user?.email || 'N/A'}</p>
-              </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Email Display (Read-only) */}
+          <div>
+            <label className="block text-label-md text-on-surface font-medium mb-2">Email</label>
+            <div className="px-4 py-3 bg-surface-variant/30 rounded-lg border border-outline/20">
+              <p className="text-body-md text-on-background font-medium">{user?.email || 'N/A'}</p>
             </div>
+          </div>
 
-            {/* Password Input */}
-            <div>
-              <label className="block text-label-md text-on-surface font-medium mb-2">Password</label>
-              <div className="relative">
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  value={password}
-                  onChange={handlePasswordChange}
-                  placeholder="Enter your password"
-                  className="w-full px-4 py-3 bg-surface border border-outline rounded-lg text-body-md text-on-background placeholder-on-surface/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-on-surface/60 hover:text-on-surface transition-colors"
-                  tabIndex="-1"
-                >
-                  {showPassword ? (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Error Message */}
-            {error && (
-              <div className="p-4 bg-error/10 border border-error/30 rounded-lg">
-                <p className="text-body-sm text-error font-medium">{error}</p>
-              </div>
-            )}
-
-            {/* Warning Message */}
-            <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
-              <p className="text-body-sm text-warning font-medium">
-                ⚠️ Warning: Deleting your account is permanent. All your data, orders, and settings will be removed.
-              </p>
-            </div>
-
-            {/* Buttons */}
-            <div className="flex gap-3 pt-4">
+          {/* Password Input */}
+          <div>
+            <label className="block text-label-md text-on-surface font-medium mb-2">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={password}
+                onChange={handlePasswordChange}
+                placeholder="Enter your password"
+                className="w-full px-4 py-3 bg-surface border border-outline rounded-lg text-body-md text-on-background placeholder-on-surface/40 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+                disabled={isLoading}
+              />
               <button
                 type="button"
-                onClick={handleCancel}
-                className="flex-1 px-4 py-3 bg-surface border border-outline rounded-lg text-body-md font-semibold text-on-background hover:bg-surface-variant transition-colors disabled:opacity-50"
-                disabled={isLoading}
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 text-on-surface/60 hover:text-on-surface transition-colors"
+                tabIndex="-1"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-4 py-3 bg-error hover:bg-error/90 rounded-lg text-body-md font-semibold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                disabled={isLoading || !password.trim()}
-              >
-                {isLoading ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Deleting...
-                  </>
+                {showPassword ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-4.803m5.596-3.856a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0z" />
+                  </svg>
                 ) : (
-                  'Delete Account'
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
                 )}
               </button>
             </div>
-          </form>
-        </div>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="p-4 bg-error/10 border border-error/30 rounded-lg">
+              <p className="text-body-sm text-error font-medium">{error}</p>
+            </div>
+          )}
+
+          {/* Warning Message */}
+          <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+            <p className="text-body-sm text-warning font-medium">
+              ⚠️ Warning: Deleting your account is permanent. All your data, orders, and settings will be removed.
+            </p>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="flex-1 px-4 py-3 bg-surface border border-outline rounded-lg text-body-md font-semibold text-on-background hover:bg-surface-variant transition-colors disabled:opacity-50"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-4 py-3 bg-error hover:bg-error/90 rounded-lg text-body-md font-semibold text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              disabled={isLoading || !password.trim()}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                'Delete Account'
+              )}
+            </button>
+          </div>
+        </form>
       </div>
+    </div>
+  )
+
+  if (user?.role === 'RestaurantPartner') {
+    return <PartnerLayout title="Account Settings">{deleteContent}</PartnerLayout>
+  }
+
+  if (user?.role === 'Admin') {
+    return <AdminLayout title="Account Settings">{deleteContent}</AdminLayout>
+  }
+
+  if (user?.role === 'DeliveryAgent') {
+    return <AgentLayout title="Account Settings">{deleteContent}</AgentLayout>
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-8">
+      {deleteContent}
     </div>
   )
 }

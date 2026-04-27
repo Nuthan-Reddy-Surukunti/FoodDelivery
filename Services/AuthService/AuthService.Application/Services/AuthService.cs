@@ -797,6 +797,14 @@ public class AuthService : IAuthService
         if (!result)
             return new AuthRequestDto { Success = false, Message = "Failed to delete user." };
 
+        // Publish UserDeletedEvent to notify other services (like CatalogService to delete restaurants)
+        await _publishEndpoint.Publish(new UserDeletedEvent
+        {
+            UserId = user.Id,
+            Email = user.Email,
+            Role = user.Role.ToString()
+        });
+
         return new AuthRequestDto { Success = true, Message = "User account deleted successfully." };
     }
 

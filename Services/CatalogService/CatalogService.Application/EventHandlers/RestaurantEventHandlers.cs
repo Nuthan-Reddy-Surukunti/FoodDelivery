@@ -1,15 +1,99 @@
+using QuickBite.Shared.Events.Auth;
+using CatalogEvents = QuickBite.Shared.Events.Catalog;
 using Microsoft.Extensions.Logging;
-using QuickBite.Shared.Events.Catalog;
 using MassTransit;
 using CatalogService.Domain.Enums;
 using CatalogService.Domain.Interfaces;
 
 namespace CatalogService.Application.EventHandlers;
 
+
+
+/// <summary>
+/// Handles UserDeletedEvent from AuthService to delete all restaurants owned by the user
+/// </summary>
+public class UserDeletedEventHandler : IConsumer<UserDeletedEvent>
+{
+    private readonly ILogger<UserDeletedEventHandler> _logger;
+    private readonly IRestaurantRepository _restaurantRepository;
+    private readonly IMenuItemRepository _menuItemRepository;
+    private readonly ICategoryRepository _categoryRepository;
+
+    public UserDeletedEventHandler(
+        ILogger<UserDeletedEventHandler> logger,
+        IRestaurantRepository restaurantRepository,
+        IMenuItemRepository menuItemRepository,
+        ICategoryRepository categoryRepository)
+    {
+        _logger = logger;
+        _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
+        _menuItemRepository = menuItemRepository ?? throw new ArgumentNullException(nameof(menuItemRepository));
+        _categoryRepository = categoryRepository ?? throw new ArgumentNullException(nameof(categoryRepository));
+    }
+
+    public async Task Consume(ConsumeContext<UserDeletedEvent> context)
+    {
+        var @event = context.Message;
+        
+        // We only care about RestaurantPartners being deleted for cascading restaurant deletion
+        if (!@event.Role.Equals("RestaurantPartner", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _logger.LogInformation("Processing UserDeletedEvent for RestaurantPartner: UserId={UserId}, Email={Email}", 
+            @event.UserId, @event.Email);
+
+        try
+        {
+            var restaurants = await _restaurantRepository.GetListByOwnerIdAsync(@event.UserId);
+            
+            if (restaurants == null || !restaurants.Any())
+            {
+                _logger.LogInformation("No restaurants found for deleted partner: UserId={UserId}", @event.UserId);
+                return;
+            }
+
+            _logger.LogInformation("Found {Count} restaurants to delete for user {UserId}", restaurants.Count, @event.UserId);
+
+            foreach (var restaurant in restaurants)
+            {
+                _logger.LogInformation("Cascading deletion for restaurant: RestaurantId={RestaurantId}, Name={Name}", 
+                    restaurant.Id, restaurant.Name);
+
+                // Step 1: Delete all menu items for this restaurant
+                var menuItems = await _menuItemRepository.GetByRestaurantAsync(restaurant.Id);
+                foreach (var menuItem in menuItems)
+                {
+                    await _menuItemRepository.DeleteAsync(menuItem.Id);
+                }
+
+                // Step 2: Delete all categories for this restaurant
+                var categories = await _categoryRepository.GetByRestaurantAsync(restaurant.Id);
+                foreach (var category in categories)
+                {
+                    await _categoryRepository.DeleteAsync(category.Id);
+                }
+
+                // Step 3: Delete the restaurant itself
+                await _restaurantRepository.DeleteAsync(restaurant.Id);
+                
+                _logger.LogInformation("Successfully deleted restaurant and its associated data: RestaurantId={RestaurantId}", 
+                    restaurant.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing UserDeletedEvent for UserId={UserId}", @event.UserId);
+            throw;
+        }
+    }
+}
+
 /// <summary>
 /// Handles RestaurantApprovedEvent from AdminService to sync restaurant status
 /// </summary>
-public class RestaurantApprovedEventHandler : IConsumer<RestaurantApprovedEvent>
+public class RestaurantApprovedEventHandler : IConsumer<CatalogEvents.RestaurantApprovedEvent>
 {
     private readonly ILogger<RestaurantApprovedEventHandler> _logger;
     private readonly IRestaurantRepository _restaurantRepository;
@@ -22,7 +106,7 @@ public class RestaurantApprovedEventHandler : IConsumer<RestaurantApprovedEvent>
         _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
     }
 
-    public async Task Consume(ConsumeContext<RestaurantApprovedEvent> context)
+    public async Task Consume(ConsumeContext<CatalogEvents.RestaurantApprovedEvent> context)
     {
         var @event = context.Message;
         _logger.LogInformation("Processing RestaurantApprovedEvent: RestaurantId={RestaurantId}, Name={Name}", 
@@ -57,7 +141,7 @@ public class RestaurantApprovedEventHandler : IConsumer<RestaurantApprovedEvent>
 /// <summary>
 /// Handles RestaurantRejectedEvent from AdminService to sync restaurant status
 /// </summary>
-public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
+public class RestaurantRejectedEventHandler : IConsumer<CatalogEvents.RestaurantRejectedEvent>
 {
     private readonly ILogger<RestaurantRejectedEventHandler> _logger;
     private readonly IRestaurantRepository _restaurantRepository;
@@ -70,7 +154,7 @@ public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
         _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
     }
 
-    public async Task Consume(ConsumeContext<RestaurantRejectedEvent> context)
+    public async Task Consume(ConsumeContext<CatalogEvents.RestaurantRejectedEvent> context)
     {
         var @event = context.Message;
         _logger.LogInformation("Processing RestaurantRejectedEvent: RestaurantId={RestaurantId}, Reason={Reason}", 
@@ -105,7 +189,7 @@ public class RestaurantRejectedEventHandler : IConsumer<RestaurantRejectedEvent>
 /// <summary>
 /// Handles RestaurantDeletedEvent from AdminService to delete restaurant and cascade delete all items and categories
 /// </summary>
-public class RestaurantDeletedEventHandler : IConsumer<RestaurantDeletedEvent>
+public class RestaurantDeletedEventHandler : IConsumer<CatalogEvents.RestaurantDeletedEvent>
 {
     private readonly ILogger<RestaurantDeletedEventHandler> _logger;
     private readonly IRestaurantRepository _restaurantRepository;
@@ -124,7 +208,7 @@ public class RestaurantDeletedEventHandler : IConsumer<RestaurantDeletedEvent>
         _categoryRepository = categoryRepository ?? throw new ArgumentNullException(nameof(categoryRepository));
     }
 
-    public async Task Consume(ConsumeContext<RestaurantDeletedEvent> context)
+    public async Task Consume(ConsumeContext<CatalogEvents.RestaurantDeletedEvent> context)
     {
         var @event = context.Message;
         _logger.LogInformation("Processing RestaurantDeletedEvent: RestaurantId={RestaurantId}, Name={Name}", 

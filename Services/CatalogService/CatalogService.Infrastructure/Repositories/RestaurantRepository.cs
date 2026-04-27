@@ -49,6 +49,13 @@ public class RestaurantRepository : IRestaurantRepository
             .FirstOrDefaultAsync();
     }
 
+    public async Task<List<Restaurant>> GetListByOwnerIdAsync(Guid ownerId)
+    {
+        return await _context.Restaurants
+            .Where(r => r.OwnerId == ownerId)
+            .ToListAsync();
+    }
+
     public async Task<List<Restaurant>> SearchByNameAsync(string query)
     {
         var lowerQuery = query.ToLower();

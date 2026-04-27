@@ -5,11 +5,11 @@ import { useAuth } from '../../context/AuthContext'
 const NAV_ITEMS = [
   { to: '/agent/active', icon: 'local_shipping', label: 'Deliveries' },
   { to: '/agent/earnings', icon: 'payments', label: 'Earnings' },
+  { to: '/profile', icon: 'person', label: 'Profile' },
 ]
 
 const PLACEHOLDER_ITEMS = [
   { icon: 'map', label: 'Map' },
-  { icon: 'person', label: 'Profile' },
 ]
 
 export const AgentLayout = ({ children, title = '' }) => {
@@ -22,9 +22,13 @@ export const AgentLayout = ({ children, title = '' }) => {
       {/* ── Left sidebar ── */}
       <aside className="hidden md:flex bg-white dark:bg-slate-900 h-screen w-64 border-r border-slate-200 dark:border-slate-800 shadow-sm flex-col py-6 z-20 shrink-0">
         <div className="px-6 mb-8 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold">
+          <Link 
+            to="/profile" 
+            className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold hover:border-primary transition-colors"
+            aria-label="View Profile"
+          >
             {(user?.email?.[0] || 'A').toUpperCase()}
-          </div>
+          </Link>
           <div>
             <h1 className="text-sm font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h1>
             <p className="text-[11px] text-slate-500">Delivery Dashboard</p>
@@ -77,9 +81,13 @@ export const AgentLayout = ({ children, title = '' }) => {
       <main className="flex-1 flex flex-col h-full overflow-hidden">
         <header className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md w-full border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-6 py-3 h-16 sticky top-0 z-40">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold">
+            <Link 
+              to="/profile" 
+              className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center text-xs font-semibold hover:border-primary transition-colors"
+              aria-label="View Profile"
+            >
               {(user?.email?.[0] || 'A').toUpperCase()}
-            </div>
+            </Link>
             <h2 className="text-lg font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h2>
           </div>
           <div className="flex items-center gap-4">

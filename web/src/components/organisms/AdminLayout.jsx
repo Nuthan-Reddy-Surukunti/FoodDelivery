@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { to: '/admin/restaurants', icon: 'restaurant', label: 'Restaurants' },
   { to: '/admin/orders', icon: 'shopping_cart', label: 'Orders' },
   { to: '/admin/users', icon: 'group', label: 'Users' },
+  { to: '/profile', icon: 'person', label: 'Profile' },
 ]
 
 export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' }) => {
@@ -93,9 +94,13 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
               <button className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer active:opacity-70" aria-label="Help">
                 <span className="material-symbols-outlined">help</span>
               </button>
-              <div className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-sm font-semibold ml-2">
+              <Link 
+                to="/profile" 
+                className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-sm font-semibold ml-2 hover:border-primary transition-colors"
+                aria-label="View Profile"
+              >
                 {(user?.email?.[0] || 'A').toUpperCase()}
-              </div>
+              </Link>
             </div>
           </div>
         </header>

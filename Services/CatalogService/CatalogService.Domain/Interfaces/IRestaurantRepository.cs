@@ -12,6 +12,8 @@ public interface IRestaurantRepository
     Task<Restaurant?> GetByNameAsync(string name);
 
     Task<Restaurant?> GetByOwnerIdAsync(Guid ownerId);
+    
+    Task<List<Restaurant>> GetListByOwnerIdAsync(Guid ownerId);
 
     Task<List<Restaurant>> SearchByNameAsync(string query);
 

@@ -18,11 +18,13 @@ export const Layout = ({ children }) => {
   const isAdminPage = location.pathname.startsWith('/admin')
   const isPartnerPage = location.pathname.startsWith('/partner')
   const isAgentPage = location.pathname.startsWith('/agent')
+  const isProfileRelated = ['/profile', '/change-password', '/delete-account'].includes(location.pathname)
+  const isNotCustomer = user?.role && !['Customer', 'customer'].includes(user.role)
 
   // Admin and Partner use their own built-in sidebar layouts
   // Agent uses mobile shell with bottom nav
   // These pages should NOT have the global top nav
-  const useCustomLayout = isAdminPage || isPartnerPage || isAgentPage
+  const useCustomLayout = isAdminPage || isPartnerPage || isAgentPage || (isProfileRelated && isNotCustomer)
 
   if (isAuthPage || useCustomLayout) {
     return (

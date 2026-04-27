@@ -62,6 +62,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<MenuItemCreatedEventHandler>();
     x.AddConsumer<MenuItemUpdatedEventHandler>();
     x.AddConsumer<MenuItemDeletedEventHandler>();
+    x.AddConsumer<UserDeletedEventHandler>();
     
     x.UsingRabbitMq((context, cfg) =>
     {

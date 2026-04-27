@@ -6,6 +6,7 @@ const NAV_ITEMS = [
   { to: '/partner/dashboard', icon: 'dashboard', label: 'Dashboard' },
   { to: '/partner/queue', icon: 'receipt_long', label: 'Orders' },
   { to: '/partner/menu', icon: 'restaurant_menu', label: 'Menu' },
+  { to: '/profile', icon: 'person', label: 'Profile' },
 ]
 
 const PLACEHOLDER_ITEMS = [
@@ -109,9 +110,13 @@ export const PartnerLayout = ({ children, title = '' }) => {
               <span className="material-symbols-outlined hover:text-blue-500 dark:hover:text-blue-300 cursor-pointer">notifications</span>
               <span className="material-symbols-outlined hover:text-blue-500 dark:hover:text-blue-300 cursor-pointer">help_outline</span>
             </div>
-            <div className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-semibold">
+            <Link 
+              to="/profile" 
+              className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 flex items-center justify-center text-sm font-semibold hover:border-primary transition-colors"
+              aria-label="View Profile"
+            >
               {(user?.email?.[0] || 'P').toUpperCase()}
-            </div>
+            </Link>
           </div>
         </header>
 

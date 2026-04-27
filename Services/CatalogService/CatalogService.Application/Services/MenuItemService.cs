@@ -108,7 +108,7 @@ public class MenuItemService : IMenuItemService
             Price = createdItem.Price,
             IsVeg = createdItem.IsVeg,
             AvailabilityStatus = createdItem.AvailabilityStatus.ToString(),
-            CategoryName = createdItem.CategoryName ?? string.Empty
+            CategoryName = createdItem.Category?.Name ?? string.Empty
         };
         await _publishEndpoint.Publish(menuItemCreatedEvent);
         
@@ -151,7 +151,7 @@ public class MenuItemService : IMenuItemService
             Price = updatedItem.Price,
             IsVeg = updatedItem.IsVeg,
             AvailabilityStatus = updatedItem.AvailabilityStatus.ToString(),
-            CategoryName = updatedItem.CategoryName ?? string.Empty
+            CategoryName = updatedItem.Category?.Name ?? string.Empty
         };
         await _publishEndpoint.Publish(menuItemUpdatedEvent);
         
