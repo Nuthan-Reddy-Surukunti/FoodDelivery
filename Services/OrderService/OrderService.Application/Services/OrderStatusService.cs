@@ -21,7 +21,14 @@ public class OrderStatusService : IOrderStatusService
     // Define allowed order status transitions
     private static readonly Dictionary<OrderStatus, HashSet<OrderStatus>> AllowedTransitions = new()
     {
-        // From Paid state
+        // From CheckoutStarted state (in case payment is confirmed before status update)
+        {
+            OrderStatus.CheckoutStarted, new HashSet<OrderStatus>
+            {
+                OrderStatus.Paid
+            }
+        },
+        // From Paid state — restaurant can accept or reject
         {
             OrderStatus.Paid, new HashSet<OrderStatus>
             {

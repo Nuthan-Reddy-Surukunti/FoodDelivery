@@ -109,11 +109,6 @@ public class DeliveryService : IDeliveryService
 
     public async Task<PaymentResponseDto> ProcessPaymentAsync(Guid orderId, ProcessPaymentRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (request.PaymentMethod != PaymentMethod.CashOnDelivery)
-        {
-            throw new ValidationException("Only CashOnDelivery is currently supported.");
-        }
-
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", orderId);
 
@@ -186,7 +181,10 @@ public class DeliveryService : IDeliveryService
         order.DeliveryAssignmentId = existingAssignment.Id;
         order.DeliveryAssignment = existingAssignment;
         order.PaymentCompletedAt = DateTime.UtcNow;
-        order.OrderStatus = OrderStatus.OutForDelivery;
+        // FIXED: Set status to Paid — not OutForDelivery.
+        // The restaurant must still accept, prepare, and mark ReadyForPickup
+        // before the delivery agent picks up the order.
+        order.OrderStatus = OrderStatus.Paid;
         order.UpdatedAt = DateTime.UtcNow;
         await _orderRepository.UpdateAsync(order, cancellationToken);
         
