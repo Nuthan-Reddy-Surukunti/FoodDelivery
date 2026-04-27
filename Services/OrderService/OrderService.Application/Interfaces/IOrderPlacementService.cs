@@ -11,7 +11,7 @@ public interface IOrderPlacementService
 
     Task<IReadOnlyList<OrderDetailDto>> GetOrdersByUserAsync(Guid userId, bool activeOnly = false, CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<OrderDetailDto>> GetOrderQueueAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<OrderDetailDto>> GetOrderQueueAsync(Guid? restaurantId = null, CancellationToken cancellationToken = default);
 
     Task<OrderDetailDto> ReorderFromHistoryAsync(Guid orderId, CancellationToken cancellationToken = default);
 

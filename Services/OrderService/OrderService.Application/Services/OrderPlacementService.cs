@@ -140,10 +140,14 @@ public class OrderPlacementService : IOrderPlacementService
         return orders.Select(OrderMappings.MapToDto).ToList().AsReadOnly();
     }
 
-    public async Task<IReadOnlyList<OrderDetailDto>> GetOrderQueueAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<OrderDetailDto>> GetOrderQueueAsync(Guid? restaurantId = null, CancellationToken cancellationToken = default)
     {
         var orders = await _orderRepository.GetActiveOrdersAsync(cancellationToken);
-        var filtered = orders.Where(o => o.OrderStatus != OrderStatus.CancelRequestedByCustomer).ToList();
+        var filtered = orders.Where(o => o.OrderStatus != OrderStatus.CancelRequestedByCustomer);
+        if (restaurantId.HasValue && restaurantId.Value != Guid.Empty)
+        {
+            filtered = filtered.Where(o => o.RestaurantId == restaurantId.Value);
+        }
         return filtered.Select(OrderMappings.MapToDto).ToList().AsReadOnly();
     }
 

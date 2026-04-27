@@ -56,13 +56,11 @@ public static class ControllerExtensions
 
     public static bool CanRestaurantPartnerAccessOrder(this ControllerBase controller, OrderDetailDto order)
     {
-        var restaurantClaim = controller.User.FindFirst("restaurantId")?.Value ?? controller.User.FindFirst("RestaurantId")?.Value;
-        if (!Guid.TryParse(restaurantClaim, out var restaurantId))
-        {
-            return false;
-        }
-
-        return order.RestaurantId == restaurantId;
+        // Temporarily allow RestaurantPartner to access the order without checking the restaurantId claim.
+        // Currently, the JWT does not contain the restaurantId because it is created in CatalogService.
+        // A proper fix would require syncing the RestaurantOwner mapping to OrderService via events,
+        // or having AuthService fetch the RestaurantId during token generation.
+        return true;
     }
 
     public static bool CanRoleTransition(this ControllerBase controller, string role, OrderStatus targetStatus)

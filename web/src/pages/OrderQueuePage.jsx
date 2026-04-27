@@ -69,9 +69,10 @@ export const OrderQueuePage = () => {
 
   // Fetch orders via the partner-specific queue endpoint
   const fetchOrders = useCallback(async () => {
+    if (!restaurant?.id) return
     setLoading(true)
     try {
-      const data = await api.get('/gateway/orders/queue')
+      const data = await api.get(`/gateway/orders/queue?restaurantId=${restaurant.id}`)
       const arr = Array.isArray(data.data) ? data.data : (data.data?.items || [])
       setOrders(arr)
     } catch (err) {
@@ -79,7 +80,7 @@ export const OrderQueuePage = () => {
     } finally {
       setLoading(false)
     }
-  }, [showError])
+  }, [restaurant?.id, showError])
 
   useEffect(() => {
     if (!restaurant?.id) return

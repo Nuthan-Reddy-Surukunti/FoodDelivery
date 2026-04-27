@@ -145,9 +145,9 @@ public class OrdersController : ControllerBase
 
     [HttpGet("queue")]
     [Authorize(Roles = "Admin,RestaurantPartner")]
-    public async Task<IActionResult> GetOrderQueue(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetOrderQueue([FromQuery] Guid? restaurantId, CancellationToken cancellationToken)
     {
-        var orders = await _orderPlacementService.GetOrderQueueAsync(cancellationToken);
+        var orders = await _orderPlacementService.GetOrderQueueAsync(restaurantId, cancellationToken);
         return Ok(orders);
     }
 
