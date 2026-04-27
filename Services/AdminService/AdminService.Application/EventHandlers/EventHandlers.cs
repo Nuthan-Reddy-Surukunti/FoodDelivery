@@ -242,13 +242,16 @@ public class UserRegisteredEventHandler : IConsumer<UserRegisteredEvent>
                 return;
             }
 
+            var isPending = @event.Role.Equals("RestaurantPartner", StringComparison.OrdinalIgnoreCase);
+
             var user = new User
             {
                 Id = @event.UserId,
                 Email = @event.Email,
                 FullName = @event.FullName,
                 Role = @event.Role,
-                IsActive = true,
+                IsActive = !isPending, // False if pending, true otherwise
+                AccountStatus = isPending ? "Pending" : "Active",
                 CreatedAt = @event.OccurredAt
             };
 

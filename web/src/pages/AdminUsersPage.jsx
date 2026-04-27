@@ -3,6 +3,7 @@ import { AdminLayout } from '../components/organisms/AdminLayout'
 import { useNotification } from '../hooks/useNotification'
 import adminApi from '../services/adminApi'
 import api from '../services/api'
+import authApi from '../services/authApi'
 
 const ROLE_CONFIG = {
   Admin: { icon: 'shield', color: 'bg-red-50 text-red-600' },
@@ -262,7 +263,7 @@ export const AdminUsersPage = () => {
               )}
             </div>
 
-            {/* Detailed User Table */}
+    {/* Detailed User Table */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden h-full">
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
@@ -282,11 +283,13 @@ export const AdminUsersPage = () => {
                         <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Role</th>
                         <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Joined</th>
                         <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Status</th>
+                        <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
                       {filteredUsers.map((u) => {
                         const cfg = ROLE_CONFIG[u.role] || { icon: 'person', color: 'bg-slate-50 text-slate-600' }
+                        const isPending = u.accountStatus === 'Pending'
                         return (
                           <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
                             <td className="px-5 py-4">
@@ -311,15 +314,41 @@ export const AdminUsersPage = () => {
                               <p className="text-[10px] text-on-surface-variant uppercase">{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                             </td>
                             <td className="px-5 py-4">
-                              <span className={`w-2 h-2 rounded-full inline-block mr-2 ${u.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
-                              <span className="text-sm text-on-surface">{u.isActive ? 'Active' : 'Inactive'}</span>
+                              {isPending ? (
+                                <span className="inline-flex items-center gap-1 text-amber-600 text-sm font-medium bg-amber-50 px-2 py-1 rounded-md">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending
+                                </span>
+                              ) : (
+                                <span className={`inline-flex items-center gap-1 text-sm font-medium ${u.isActive ? 'text-emerald-600' : 'text-slate-600'}`}>
+                                  <span className={`w-1.5 h-1.5 rounded-full ${u.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`}></span>
+                                  {u.isActive ? 'Active' : 'Inactive'}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-5 py-4">
+                              {isPending && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      await authApi.approvePartnerAccount(u.id);
+                                      showSuccess('Partner account approved successfully');
+                                      loadData(); // Reload list to reflect changes
+                                    } catch (err) {
+                                      showError(err.message || 'Failed to approve partner');
+                                    }
+                                  }}
+                                  className="text-xs font-semibold px-3 py-1.5 bg-primary text-on-primary rounded-lg hover:bg-primary-container transition-colors"
+                                >
+                                  Approve
+                                </button>
+                              )}
                             </td>
                           </tr>
                         )
                       })}
                       {filteredUsers.length === 0 && (
                         <tr>
-                          <td colSpan="4" className="px-5 py-12 text-center text-on-surface-variant">
+                          <td colSpan="5" className="px-5 py-12 text-center text-on-surface-variant">
                             <span className="material-symbols-outlined text-4xl mb-2 block opacity-20">search_off</span>
                             No users found matching your search.
                           </td>

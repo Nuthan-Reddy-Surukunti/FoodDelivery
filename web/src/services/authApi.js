@@ -105,6 +105,24 @@ export const authApi = {
   },
 
   /**
+   * Approve a pending partner account
+   * @param {string} userId - User ID
+   * @returns {Promise} Response with approval status
+   */
+  approvePartnerAccount: async (userId) => {
+    try {
+      const response = await api.post('/gateway/auth/admin/restaurants/approve', {
+        userId,
+        notes: "Approved from Admin Dashboard"
+      })
+      return response.data
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to approve partner'
+      throw new Error(message)
+    }
+  },
+
+  /**
    * Request password reset
    * @param {string} email - User email
    * @returns {Promise} Response with reset link info

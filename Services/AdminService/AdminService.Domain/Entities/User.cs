@@ -12,5 +12,6 @@ public class User
     public string FullName { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    public string AccountStatus { get; set; } = "Active"; // "Active", "Pending", "Rejected"
     public DateTime CreatedAt { get; set; }
 }
