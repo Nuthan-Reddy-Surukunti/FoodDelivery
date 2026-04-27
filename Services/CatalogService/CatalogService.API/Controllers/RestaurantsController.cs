@@ -107,6 +107,11 @@ public class RestaurantsController : ControllerBase
 
     /// <summary>
     /// Update an existing restaurant (Admin or RestaurantPartner - own restaurant only)
+    /// 
+    /// RestaurantPartner: Once admin approves your restaurant, you can freely edit details without requiring re-approval.
+    /// You cannot change: restaurant ownership or status.
+    /// 
+    /// Admin: Can update any field including status and ownership.
     /// </summary>
     [HttpPut("{id}")]
     [Authorize(Roles = "Admin,RestaurantPartner")]

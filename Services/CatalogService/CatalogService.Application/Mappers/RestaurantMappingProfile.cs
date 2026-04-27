@@ -31,10 +31,13 @@ public class RestaurantMappingProfile : Profile
             .ForMember(dest => dest.OperatingHours, opt => opt.Ignore());
 
         // UpdateRestaurantDto -> Restaurant
+        // Note: Status is NOT mapped here - it's handled separately in the service layer
+        // to enforce that RestaurantPartners cannot change status after approval
         CreateMap<UpdateRestaurantDto, Restaurant>()
             .ForMember(dest => dest.Id, opt => opt.Condition(src => src.Id != Guid.Empty))
             .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
             .ForMember(dest => dest.UpdatedAt, opt => opt.Ignore())
+            .ForMember(dest => dest.Status, opt => opt.Ignore()) // Always ignore - handle in service
             .ForMember(dest => dest.MenuItems, opt => opt.Ignore())
             .ForMember(dest => dest.Categories, opt => opt.Ignore())
             .ForMember(dest => dest.OperatingHours, opt => opt.Ignore())

@@ -190,21 +190,23 @@ public class RestaurantUpdatedEventHandler : IConsumer<RestaurantUpdatedEvent>
                 return;
             }
 
+            // Preserve the current status - once a restaurant is approved, edits don't require re-approval
+            var originalStatus = restaurant.Status;
+            
             restaurant.Name = @event.Name;
             restaurant.Description = @event.Description;
             restaurant.City = @event.City;
-            // CuisineType could be mapped if needed, but AdminService Restaurant entity might not have it or just needs basic fields
             
-            // Wait, does AdminService.Domain.Entities.Restaurant have City, Description? Yes it does.
-            // Let's check what fields we have in Restaurant entity: City, Description, Name.
-            // Update those fields:
+            // Preserve the original status (don't revert approved restaurants back to pending)
+            restaurant.Status = originalStatus;
             
             restaurant.UpdatedAt = DateTime.UtcNow;
             restaurant.LastSyncedAt = @event.OccurredAt;
             restaurant.SyncEventId = @event.EventId;
 
             await _restaurantRepository.UpdateAsync(restaurant, context.CancellationToken);
-            _logger.LogInformation("Restaurant updated successfully in AdminService: RestaurantId={RestaurantId}", @event.RestaurantId);
+            _logger.LogInformation("Restaurant updated successfully in AdminService: RestaurantId={RestaurantId}, Status preserved as {Status}", 
+                @event.RestaurantId, originalStatus);
         }
         catch (Exception ex)
         {

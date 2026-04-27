@@ -9,6 +9,8 @@ import api from '../services/api'
 
 // Backend OrderStatus enum integers — must match OrderService.Domain.Enums.OrderStatus exactly
 const ORDER_STATUS_INT = {
+  Paid: 4,
+  RestaurantAccepted: 5,
   Preparing: 6,
   ReadyForPickup: 7,
   RestaurantRejected: 13,
@@ -16,20 +18,20 @@ const ORDER_STATUS_INT = {
 
 // Keyed by integer AND string for resilience — backend may serialize either way
 const STATUS_FLOW = {
-  // Integer keys
-  4:  { label: 'New Order (Paid)',     actionLabel: 'Accept & Prepare',       nextStatus: ORDER_STATUS_INT.Preparing,      color: 'text-blue-600 bg-blue-50 border-blue-200',   canReject: true  },
-  5:  { label: 'Accepted',            actionLabel: 'Mark Preparing',          nextStatus: ORDER_STATUS_INT.Preparing,      color: 'text-indigo-600 bg-indigo-50 border-indigo-200', canReject: true },
-  6:  { label: 'Preparing',           actionLabel: 'Mark Ready for Pickup',   nextStatus: ORDER_STATUS_INT.ReadyForPickup, color: 'text-amber-600 bg-amber-50 border-amber-200',   canReject: false },
-  7:  { label: 'Ready for Pickup',    actionLabel: null,                      nextStatus: null,                            color: 'text-green-600 bg-green-50 border-green-200',  canReject: false },
-  8:  { label: 'Picked Up',           actionLabel: null,                      nextStatus: null,                            color: 'text-teal-600 bg-teal-50 border-teal-200',     canReject: false },
-  9:  { label: 'Out for Delivery',    actionLabel: null,                      nextStatus: null,                            color: 'text-cyan-600 bg-cyan-50 border-cyan-200',     canReject: false },
-  10: { label: 'Delivered',           actionLabel: null,                      nextStatus: null,                            color: 'text-gray-500 bg-gray-50 border-gray-200',    canReject: false },
-  13: { label: 'Rejected',            actionLabel: null,                      nextStatus: null,                            color: 'text-red-600 bg-red-50 border-red-200',        canReject: false },
+  // Integer keys — MUST follow backend's allowed transitions exactly
+  4:  { label: 'New Order (Paid)',     actionLabel: 'Accept Order',           nextStatus: ORDER_STATUS_INT.RestaurantAccepted, color: 'text-blue-600 bg-blue-50 border-blue-200',   canReject: true  },
+  5:  { label: 'Accepted',            actionLabel: 'Start Preparing',        nextStatus: ORDER_STATUS_INT.Preparing,         color: 'text-indigo-600 bg-indigo-50 border-indigo-200', canReject: true },
+  6:  { label: 'Preparing',           actionLabel: 'Mark Ready for Pickup',  nextStatus: ORDER_STATUS_INT.ReadyForPickup,    color: 'text-amber-600 bg-amber-50 border-amber-200',   canReject: false },
+  7:  { label: 'Ready for Pickup',    actionLabel: null,                     nextStatus: null,                               color: 'text-green-600 bg-green-50 border-green-200',  canReject: false },
+  8:  { label: 'Picked Up',           actionLabel: null,                     nextStatus: null,                               color: 'text-teal-600 bg-teal-50 border-teal-200',     canReject: false },
+  9:  { label: 'Out for Delivery',    actionLabel: null,                     nextStatus: null,                               color: 'text-cyan-600 bg-cyan-50 border-cyan-200',     canReject: false },
+  10: { label: 'Delivered',           actionLabel: null,                     nextStatus: null,                               color: 'text-gray-500 bg-gray-50 border-gray-200',    canReject: false },
+  13: { label: 'Rejected',            actionLabel: null,                     nextStatus: null,                               color: 'text-red-600 bg-red-50 border-red-200',        canReject: false },
   // String-name fallbacks
-  Paid:              { label: 'New Order',        actionLabel: 'Accept & Prepare',     nextStatus: ORDER_STATUS_INT.Preparing,      color: 'text-blue-600 bg-blue-50 border-blue-200',  canReject: true  },
-  RestaurantAccepted:{ label: 'Accepted',         actionLabel: 'Mark Preparing',       nextStatus: ORDER_STATUS_INT.Preparing,      color: 'text-indigo-600 bg-indigo-50 border-indigo-200', canReject: true },
-  Preparing:         { label: 'Preparing',        actionLabel: 'Mark Ready for Pickup',nextStatus: ORDER_STATUS_INT.ReadyForPickup, color: 'text-amber-600 bg-amber-50 border-amber-200',   canReject: false },
-  ReadyForPickup:    { label: 'Ready for Pickup', actionLabel: null,                   nextStatus: null,                            color: 'text-green-600 bg-green-50 border-green-200',  canReject: false },
+  Paid:              { label: 'New Order',        actionLabel: 'Accept Order',        nextStatus: ORDER_STATUS_INT.RestaurantAccepted, color: 'text-blue-600 bg-blue-50 border-blue-200',  canReject: true  },
+  RestaurantAccepted:{ label: 'Accepted',         actionLabel: 'Start Preparing',    nextStatus: ORDER_STATUS_INT.Preparing,         color: 'text-indigo-600 bg-indigo-50 border-indigo-200', canReject: true },
+  Preparing:         { label: 'Preparing',        actionLabel: 'Mark Ready for Pickup', nextStatus: ORDER_STATUS_INT.ReadyForPickup,    color: 'text-amber-600 bg-amber-50 border-amber-200',   canReject: false },
+  ReadyForPickup:    { label: 'Ready for Pickup', actionLabel: null,                 nextStatus: null,                              color: 'text-green-600 bg-green-50 border-green-200',  canReject: false },
 }
 
 const formatTime = (iso) => {

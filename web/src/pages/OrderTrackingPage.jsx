@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import orderApi from '../services/orderApi'
 
@@ -50,26 +50,46 @@ export const OrderTrackingPage = () => {
   const [timeline, setTimeline] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const intervalRef = useRef(null)
+
+  // Function to fetch order details
+  const fetchOrderData = async (showErrors = false) => {
+    if (!orderId) return
+    try {
+      const res = await orderApi.getOrderById(orderId)
+      const order = res?.order ?? res
+      const tl = res?.timeline ?? []
+      setOrderData(order)
+      setTimeline(Array.isArray(tl) ? tl : [])
+      setError('')
+    } catch (err) {
+      if (showErrors) {
+        setError(err.response?.data?.message || err.message || 'Failed to load tracking')
+      }
+    }
+  }
 
   useEffect(() => {
     if (!orderId) return
     let active = true
-    setLoading(true)
-    setError('')
-    orderApi.getOrderById(orderId)
-      .then((res) => {
-        if (!active) return
-        const order = res?.order ?? res
-        const tl = res?.timeline ?? []
-        setOrderData(order)
-        setTimeline(Array.isArray(tl) ? tl : [])
-      })
-      .catch((err) => {
-        if (!active) return
-        setError(err.response?.data?.message || err.message || 'Failed to load tracking')
-      })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    
+    const load = async () => {
+      setLoading(true)
+      await fetchOrderData(true)
+      if (active) setLoading(false)
+    }
+    
+    load()
+    
+    // Poll for updated order status every 10 seconds
+    intervalRef.current = setInterval(() => {
+      if (active) fetchOrderData(false)
+    }, 10000)
+    
+    return () => { 
+      active = false
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
   }, [orderId])
 
   const currentStep = useMemo(() => {

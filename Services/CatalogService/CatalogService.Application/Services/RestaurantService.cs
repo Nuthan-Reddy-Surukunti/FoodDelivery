@@ -123,6 +123,9 @@ public class RestaurantService : IRestaurantService
         if (restaurant == null)
             throw new RestaurantNotFoundException(id);
         
+        // Store the current status before any changes
+        var originalStatus = restaurant.Status;
+        
         // Authorization checks
         if (userRole == "RestaurantPartner")
         {
@@ -133,15 +136,39 @@ public class RestaurantService : IRestaurantService
             // RestaurantPartner cannot change ownership (OwnerId must be null in their request)
             if (dto.OwnerId.HasValue)
                 throw new UnauthorizedAccessException("You cannot change restaurant ownership.");
+            
+            // RestaurantPartner cannot change status - once approved, they can edit without re-approval
+            if (dto.Status.HasValue)
+                throw new UnauthorizedAccessException("You cannot change restaurant status. Once approved by admin, you can update any other details freely.");
+            
+            // Map DTO to restaurant (Status is ignored in mapping)
+            _mapper.Map(dto, restaurant);
+            
+            // Double-check: restore original status for extra safety
+            restaurant.Status = originalStatus;
         }
-        else if (userRole != "Admin")
+        else if (userRole == "Admin")
+        {
+            // Admin can update any field including status and ownership
+            _mapper.Map(dto, restaurant);
+            
+            // If admin explicitly provided a new status, apply it
+            if (dto.Status.HasValue)
+            {
+                restaurant.Status = dto.Status.Value;
+            }
+            else
+            {
+                // If no status provided, preserve current status
+                restaurant.Status = originalStatus;
+            }
+        }
+        else
         {
             // Only Admin and RestaurantPartner can update
             throw new UnauthorizedAccessException("You do not have permission to update restaurants.");
         }
-        // Admin can update any field including OwnerId (for reassignment)
-
-        _mapper.Map(dto, restaurant);
+        
         var updatedRestaurant = await _repository.UpdateAsync(restaurant);
         
         var restaurantUpdatedEvent = new RestaurantUpdatedEvent

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useNotification } from '../hooks/useNotification'
@@ -57,6 +57,7 @@ export const MyOrdersPage = () => {
   const [error, setError] = useState('')
   const [tab, setTab] = useState('all') // all | active | past
   const [reordering, setReordering] = useState(null)
+  const intervalRef = useRef(null)
 
   const handleReorder = async (orderId) => {
     setReordering(orderId)
@@ -71,23 +72,43 @@ export const MyOrdersPage = () => {
     }
   }
 
+  // Function to fetch orders
+  const fetchOrders = async (showErrors = false) => {
+    if (!user?.id) return
+    try {
+      const res = await orderApi.getOrdersByUser(user.id, false)
+      const raw = Array.isArray(res) ? res : (res?.items || res?.data || [])
+      setOrders(raw.map(normalizeOrder))
+      setError('')
+    } catch (err) {
+      if (showErrors) {
+        setError(err.response?.data?.message || err.message || 'Failed to load orders')
+      }
+    }
+  }
+
+  // Initial load + polling for status updates
   useEffect(() => {
     if (!user?.id) { setLoading(false); return }
     let active = true
-    setLoading(true)
-    setError('')
-    orderApi.getOrdersByUser(user.id, false)
-      .then((res) => {
-        if (!active) return
-        const raw = Array.isArray(res) ? res : (res?.items || res?.data || [])
-        setOrders(raw.map(normalizeOrder))
-      })
-      .catch((err) => {
-        if (!active) return
-        setError(err.response?.data?.message || err.message || 'Failed to load orders')
-      })
-      .finally(() => { if (active) setLoading(false) })
-    return () => { active = false }
+    
+    const load = async () => {
+      setLoading(true)
+      await fetchOrders(true)
+      if (active) setLoading(false)
+    }
+    
+    load()
+    
+    // Poll for updated order status every 15 seconds
+    intervalRef.current = setInterval(() => {
+      if (active) fetchOrders(false)
+    }, 15000)
+    
+    return () => { 
+      active = false
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
   }, [user?.id])
 
   const filtered = orders.filter((o) => {
