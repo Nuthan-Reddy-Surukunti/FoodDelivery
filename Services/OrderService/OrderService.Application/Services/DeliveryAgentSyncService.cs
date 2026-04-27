@@ -56,7 +56,18 @@ public class DeliveryAgentSyncService : IDeliveryAgentSyncService
                     
                     if (existingAgent != null)
                     {
-                        _logger.LogDebug("Agent already synced: {UserId}, Email: {Email}", agent.UserId, agent.Email);
+                        if (existingAgent.PhoneNumber != agent.PhoneNumber || existingAgent.FullName != agent.FullName)
+                        {
+                            existingAgent.PhoneNumber = agent.PhoneNumber;
+                            existingAgent.FullName = agent.FullName;
+                            existingAgent.UpdatedAt = DateTime.UtcNow;
+                            await _deliveryAgentRepository.UpdateAsync(existingAgent, cancellationToken);
+                            _logger.LogInformation("Updated synced delivery agent: UserId={UserId}", agent.UserId);
+                        }
+                        else
+                        {
+                            _logger.LogDebug("Agent already synced and up-to-date: {UserId}, Email: {Email}", agent.UserId, agent.Email);
+                        }
                         continue;
                     }
 
@@ -67,6 +78,7 @@ public class DeliveryAgentSyncService : IDeliveryAgentSyncService
                         AuthUserId = agent.UserId,
                         FullName = agent.FullName,
                         Email = agent.Email,
+                        PhoneNumber = agent.PhoneNumber,
                         IsActive = true,
                         IsEmailVerified = true, // Agents synced from AuthService are considered verified
                         CreatedAt = DateTime.UtcNow,
@@ -108,4 +120,5 @@ public class DeliveryAgentDto
     public string UserId { get; set; } = string.Empty;
     public string FullName { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
+    public string? PhoneNumber { get; set; }
 }

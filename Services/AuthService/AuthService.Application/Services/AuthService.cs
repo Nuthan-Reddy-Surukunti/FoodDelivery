@@ -490,7 +490,8 @@ public class AuthService : IAuthService
             UserId = newUser!.Id,
             Email = newUser.Email,
             FullName = newUser.FullName,
-            Role = parsedRole.ToString()
+            Role = parsedRole.ToString(),
+            PhoneNumber = newUser.MobileNumber
         });
 
         // For Customer/DeliveryAgent: send email verification OTP
@@ -882,7 +883,8 @@ public class AuthService : IAuthService
             {
                 UserId = u.Id.ToString(),
                 FullName = u.FullName ?? "Unknown",
-                Email = u.Email
+                Email = u.Email,
+                PhoneNumber = u.MobileNumber
             })
             .ToList();
         return agents;

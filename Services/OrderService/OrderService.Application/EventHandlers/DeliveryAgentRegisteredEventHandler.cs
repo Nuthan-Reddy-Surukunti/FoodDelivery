@@ -68,6 +68,7 @@ public class DeliveryAgentRegisteredEventHandler : IConsumer<UserRegisteredEvent
                 AuthUserId = @event.UserId.ToString(),
                 FullName = @event.FullName,
                 Email = @event.Email,
+                PhoneNumber = @event.PhoneNumber,
                 IsActive = true,
                 IsEmailVerified = true, // DeliveryAgents are auto-verified upon registration in AuthService
                 CreatedAt = @event.OccurredAt,
