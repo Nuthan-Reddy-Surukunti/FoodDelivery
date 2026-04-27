@@ -319,3 +319,45 @@ public class UserDeletedEventHandler : IConsumer<UserDeletedEvent>
         }
     }
 }
+
+// PartnerApprovedEventHandler - Syncs partner approval from AuthService to AdminService User table
+public class PartnerApprovedEventHandler : IConsumer<QuickBite.Shared.Events.Auth.RestaurantApprovedEvent>
+{
+    private readonly ILogger<PartnerApprovedEventHandler> _logger;
+    private readonly IUserRepository _userRepository;
+
+    public PartnerApprovedEventHandler(
+        ILogger<PartnerApprovedEventHandler> logger, 
+        IUserRepository userRepository)
+    {
+        _logger = logger;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+    }
+
+    public async Task Consume(ConsumeContext<QuickBite.Shared.Events.Auth.RestaurantApprovedEvent> context)
+    {
+        var @event = context.Message;
+        _logger.LogInformation("Processing PartnerApprovedEvent in AdminService: UserId={UserId}", @event.RestaurantId);
+
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(@event.RestaurantId, context.CancellationToken);
+            if (user != null)
+            {
+                user.IsActive = true;
+                user.AccountStatus = "Active";
+                await _userRepository.UpdateAsync(user, context.CancellationToken);
+                _logger.LogInformation("Successfully updated Partner AccountStatus to Active for UserId={UserId}", @event.RestaurantId);
+            }
+            else
+            {
+                _logger.LogWarning("User not found in AdminService for Partner approval: UserId={UserId}", @event.RestaurantId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing PartnerApprovedEvent for UserId={UserId}", @event.RestaurantId);
+            throw;
+        }
+    }
+}

@@ -33,8 +33,16 @@ public class AuthRepository : IAuthRepository
     public async Task<bool> ApproveRestaurantAsync(Guid restaurantId, Guid adminId, string? notes)
     {
         var restaurant = await _userManager.FindByIdAsync(restaurantId.ToString());
-        if (restaurant == null || restaurant.Role != UserRole.RestaurantPartner.ToString())
+        if (restaurant == null)
+        {
+            Console.WriteLine($"ApproveRestaurantAsync: Restaurant not found for ID {restaurantId}");
             return false;
+        }
+        if (restaurant.Role != UserRole.RestaurantPartner.ToString())
+        {
+            Console.WriteLine($"ApproveRestaurantAsync: Role mismatch for ID {restaurantId}. Expected RestaurantPartner, got {restaurant.Role}");
+            return false;
+        }
 
         restaurant.AccountStatus = (int)AccountStatus.Active;
         restaurant.ApprovedByAdminId = adminId.ToString();
@@ -43,9 +51,13 @@ public class AuthRepository : IAuthRepository
 
         var result = await _userManager.UpdateAsync(restaurant);
         if (result.Succeeded)
+        {
             await _context.SaveChangesAsync();
+            return true;
+        }
 
-        return result.Succeeded;
+        Console.WriteLine($"UpdateAsync failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        return false;
     }
 
     public async Task<bool> RejectRestaurantAsync(Guid restaurantId, Guid adminId, string? notes)

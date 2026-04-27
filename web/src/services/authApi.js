@@ -79,20 +79,28 @@ export const authApi = {
 
       if (response.data.success) {
         // Check if account is pending approval (RestaurantPartner/Admin)
-        if (response.data.message.includes('pending approval')) {
+        const msg = (response.data.message || '').toLowerCase()
+        if (msg.includes('pending')) {
           return {
             success: true,
             message: response.data.message,
             isPendingApproval: true,
             requiresEmailVerification: false
           }
-        } else if (response.data.message.includes('verify your email')) {
+        } else if (msg.includes('verify')) {
           // Customer/DeliveryAgent - needs email verification
           return {
             success: true,
             message: response.data.message,
             isPendingApproval: false,
             requiresEmailVerification: true
+          }
+        } else {
+          return {
+            success: true,
+            message: response.data.message || 'Registration successful',
+            isPendingApproval: false,
+            requiresEmailVerification: false
           }
         }
       } else {

@@ -123,6 +123,7 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
 }
 
 export const AdminUsersPage = () => {
+  const { showSuccess, showError } = useNotification()
   const [users, setUsers] = useState(null)
   const [userList, setUserList] = useState([])
   const [partners, setPartners] = useState(null)
