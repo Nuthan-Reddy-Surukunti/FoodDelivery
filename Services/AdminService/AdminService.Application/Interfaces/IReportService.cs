@@ -10,4 +10,5 @@ public interface IReportService
     Task<RestaurantAnalyticsDto> GetAllRestaurantsAnalyticsAsync(CancellationToken cancellationToken = default);
     Task<ReportDto> GetAllSalesAsync(CancellationToken cancellationToken = default);
     Task<ReportDto> GetAllPartnersAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<UserDto>> GetUsersListAsync(CancellationToken cancellationToken = default);
 }

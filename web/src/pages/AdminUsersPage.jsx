@@ -123,23 +123,27 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
 
 export const AdminUsersPage = () => {
   const [users, setUsers] = useState(null)
+  const [userList, setUserList] = useState([])
   const [partners, setPartners] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateAdmin, setShowCreateAdmin] = useState(false)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const loadData = async () => {
     let active = true
     setLoading(true)
     setError('')
     try {
-      const [usersRes, partnersRes] = await Promise.all([
+      const [usersRes, partnersRes, listRes] = await Promise.all([
         adminApi.getUserAnalytics(),
         adminApi.getPartnersReport().catch(() => null),
+        adminApi.getUsersList().catch(() => []),
       ])
       if (!active) return
       setUsers(usersRes)
       setPartners(partnersRes)
+      setUserList(listRes)
     } catch (err) {
       if (!active) return
       setError(err.response?.data?.message || err.message || 'Failed to load analytics')
@@ -151,12 +155,22 @@ export const AdminUsersPage = () => {
 
   useEffect(() => { loadData() }, [])
 
+  const filteredUsers = userList.filter(u => 
+    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u.role.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   const usersByRole = users?.usersByRole
     ? Object.entries(users.usersByRole).map(([role, count]) => ({ role, count }))
     : []
 
   return (
-    <AdminLayout title="Users & Analytics" searchPlaceholder="Search users...">
+    <AdminLayout 
+      title="Users & Analytics" 
+      searchPlaceholder="Search users by name, email or role..."
+      onSearch={setSearchTerm}
+    >
       {showCreateAdmin && (
         <CreateAdminModal
           onClose={() => setShowCreateAdmin(false)}
@@ -177,16 +191,19 @@ export const AdminUsersPage = () => {
         </button>
       </div>
 
-      {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm">{error}</div>}
+      {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm mb-6">{error}</div>}
 
       {loading && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[1,2,3].map(i => <div key={i} className="h-28 bg-slate-200 animate-pulse rounded-xl" />)}
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[1,2,3].map(i => <div key={i} className="h-28 bg-slate-200 animate-pulse rounded-xl" />)}
+          </div>
+          <div className="h-96 bg-slate-200 animate-pulse rounded-xl" />
         </div>
       )}
 
       {users && (
-        <>
+        <div className="space-y-8">
           {/* Summary stat cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
@@ -206,42 +223,115 @@ export const AdminUsersPage = () => {
             ))}
           </div>
 
-          {/* Users by role */}
-          {usersByRole.length > 0 && (
-            <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="p-5 border-b border-slate-100">
-                <h3 className="text-lg font-semibold text-on-surface flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">people</span>
-                  Users by Role
-                </h3>
-              </div>
-              <div className="divide-y divide-slate-50">
-                {usersByRole.map(({ role, count }) => {
-                  const cfg = ROLE_CONFIG[role] || { icon: 'person', color: 'bg-slate-50 text-slate-600' }
-                  const total = usersByRole.reduce((s, r) => s + Number(r.count || 0), 0)
-                  const pct = total > 0 ? Math.round((Number(count) / total) * 100) : 0
-                  return (
-                    <div key={role} className="p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors">
-                      <div className={`w-10 h-10 rounded-xl ${cfg.color} flex items-center justify-center flex-shrink-0`}>
-                        <span className="material-symbols-outlined text-lg">{cfg.icon}</span>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex justify-between items-center mb-1.5">
-                          <span className="text-sm font-semibold text-on-surface">{role}</span>
-                          <span className="text-sm font-bold text-on-surface">{count}</span>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Users by role */}
+            <div className="lg:col-span-1">
+              {usersByRole.length > 0 && (
+                <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden h-full">
+                  <div className="p-5 border-b border-slate-100">
+                    <h3 className="text-lg font-semibold text-on-surface flex items-center gap-2">
+                      <span className="material-symbols-outlined text-primary">analytics</span>
+                      Distribution
+                    </h3>
+                  </div>
+                  <div className="divide-y divide-slate-50">
+                    {usersByRole.map(({ role, count }) => {
+                      const cfg = ROLE_CONFIG[role] || { icon: 'person', color: 'bg-slate-50 text-slate-600' }
+                      const total = usersByRole.reduce((s, r) => s + Number(r.count || 0), 0)
+                      const pct = total > 0 ? Math.round((Number(count) / total) * 100) : 0
+                      return (
+                        <div key={role} className="p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors">
+                          <div className={`w-10 h-10 rounded-xl ${cfg.color} flex items-center justify-center flex-shrink-0`}>
+                            <span className="material-symbols-outlined text-lg">{cfg.icon}</span>
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-sm font-semibold text-on-surface">{role}</span>
+                              <span className="text-sm font-bold text-on-surface">{count}</span>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-1.5">
+                              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+                            </div>
+                            <p className="text-xs text-on-surface-variant mt-1">{pct}% of total users</p>
+                          </div>
                         </div>
-                        <div className="w-full bg-slate-100 rounded-full h-1.5">
-                          <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
-                        </div>
-                        <p className="text-xs text-on-surface-variant mt-1">{pct}% of total users</p>
-                      </div>
-                    </div>
-                  )
-                })}
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Detailed User Table */}
+            <div className="lg:col-span-2">
+              <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden h-full">
+                <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                  <h3 className="text-lg font-semibold text-on-surface flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary">list_alt</span>
+                    Registered Users
+                  </h3>
+                  <span className="text-xs font-medium px-2 py-1 bg-slate-100 text-slate-600 rounded-lg">
+                    {filteredUsers.length} total
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50/50">
+                        <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">User</th>
+                        <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Role</th>
+                        <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Joined</th>
+                        <th className="px-5 py-4 text-xs font-bold text-on-surface-variant uppercase tracking-wider">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredUsers.map((u) => {
+                        const cfg = ROLE_CONFIG[u.role] || { icon: 'person', color: 'bg-slate-50 text-slate-600' }
+                        return (
+                          <tr key={u.id} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="px-5 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-full ${cfg.color} flex items-center justify-center font-bold text-xs`}>
+                                  {u.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-on-surface">{u.fullName}</p>
+                                  <p className="text-xs text-on-surface-variant">{u.email}</p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium ${cfg.color}`}>
+                                <span className="material-symbols-outlined text-sm">{cfg.icon}</span>
+                                {u.role}
+                              </span>
+                            </td>
+                            <td className="px-5 py-4">
+                              <p className="text-sm text-on-surface">{new Date(u.createdAt).toLocaleDateString()}</p>
+                              <p className="text-[10px] text-on-surface-variant uppercase">{new Date(u.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                            </td>
+                            <td className="px-5 py-4">
+                              <span className={`w-2 h-2 rounded-full inline-block mr-2 ${u.isActive ? 'bg-emerald-500' : 'bg-slate-300'}`}></span>
+                              <span className="text-sm text-on-surface">{u.isActive ? 'Active' : 'Inactive'}</span>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                      {filteredUsers.length === 0 && (
+                        <tr>
+                          <td colSpan="4" className="px-5 py-12 text-center text-on-surface-variant">
+                            <span className="material-symbols-outlined text-4xl mb-2 block opacity-20">search_off</span>
+                            No users found matching your search.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          )}
-        </>
+          </div>
+        </div>
       )}
 
       {/* Partners analytics */}

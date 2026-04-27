@@ -90,18 +90,22 @@ public class ReportRepository : IReportRepository
 
     public async Task<Dictionary<string, object>> GetUserRegistrationAnalyticsAsync(DateTime startDate, DateTime endDate, CancellationToken cancellationToken = default)
     {
-        var orders = await _context.Orders
-            .Where(o => o.CreatedAt >= startDate && o.CreatedAt <= endDate)
+        var users = await _context.Users
+            .Where(u => u.CreatedAt >= startDate && u.CreatedAt <= endDate)
             .ToListAsync(cancellationToken);
 
-        var totalRegistrations = orders.Select(o => o.CustomerId).Distinct().Count();
-        var activeUsers = orders.GroupBy(o => o.CustomerId).Count();
+        var totalRegistrations = users.Count;
+        var activeUsers = users.Count(u => u.IsActive);
+        
+        var usersByRole = users
+            .GroupBy(u => u.Role)
+            .ToDictionary(g => g.Key, g => g.Count());
 
         var analytics = new Dictionary<string, object>
         {
             { "TotalRegistrations", totalRegistrations },
             { "ActiveUsers", activeUsers },
-            { "UsersByRole", new Dictionary<string, int> { { "Customer", totalRegistrations } } }
+            { "UsersByRole", usersByRole }
         };
 
         return analytics;

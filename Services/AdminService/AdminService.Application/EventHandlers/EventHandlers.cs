@@ -214,49 +214,98 @@ public class RestaurantUpdatedEventHandler : IConsumer<RestaurantUpdatedEvent>
     }
 }
 
-// UserDeletedEventHandler - Handles cascading restaurant deletion when a partner deletes their account
+// UserRegisteredEventHandler - Syncs newly registered users into AdminService
+public class UserRegisteredEventHandler : IConsumer<UserRegisteredEvent>
+{
+    private readonly ILogger<UserRegisteredEventHandler> _logger;
+    private readonly IUserRepository _userRepository;
+
+    public UserRegisteredEventHandler(ILogger<UserRegisteredEventHandler> logger, IUserRepository userRepository)
+    {
+        _logger = logger;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+    }
+
+    public async Task Consume(ConsumeContext<UserRegisteredEvent> context)
+    {
+        var @event = context.Message;
+        _logger.LogInformation("Processing UserRegisteredEvent: UserId={UserId}, Email={Email}, Role={Role}", 
+            @event.UserId, @event.Email, @event.Role);
+
+        try
+        {
+            // Check if user already exists (idempotent)
+            var existingUser = await _userRepository.GetByIdAsync(@event.UserId, context.CancellationToken);
+            if (existingUser != null)
+            {
+                _logger.LogWarning("User already exists in AdminService: UserId={UserId}", @event.UserId);
+                return;
+            }
+
+            var user = new User
+            {
+                Id = @event.UserId,
+                Email = @event.Email,
+                FullName = @event.FullName,
+                Role = @event.Role,
+                IsActive = true,
+                CreatedAt = @event.OccurredAt
+            };
+
+            await _userRepository.AddAsync(user, context.CancellationToken);
+            _logger.LogInformation("User synced successfully to AdminService: UserId={UserId}", @event.UserId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing UserRegisteredEvent: UserId={UserId}", @event.UserId);
+            throw;
+        }
+    }
+}
+
+// UserDeletedEventHandler - Handles cascading restaurant deletion and user cleanup when a partner deletes their account
 public class UserDeletedEventHandler : IConsumer<UserDeletedEvent>
 {
     private readonly ILogger<UserDeletedEventHandler> _logger;
     private readonly IRestaurantRepository _restaurantRepository;
+    private readonly IUserRepository _userRepository;
 
-    public UserDeletedEventHandler(ILogger<UserDeletedEventHandler> logger, IRestaurantRepository restaurantRepository)
+    public UserDeletedEventHandler(
+        ILogger<UserDeletedEventHandler> logger, 
+        IRestaurantRepository restaurantRepository,
+        IUserRepository userRepository)
     {
         _logger = logger;
         _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
     }
 
     public async Task Consume(ConsumeContext<UserDeletedEvent> context)
     {
         var @event = context.Message;
-        
-        // We only care about RestaurantPartners being deleted for cascading restaurant deletion
-        if (!@event.Role.Equals("RestaurantPartner", StringComparison.OrdinalIgnoreCase))
-        {
-            return;
-        }
-
         _logger.LogInformation("Processing UserDeletedEvent in AdminService: UserId={UserId}, Email={Email}", 
             @event.UserId, @event.Email);
 
         try
         {
-            // Get all restaurants owned by the user (including inactive ones to be thorough)
-            var restaurants = await _restaurantRepository.GetByOwnerIdAsync(@event.UserId, context.CancellationToken);
-            
-            if (restaurants == null || !restaurants.Any())
+            // 1. Delete associated restaurants if it's a partner
+            if (@event.Role.Equals("RestaurantPartner", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("No restaurants found for deleted partner in AdminService: UserId={UserId}", @event.UserId);
-                return;
+                var restaurants = await _restaurantRepository.GetByOwnerIdAsync(@event.UserId, context.CancellationToken);
+                
+                if (restaurants != null && restaurants.Any())
+                {
+                    foreach (var restaurant in restaurants)
+                    {
+                        _logger.LogInformation("Deleting restaurant from AdminService: RestaurantId={RestaurantId}, Name={Name}", 
+                            restaurant.Id, restaurant.Name);
+                        await _restaurantRepository.DeleteAsync(restaurant.Id, context.CancellationToken);
+                    }
+                }
             }
 
-            foreach (var restaurant in restaurants)
-            {
-                _logger.LogInformation("Deleting restaurant from AdminService: RestaurantId={RestaurantId}, Name={Name}", 
-                    restaurant.Id, restaurant.Name);
-
-                await _restaurantRepository.DeleteAsync(restaurant.Id, context.CancellationToken);
-            }
+            // 2. Delete user record from AdminService.Users
+            await _userRepository.DeleteAsync(@event.UserId, context.CancellationToken);
             
             _logger.LogInformation("Successfully processed UserDeletedEvent in AdminService for UserId={UserId}", @event.UserId);
         }

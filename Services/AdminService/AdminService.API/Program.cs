@@ -45,6 +45,7 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IReportRepository, ReportRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
 builder.Services.AddScoped<IMenuItemRepository, MenuItemRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 // Add Application Services
 builder.Services.AddScoped<IRestaurantService, RestaurantService>();
@@ -63,6 +64,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<MenuItemUpdatedEventHandler>();
     x.AddConsumer<MenuItemDeletedEventHandler>();
     x.AddConsumer<UserDeletedEventHandler>();
+    x.AddConsumer<UserRegisteredEventHandler>();
     
     x.UsingRabbitMq((context, cfg) =>
     {

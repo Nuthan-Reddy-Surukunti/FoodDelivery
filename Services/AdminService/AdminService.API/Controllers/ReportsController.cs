@@ -25,6 +25,16 @@ public class ReportsController : ControllerBase
         var report = await _reportService.GetAllUsersAnalyticsAsync();
         return Ok(report);
     }
+    
+    /// <summary>
+    /// Get list of all registered users with details
+    /// </summary>
+    [HttpGet("users-list")]
+    public async Task<IActionResult> GetUsersList()
+    {
+        var users = await _reportService.GetUsersListAsync();
+        return Ok(users);
+    }
 
     /// <summary>
     /// Get all restaurants analytics (no date filters)

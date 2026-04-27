@@ -18,6 +18,11 @@ const adminApi = {
     return response.data
   },
 
+  async getUsersList() {
+    const response = await api.get('/gateway/admin/reports/users-list')
+    return response.data
+  },
+
   async getRestaurantsReport() {
     const response = await api.get('/gateway/admin/reports/all-restaurants')
     return response.data

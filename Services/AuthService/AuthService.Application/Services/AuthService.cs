@@ -835,6 +835,18 @@ public class AuthService : IAuthService
         if (!created)
             return new AuthRequestDto { Success = false, Message = "Failed to create admin account." };
 
+        // Publish UserRegisteredEvent to notify other services
+        await _publishEndpoint.Publish(new UserRegisteredEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            UserId = admin.Id,
+            Email = admin.Email,
+            FullName = admin.FullName,
+            Role = admin.Role.ToString()
+        });
+
         // Send admin creation confirmation email
         await _emailService.SendEmailAsync(
             dto.Email,

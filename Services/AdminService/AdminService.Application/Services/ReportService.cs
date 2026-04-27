@@ -11,12 +11,20 @@ namespace AdminService.Application.Services;
 public class ReportService : IReportService
 {
     private readonly IReportRepository _reportRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
 
-    public ReportService(IReportRepository reportRepository, IMapper mapper)
+    public ReportService(IReportRepository reportRepository, IUserRepository userRepository, IMapper mapper)
     {
         _reportRepository = reportRepository;
+        _userRepository = userRepository;
         _mapper = mapper;
+    }
+
+    public async Task<IEnumerable<UserDto>> GetUsersListAsync(CancellationToken cancellationToken = default)
+    {
+        var users = await _userRepository.GetAllAsync(cancellationToken);
+        return _mapper.Map<IEnumerable<UserDto>>(users);
     }
 
     // GetAll methods - no date filters, returns all data

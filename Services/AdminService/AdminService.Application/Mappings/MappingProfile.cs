@@ -24,5 +24,8 @@ public class MappingProfile : Profile
 
         // AuditLog mappings
         CreateMap<AuditLog, AuditLogDto>();
+
+        // User mappings
+        CreateMap<User, UserDto>();
     }
 }
