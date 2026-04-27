@@ -300,14 +300,31 @@ export const AgentActivePage = () => {
                       )}
                     </div>
 
-                    {/* COD Total */}
-                    <div className="mt-3 flex items-center justify-between rounded-xl bg-primary/5 border border-primary/20 px-4 py-3">
-                      <div>
-                        <p className="text-xs text-primary/80 font-medium">Collect on Delivery (COD)</p>
-                        <p className="text-2xl font-bold text-on-surface mt-0.5">₹{Number(total).toFixed(2)}</p>
-                      </div>
-                      <span className="material-symbols-outlined text-primary text-3xl" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
-                    </div>
+                    {/* Payment Status Display */}
+                    {(() => {
+                      const method = order?.payment?.paymentMethod || 'CashOnDelivery'
+                      const isCod = method === 'CashOnDelivery' || method === 3
+                      const paymentLabel = isCod 
+                        ? 'Collect on Delivery (COD)' 
+                        : (method === 'Card' || method === 2 ? 'Paid Online (Card)' : 'Paid Online (Wallet)')
+                      
+                      const paymentIcon = isCod ? 'payments' : 'credit_score'
+                      const bgClass = isCod ? 'bg-primary/5 border-primary/20' : 'bg-green-50 border-green-200'
+                      const textClass = isCod ? 'text-primary' : 'text-green-700'
+                      const titleClass = isCod ? 'text-primary/80' : 'text-green-700/80'
+
+                      return (
+                        <div className={`mt-3 flex items-center justify-between rounded-xl border px-4 py-3 ${bgClass}`}>
+                          <div>
+                            <p className={`text-xs font-medium ${titleClass}`}>{paymentLabel}</p>
+                            <p className="text-2xl font-bold text-on-surface mt-0.5">₹{Number(total).toFixed(2)}</p>
+                          </div>
+                          <span className={`material-symbols-outlined text-3xl ${textClass}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                            {paymentIcon}
+                          </span>
+                        </div>
+                      )
+                    })()}
                   </section>
 
                   <div className="border-t border-slate-100" />

@@ -197,7 +197,7 @@ export const CartPage = () => {
                 </div>
               </div>
               <div className="border-t border-slate-200 pt-4 mb-6 flex justify-between font-bold text-lg text-on-surface">
-                <span>Total (COD)</span>
+                <span>Total</span>
                 <span>₹{total.toFixed(2)}</span>
               </div>
               <button

@@ -127,7 +127,6 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit, loading = false }) => {
       {currentStep === 1 ? (
         <div className="rounded-xl bg-surface-dim p-3 text-sm">
           <p><span className="font-semibold">Address:</span> {finalAddress}</p>
-          <p className="mt-2">Payment method: Cash on Delivery</p>
         </div>
       ) : null}
 

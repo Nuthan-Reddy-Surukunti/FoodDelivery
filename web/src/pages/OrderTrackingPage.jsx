@@ -41,8 +41,16 @@ const STATUS_LABEL = {
   CancelRequestedByCustomer: 'Cancellation Requested',
 }
 
-const PAYMENT_METHOD_LABEL = { 1: 'Digital Wallet', 2: 'Credit / Debit Card', 3: 'Cash on Delivery' }
-const PAYMENT_METHOD_ICON  = { 1: 'account_balance_wallet', 2: 'credit_card', 3: 'payments' }
+const PAYMENT_METHOD_LABEL = { 
+  1: 'Digital Wallet', Wallet: 'Digital Wallet',
+  2: 'Credit / Debit Card', Card: 'Credit / Debit Card',
+  3: 'Cash on Delivery', CashOnDelivery: 'Cash on Delivery' 
+}
+const PAYMENT_METHOD_ICON  = { 
+  1: 'account_balance_wallet', Wallet: 'account_balance_wallet',
+  2: 'credit_card', Card: 'credit_card',
+  3: 'payments', CashOnDelivery: 'payments' 
+}
 
 const fmtTime = (iso) =>
   iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }) : ''
