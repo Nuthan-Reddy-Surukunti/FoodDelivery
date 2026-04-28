@@ -109,6 +109,15 @@ const catalogApi = {
   async getAiRecommendation(payload) {
     const response = await api.post('/gateway/catalog/ai/chat', payload)
     return response.data
+  },
+
+  async checkAiStatus() {
+    try {
+      const response = await api.get('/gateway/catalog/ai/status')
+      return response.data?.online === true
+    } catch {
+      return false
+    }
   }
 }
 

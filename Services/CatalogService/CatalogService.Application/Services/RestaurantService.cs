@@ -27,8 +27,8 @@ public class RestaurantService : IRestaurantService
         Domain.Enums.RestaurantStatus? statusFilter = userRole != "Admin" ? Domain.Enums.RestaurantStatus.Active : null;
 
         var restaurants = query == null
-            ? await _repository.GetFilteredAsync(statusFilter, null, null, null)
-            : await _repository.GetFilteredAsync(statusFilter, query.SearchTerm, query.Cuisine, query.IsVegetarianOnly);
+            ? await _repository.GetFilteredAsync(statusFilter, null, null, null, null, false)
+            : await _repository.GetFilteredAsync(statusFilter, query.SearchTerm, query.Cuisine, null, null, query.IsVegetarianOnly ?? false);
 
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(restaurants);
         return restaurantDtos;

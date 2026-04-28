@@ -4,6 +4,7 @@ using CatalogService.Application.DTOs.MenuItem;
 using CatalogService.Application.DTOs.Restaurant;
 using CatalogService.Application.DTOs.Search;
 using CatalogService.Application.Interfaces;
+using CatalogService.Domain.Enums;
 using CatalogService.Domain.Interfaces;
 
 namespace CatalogService.Application.Services;
@@ -79,12 +80,42 @@ public class SearchService : ISearchService
         };
     }
 
-    public async Task<List<MenuItemSearchResultDto>> SearchMenuItemsAsync(string query)
+    public async Task<List<MenuItemSearchResultDto>> SearchMenuItemsAsync(
+        string query,
+        decimal? maxPrice = null,
+        decimal? minPrice = null,
+        Guid? restaurantId = null,
+        CuisineType? cuisineType = null,
+        bool? isVeg = null)
     {
-        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+        var hasQuery = !string.IsNullOrWhiteSpace(query);
+        var hasFilters = restaurantId.HasValue || cuisineType.HasValue || isVeg.HasValue || maxPrice.HasValue || minPrice.HasValue;
+
+        if (!hasQuery && !hasFilters)
             return new List<MenuItemSearchResultDto>();
 
-        var items = await _menuItemRepository.SearchAsync(query);
+        // Pass empty string to search all items when no keyword given but filters present
+        var items = await _menuItemRepository.SearchAsync(hasQuery ? query : string.Empty);
+
+        // Filter by restaurant if provided
+        if (restaurantId.HasValue)
+            items = items.Where(i => i.RestaurantId == restaurantId.Value).ToList();
+
+        // Filter by cuisine type (via the restaurant relationship)
+        if (cuisineType.HasValue)
+            items = items.Where(i => i.Restaurant != null && i.Restaurant.CuisineType == cuisineType.Value).ToList();
+
+        // Filter by veg/non-veg
+        if (isVeg.HasValue)
+            items = items.Where(i => i.IsVeg == isVeg.Value).ToList();
+
+        // Filter by max price
+        if (maxPrice.HasValue)
+            items = items.Where(i => i.Price <= maxPrice.Value).ToList();
+
+        // Filter by min price
+        if (minPrice.HasValue)
+            items = items.Where(i => i.Price >= minPrice.Value).ToList();
 
         return items.Select(item => new MenuItemSearchResultDto
         {
