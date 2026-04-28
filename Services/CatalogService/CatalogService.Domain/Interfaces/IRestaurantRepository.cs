@@ -7,7 +7,7 @@ public interface IRestaurantRepository
 {
     Task<List<Restaurant>> GetAllAsync();
     
-    Task<List<Restaurant>> GetFilteredAsync(RestaurantStatus? status, string? searchTerm, string? cuisine, bool? isVegetarianOnly);
+    Task<List<Restaurant>> GetFilteredAsync(RestaurantStatus? status, string? searchTerm, string? cuisine, decimal? minRating, string? city, bool? isVegetarianOnly);
 
     Task<Restaurant?> GetByIdAsync(Guid id);
 

@@ -19,6 +19,8 @@ public static class ServiceRegistration
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<ISearchService, SearchService>();
 
+        services.AddHttpClient<IAiService, AiService>();
+
         return services;
     }
 }

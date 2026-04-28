@@ -23,7 +23,7 @@ public class RestaurantRepository : IRestaurantRepository
         return restaurants;
     }
 
-    public async Task<List<Restaurant>> GetFilteredAsync(RestaurantStatus? status, string? searchTerm, string? cuisine, bool? isVegetarianOnly)
+    public async Task<List<Restaurant>> GetFilteredAsync(RestaurantStatus? status, string? searchTerm, string? cuisine, decimal? minRating, string? city, bool? isVegetarianOnly)
     {
         var query = _context.Restaurants.AsQueryable();
 
@@ -46,12 +46,22 @@ public class RestaurantRepository : IRestaurantRepository
             }
         }
 
+        if (minRating.HasValue)
+        {
+            query = query.Where(r => r.Rating >= minRating.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(city))
+        {
+            query = query.Where(r => r.City != null && r.City.ToLower() == city.ToLower());
+        }
+
         if (isVegetarianOnly.HasValue && isVegetarianOnly.Value)
         {
             query = query.Where(r => r.MenuItems.All(m => m.IsVeg));
         }
 
-        return await query.ToListAsync();
+        return await query.OrderByDescending(r => r.Rating).ToListAsync();
     }
 
     public async Task<Restaurant?> GetByIdAsync(Guid id)

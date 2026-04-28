@@ -105,6 +105,11 @@ const catalogApi = {
       menuItems: menuItems.status === 'fulfilled' ? (menuItems.value.data || []) : [],
     }
   },
+
+  async getAiRecommendation(payload) {
+    const response = await api.post('/gateway/catalog/ai/chat', payload)
+    return response.data
+  }
 }
 
 export default catalogApi

@@ -3,6 +3,7 @@ import PropTypes from 'prop-types'
 import { useLocation, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
+import { AiChatWidget } from './AiChatWidget'
 
 export const Layout = ({ children }) => {
   const { isAuthenticated, user, logout } = useAuth()
@@ -138,6 +139,11 @@ export const Layout = ({ children }) => {
       <main className="flex-1">
         {children}
       </main>
+
+      {/* AI Chat Widget (Only visible to Customers or Guests) */}
+      {(isCustomer || (!isAuthenticated && !isAuthPage)) && (
+        <AiChatWidget />
+      )}
     </div>
   )
 }

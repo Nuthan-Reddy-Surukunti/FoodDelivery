@@ -30,31 +30,14 @@ public class SearchService : ISearchService
 
     public async Task<List<RestaurantDto>> AdvancedSearchAsync(SearchRestaurantFilterDto filters)
     {
-        var restaurants = await _repository.GetAllAsync();
-        
-        // Apply filters
-        if (!string.IsNullOrEmpty(filters.Query))
-        {
-            var searchResults = await _repository.SearchByNameAsync(filters.Query);
-            restaurants = searchResults;
-        }
-
-        if (filters.CuisineType.HasValue)
-        {
-            var cuisineResults = await _repository.GetByCuisineAsync(filters.CuisineType.Value);
-            restaurants = restaurants.Intersect(cuisineResults).ToList();
-        }
-
-        if (filters.City != null)
-        {
-            restaurants = restaurants.Where(r => r.City == filters.City).ToList();
-        }
-
-        if (filters.MinRating.HasValue)
-        {
-            var ratingResults = await _repository.GetByRatingAsync(filters.MinRating.Value);
-            restaurants = restaurants.Intersect(ratingResults).ToList();
-        }
+        var restaurants = await _repository.GetFilteredAsync(
+            Domain.Enums.RestaurantStatus.Active, 
+            filters.Query, 
+            filters.CuisineType?.ToString(), 
+            filters.MinRating,
+            filters.City,
+            false // isVegetarianOnly
+        );
 
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(restaurants);
         return restaurantDtos;
