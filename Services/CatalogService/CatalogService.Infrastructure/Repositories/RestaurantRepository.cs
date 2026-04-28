@@ -48,7 +48,7 @@ public class RestaurantRepository : IRestaurantRepository
 
         if (isVegetarianOnly.HasValue && isVegetarianOnly.Value)
         {
-            query = query.Where(r => r.MenuItems.All(m => m.IsVegetarian));
+            query = query.Where(r => r.MenuItems.All(m => m.IsVeg));
         }
 
         return await query.ToListAsync();

@@ -18,9 +18,10 @@ export const ForgotPasswordPage = () => {
       setIsLoading(true)
       try {
         const response = await authApi.forgotPassword(values.email)
-        setSuccessMessage('Password reset link has been sent to your email. Check your inbox and spam folder.')
+        setSuccessMessage('✅ OTP sent! Check the AuthService console for your one-time password. You will be redirected to enter the OTP shortly.')
         form.resetForm?.()
-        setTimeout(() => navigate('/login'), 3000)
+        // Redirect to reset password page after showing message
+        setTimeout(() => navigate(`/reset-password?email=${encodeURIComponent(values.email)}`), 3500)
       } catch (error) {
         setSubmitError(error.message || 'Failed to send reset link. Please try again.')
       } finally {
@@ -151,3 +152,5 @@ export const ForgotPasswordPage = () => {
     </div>
   )
 }
+
+export default ForgotPasswordPage

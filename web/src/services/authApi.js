@@ -183,6 +183,37 @@ export const authApi = {
   },
 
   /**
+   * Reset password with OTP
+   * @param {string} email - User email
+   * @param {string} otp - One-time password
+   * @param {string} newPassword - New password
+   * @param {string} confirmPassword - Confirm new password
+   * @returns {Promise} Response with success message
+   */
+  resetPasswordWithOtp: async (email, otp, newPassword, confirmPassword) => {
+    try {
+      const response = await api.post('/gateway/auth/reset-password-with-otp', {
+        email,
+        otp,
+        newPassword,
+        confirmPassword,
+      })
+
+      if (response.data.success) {
+        return {
+          success: true,
+          message: response.data.message || 'Password reset successfully',
+        }
+      } else {
+        throw new Error(response.data.message || 'Failed to reset password')
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Failed to reset password'
+      throw new Error(message)
+    }
+  },
+
+  /**
    * Verify email with OTP
    * @param {string} email - User email
    * @param {string} otp - One-time password

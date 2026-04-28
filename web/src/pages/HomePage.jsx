@@ -4,21 +4,25 @@ import catalogApi from '../services/catalogApi'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CUISINE_DISPLAY = {
-  0: { label: 'All', emoji: '🍽️' },
-  1: { label: 'Italian', emoji: '🍕' },
-  2: { label: 'Chinese', emoji: '🥢' },
-  3: { label: 'Indian', emoji: '🍛' },
-  4: { label: 'Japanese', emoji: '🍱' },
-  5: { label: 'Mexican', emoji: '🌮' },
-  6: { label: 'American', emoji: '🍔' },
-  7: { label: 'Thai', emoji: '🍜' },
-  8: { label: 'Mediterranean', emoji: '🥙' },
-  9: { label: 'Other', emoji: '🍽️' },
+  0:  { label: 'All',           enumName: null,            emoji: '🍽️' },
+  1:  { label: 'Italian',       enumName: 'Italian',       emoji: '🍕' },
+  2:  { label: 'Chinese',       enumName: 'Chinese',       emoji: '🥢' },
+  3:  { label: 'Indian',        enumName: 'Indian',        emoji: '🍛' },
+  4:  { label: 'Mexican',       enumName: 'Mexican',       emoji: '🌮' },
+  5:  { label: 'American',      enumName: 'American',      emoji: '🍔' },
+  6:  { label: 'Thai',          enumName: 'Thai',          emoji: '🍜' },
+  7:  { label: 'Japanese',      enumName: 'Japanese',      emoji: '🍱' },
+  8:  { label: 'Continental',   enumName: 'Continental',   emoji: '🥘' },
+  9:  { label: 'Fast Food',     enumName: 'FastFood',      emoji: '🍟' },
+  10: { label: 'Vegan',         enumName: 'Vegan',         emoji: '🥗' },
+  11: { label: 'Mediterranean', enumName: 'Mediterranean', emoji: '🥙' },
+  12: { label: 'Other',         enumName: 'Other',         emoji: '🍽️' },
 }
 
 const cuisineLabel = (type) =>
   CUISINE_DISPLAY[type]?.label || (typeof type === 'string' ? type : 'Other')
 const cuisineEmoji = (type) => CUISINE_DISPLAY[type]?.emoji || '🍽️'
+const cuisineEnumName = (type) => CUISINE_DISPLAY[type]?.enumName || null
 
 const normalizeRestaurant = (item) => ({
   id: item.id,
@@ -190,7 +194,8 @@ export const HomePage = () => {
     // Construct params for backend filtering
     const params = {}
     if (activeCuisine !== null) {
-      params.Cuisine = cuisineLabel(activeCuisine)
+      const enumName = cuisineEnumName(activeCuisine)
+      if (enumName) params.Cuisine = enumName
     }
     if (isVegetarianOnly) {
       params.IsVegetarianOnly = true
@@ -351,32 +356,38 @@ export const HomePage = () => {
 
       {/* ── Cuisine Carousel ── */}
       {availableCuisines.length > 0 && (
-        <section className="pb-6 animate-fade-in-up stagger-2">
+        <section className="pb-8 animate-fade-in-up stagger-2">
           <div className="px-6 max-w-7xl mx-auto mb-4">
             <h2 className="text-xl font-semibold text-on-surface">Categories</h2>
           </div>
           <div className="flex gap-4 overflow-x-auto no-scrollbar px-6 max-w-7xl mx-auto snap-x">
+            {/* All button */}
             <button
               onClick={() => setActiveCuisine(null)}
-              className="flex flex-col items-center gap-2 min-w-[80px] snap-start group active:scale-95 transition-transform"
+              className="flex flex-col items-center gap-2 min-w-[90px] snap-start group active:scale-95 transition-transform"
             >
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-sm border-2 transition-all group-hover:ring-2 group-hover:ring-primary ${activeCuisine === null ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-slate-200 bg-surface-container-high'}`}>
-                🍽️
+              <div className="w-20 h-20 flex items-center justify-center">
+                <span className={`text-5xl transition-transform duration-300 group-hover:scale-125 ${activeCuisine === null ? 'scale-110' : ''}`}>🍽️</span>
               </div>
-              <span className="text-sm font-semibold text-on-surface">All</span>
+              <span className={`text-xs font-semibold ${activeCuisine === null ? 'text-primary' : 'text-on-surface'}`}>All</span>
             </button>
-            {availableCuisines.map((type) => (
-              <button
-                key={type}
-                onClick={() => setActiveCuisine(activeCuisine === type ? null : type)}
-                className="flex flex-col items-center gap-2 min-w-[80px] snap-start group active:scale-95 transition-transform"
-              >
-                <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-sm border-2 transition-all group-hover:ring-2 group-hover:ring-primary ${activeCuisine === type ? 'border-primary bg-primary/10 ring-2 ring-primary' : 'border-slate-200 bg-surface-container-high'}`}>
-                  {cuisineEmoji(type)}
-                </div>
-                <span className="text-sm font-semibold text-on-surface">{cuisineLabel(type)}</span>
-              </button>
-            ))}
+
+            {availableCuisines.map((type) => {
+              const meta = CUISINE_DISPLAY[type] || { label: 'Other', emoji: '🍽️' }
+              const isActive = activeCuisine === type
+              return (
+                <button
+                  key={type}
+                  onClick={() => setActiveCuisine(isActive ? null : type)}
+                  className="flex flex-col items-center gap-2 min-w-[90px] snap-start group active:scale-95 transition-transform"
+                >
+                  <div className="w-20 h-20 flex items-center justify-center">
+                    <span className={`text-5xl transition-transform duration-300 group-hover:scale-125 ${isActive ? 'scale-110' : ''}`}>{meta.emoji}</span>
+                  </div>
+                  <span className={`text-xs font-semibold ${isActive ? 'text-primary' : 'text-on-surface'}`}>{meta.label}</span>
+                </button>
+              )
+            })}
           </div>
         </section>
       )}

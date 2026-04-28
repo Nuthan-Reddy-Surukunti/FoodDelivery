@@ -38,7 +38,8 @@ public class CreateRestaurantDto
 
     [Range(0, 999)]
     public int? DeliveryTime { get; set; }
-
+    public decimal? Rating { get; set; }
+    public string? ImageUrl { get; set; }
     // Optional: Set OwnerId for admin assignment. If null, service auto-sets to current user (RestaurantPartner only)
     public Guid? OwnerId { get; set; }
 }

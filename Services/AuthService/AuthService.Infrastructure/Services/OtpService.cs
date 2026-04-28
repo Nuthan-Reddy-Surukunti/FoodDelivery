@@ -66,6 +66,9 @@ public class OtpService : IOtpService
 
             await _otpTokenRepository.AddAsync(otpToken);
 
+            // Print OTP to console for development
+            Console.WriteLine($"🔐 [OTP] User: {user.Email} | OTP: {otp} | Expires: 10 minutes");
+
             // Send OTP via email
             await _emailService.SendEmailAsync(
                 user.Email,

@@ -9,6 +9,7 @@ export const ResetPasswordPage = () => {
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const email = searchParams.get('email')
+  const isOtpFlow = !!email && !token // OTP flow if email is present without token
 
   const [isLoading, setIsLoading] = useState(false)
   const [submitError, setSubmitError] = useState(null)
@@ -16,8 +17,8 @@ export const ResetPasswordPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // Redirect if no token
-  if (!token || !email) {
+  // Redirect if no params
+  if (!token && !email) {
     return (
       <div className="bg-background min-h-screen flex items-center justify-center">
         <div className="text-center space-y-stack-md">
@@ -33,11 +34,37 @@ export const ResetPasswordPage = () => {
     )
   }
 
-  const form = useFormValidation(
+  // OTP Flow Form
+  const otpForm = useFormValidation(
+    { otp: '', password: '', confirmPassword: '' },
+    async (values) => {
+      if (values.password !== values.confirmPassword) {
+        otpForm.setErrors?.({ confirmPassword: 'Passwords do not match' })
+        return
+      }
+
+      setSubmitError(null)
+      setSuccessMessage(null)
+      setIsLoading(true)
+      try {
+        // Call the new OTP-based password reset endpoint
+        await authApi.resetPasswordWithOtp(email, values.otp, values.password, values.confirmPassword)
+        setSuccessMessage('✅ Password reset successfully! Redirecting to login...')
+        setTimeout(() => navigate('/login'), 2000)
+      } catch (error) {
+        setSubmitError(error.message || 'Failed to reset password. Please check your OTP and try again.')
+      } finally {
+        setIsLoading(false)
+      }
+    }
+  )
+
+  // Token Flow Form (legacy)
+  const tokenForm = useFormValidation(
     { password: '', confirmPassword: '' },
     async (values) => {
       if (values.password !== values.confirmPassword) {
-        form.setErrors?.({ confirmPassword: 'Passwords do not match' })
+        tokenForm.setErrors?.({ confirmPassword: 'Passwords do not match' })
         return
       }
 
@@ -46,7 +73,7 @@ export const ResetPasswordPage = () => {
       setIsLoading(true)
       try {
         await authApi.resetPassword(email, token, values.password)
-        setSuccessMessage('Password reset successfully! Redirecting to login...')
+        setSuccessMessage('✅ Password reset successfully! Redirecting to login...')
         setTimeout(() => navigate('/login'), 2000)
       } catch (error) {
         setSubmitError(error.message || 'Failed to reset password. Please try again.')
@@ -55,6 +82,8 @@ export const ResetPasswordPage = () => {
       }
     }
   )
+
+  const form = isOtpFlow ? otpForm : tokenForm
 
   return (
     <div className="bg-background text-on-background min-h-screen flex flex-col md:flex-row antialiased overflow-hidden">
@@ -97,7 +126,9 @@ export const ResetPasswordPage = () => {
           <div className="space-y-stack-sm text-center md:text-left">
             <h2 className="font-display-xl text-display-xl text-on-background">Reset Password</h2>
             <p className="font-body-md text-body-md text-on-surface-variant">
-              Enter a new password for your account.
+              {isOtpFlow 
+                ? 'Enter the OTP from the console and your new password.' 
+                : 'Enter a new password for your account.'}
             </p>
           </div>
 
@@ -119,6 +150,38 @@ export const ResetPasswordPage = () => {
 
           {/* Form */}
           <form onSubmit={form.handleSubmit} className="space-y-stack-md">
+            {/* OTP Field (Only for OTP Flow) */}
+            {isOtpFlow && (
+              <div className="space-y-unit">
+                <label className="font-label-md text-label-md text-on-surface ml-4 block" htmlFor="otp">
+                  One-Time Password (OTP)
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+                    <Icon name="pin" size={20} className="text-outline" />
+                  </div>
+                  <input
+                    type="text"
+                    id="otp"
+                    name="otp"
+                    placeholder="Enter 6-digit OTP"
+                    maxLength="6"
+                    className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-6 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient"
+                    value={form.values.otp || ''}
+                    onChange={form.handleChange}
+                    onBlur={form.handleBlur}
+                    required
+                  />
+                </div>
+                <p className="font-caption-sm text-caption-sm text-on-surface-variant px-2">
+                  Check your AuthService console for the OTP. It expires in 10 minutes.
+                </p>
+                {form.touched.otp && form.errors.otp && (
+                  <p className="font-caption-sm text-caption-sm text-error ml-4">{form.errors.otp}</p>
+                )}
+              </div>
+            )}
+
             {/* New Password */}
             <div className="space-y-unit">
               <label className="font-label-md text-label-md text-on-surface ml-4 block" htmlFor="password">
@@ -212,3 +275,5 @@ export const ResetPasswordPage = () => {
     </div>
   )
 }
+
+export default ResetPasswordPage

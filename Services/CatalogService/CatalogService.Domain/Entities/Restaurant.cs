@@ -30,7 +30,7 @@ public class Restaurant : BaseEntity
     public string? ContactPhone { get; set; }
 
     public string? ContactEmail { get; set; }
-
+    public string? ImageUrl { get; set; }
     public ICollection<MenuItem> MenuItems { get; set; } = [];
 
     public ICollection<Category> Categories { get; set; } = [];

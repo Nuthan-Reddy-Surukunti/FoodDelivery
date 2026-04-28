@@ -143,12 +143,12 @@ export const LoginPage = () => {
                 <label className="font-label-md text-label-md text-on-surface" htmlFor="password">
                   Password
                 </label>
-                <a
-                  href="#"
+                <Link
+                  to="/forgot-password"
                   className="font-caption-sm text-caption-sm text-primary hover:text-surface-tint transition-colors"
                 >
                   Forgot Password?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">

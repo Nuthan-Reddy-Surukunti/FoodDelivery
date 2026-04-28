@@ -38,6 +38,7 @@ const emptyForm = {
   name: '', description: '', address: '', city: '',
   serviceZoneId: '', cuisineType: '3', contactPhone: '',
   contactEmail: '', minOrderValue: '', deliveryTime: '',
+  imageUrl: '', rating: '',
 }
 
 // ── Restaurant Form ──────────────────────────────────────────────────────────
@@ -113,6 +114,27 @@ const RestaurantForm = ({ form, onChange, onSubmit, submitting, submitLabel, onC
         />
       </div>
     </div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Rating (0-5)</label>
+        <input name="rating" type="number" step="0.1" min="0" max="5" value={form.rating} onChange={onChange}
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        />
+      </div>
+      <div>
+        <label className="block text-sm font-medium text-on-surface mb-1.5">Restaurant Image URL</label>
+        <input name="imageUrl" value={form.imageUrl} onChange={onChange} placeholder="https://images.unsplash.com/..."
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary transition"
+        />
+      </div>
+    </div>
+      {form.imageUrl && (
+        <div className="mt-3 relative rounded-xl overflow-hidden border border-slate-200 h-40 bg-slate-100">
+          <img src={form.imageUrl} alt="Preview" className="w-full h-full object-cover" 
+               onError={(e) => { e.target.src = 'https://via.placeholder.com/400x200?text=Invalid+Image+URL'; }} />
+          <div className="absolute top-2 left-2 bg-black/50 text-white text-[10px] px-2 py-1 rounded backdrop-blur-sm">Live Preview</div>
+        </div>
+      )}
     <div className="flex gap-3 pt-2">
       <button type="submit" disabled={submitting}
         className="bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors disabled:opacity-50"
@@ -187,6 +209,7 @@ export const PartnerDashboardPage = () => {
       serviceZoneId: restaurant.serviceZoneId || '', cuisineType: String(restaurant.cuisineType ?? 3),
       contactPhone: restaurant.contactPhone || '', contactEmail: restaurant.contactEmail || '',
       minOrderValue: restaurant.minOrderValue ?? '', deliveryTime: restaurant.deliveryTime ?? '',
+      imageUrl: restaurant.imageUrl || '', rating: restaurant.rating ?? '',
     })
     setEditMode(true)
   }
@@ -207,6 +230,8 @@ export const PartnerDashboardPage = () => {
         contactPhone: form.contactPhone || null, contactEmail: form.contactEmail || null,
         minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : null,
         deliveryTime: form.deliveryTime ? Number(form.deliveryTime) : null,
+        imageUrl: form.imageUrl || null,
+        rating: form.rating ? Number(form.rating) : 0,
       }
       const created = await catalogApi.createRestaurant(payload)
       setRestaurant(created)
@@ -227,6 +252,8 @@ export const PartnerDashboardPage = () => {
         contactPhone: form.contactPhone || null, contactEmail: form.contactEmail || null,
         minOrderValue: form.minOrderValue ? Number(form.minOrderValue) : null,
         deliveryTime: form.deliveryTime ? Number(form.deliveryTime) : null,
+        imageUrl: form.imageUrl || null,
+        rating: form.rating ? Number(form.rating) : 0,
       }
       const updated = await catalogApi.updateRestaurant(restaurant.id, payload)
       setRestaurant(updated)
@@ -318,6 +345,11 @@ export const PartnerDashboardPage = () => {
 
       {/* Restaurant info card */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+        {restaurant.imageUrl && (
+          <div className="h-32 w-full overflow-hidden">
+            <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover" />
+          </div>
+        )}
         <div className="p-5 border-b border-slate-100 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <h3 className="text-lg font-semibold text-on-surface">{restaurant.name}</h3>

@@ -13,6 +13,7 @@ public interface IAuthService
     Task<AuthRequestDto> LogoutAsync(RefreshTokenDto dto);
     Task<AuthRequestDto> ForgotPasswordAsync(ForgotPasswordDto request);
     Task<AuthRequestDto> ResetPasswordAsync(ResetPasswordRequestDto request);
+    Task<AuthRequestDto> ResetPasswordWithOtpAsync(string email, string otp, string newPassword, string confirmPassword);
     Task<AuthRequestDto> ToggleTwoFactorAsync(string userId, ToggleTwoFactorRequestDto request);
     Task<AuthRequestDto> UpdateProfileAsync(string userId, UpdateProfileRequestDto request);
     Task<AuthRequestDto> ChangePasswordAsync(ChangePasswordRequestDto request);

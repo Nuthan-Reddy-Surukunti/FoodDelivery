@@ -134,6 +134,15 @@ namespace AuthService.API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("reset-password-with-otp")]
+        public async Task<IActionResult> ResetPasswordWithOtp([FromBody] ResetPasswordWithOtpDto dto)
+        {
+            var result = await _authService.ResetPasswordWithOtpAsync(dto.Email, dto.Otp, dto.NewPassword, dto.ConfirmPassword);
+            if (!result.Success)
+                return BadRequest(result);
+            return Ok(result);
+        }
+
         [HttpPut("toggle-2fa")]
         [Authorize]
         public async Task<IActionResult> ToggleTwoFactor([FromBody] ToggleTwoFactorRequestDto dto)

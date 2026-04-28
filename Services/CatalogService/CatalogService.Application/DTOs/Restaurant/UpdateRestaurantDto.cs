@@ -38,7 +38,8 @@ public class UpdateRestaurantDto
     public int? DeliveryTime { get; set; }
 
     public RestaurantStatus? Status { get; set; }
-
+    public decimal? Rating { get; set; }
+    public string? ImageUrl { get; set; }
     // Optional: Admin can reassign ownership via OwnerId field
     public Guid? OwnerId { get; set; }
 }

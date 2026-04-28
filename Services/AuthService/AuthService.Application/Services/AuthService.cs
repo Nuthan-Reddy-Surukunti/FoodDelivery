@@ -16,6 +16,7 @@ public class AuthService : IAuthService
     private readonly IPasswordResetTokenRepository _passwordResetTokenRepository;
     private readonly IEmailVerificationTokenRepository _emailVerificationTokenRepository;
     private readonly ITwoFactorTokenRepository _twoFactorTokenRepository;
+    private readonly IOtpTokenRepository _otpTokenRepository;
     private readonly IRefreshTokenRepository _refreshTokenRepository;
     private readonly IEmailService _emailService;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
@@ -27,6 +28,7 @@ public class AuthService : IAuthService
         IPasswordResetTokenRepository passwordResetTokenRepository,
         IEmailVerificationTokenRepository emailVerificationTokenRepository,
         ITwoFactorTokenRepository twoFactorTokenRepository,
+        IOtpTokenRepository otpTokenRepository,
         IRefreshTokenRepository refreshTokenRepository,
         IEmailService emailService,
         IJwtTokenGenerator jwtTokenGenerator,
@@ -37,6 +39,7 @@ public class AuthService : IAuthService
         _passwordResetTokenRepository = passwordResetTokenRepository;
         _emailVerificationTokenRepository = emailVerificationTokenRepository;
         _twoFactorTokenRepository = twoFactorTokenRepository;
+        _otpTokenRepository = otpTokenRepository;
         _refreshTokenRepository = refreshTokenRepository;
         _emailService = emailService;
         _jwtTokenGenerator = jwtTokenGenerator;
@@ -47,22 +50,32 @@ public class AuthService : IAuthService
     {
         var user = await _userRepository.FindByEmailAsync(dto.Email);
         if(user==null)
-        return new AuthRequestDto { Success = true, Message = "If that email exists, a reset link has been sent." };
+            return new AuthRequestDto { Success = true, Message = "If that email exists, a reset link has been sent." };
 
-        var resetToken = GenerateSecureToken();
-       await _passwordResetTokenRepository.AddAsync(new PasswordResetToken
+        // Generate OTP for password reset
+        var otp = GenerateOtp();
+        var now = DateTime.UtcNow;
+
+        // Store OTP for password reset
+        var otpToken = new OtpToken
         {
             UserId = user.Id,
-            Token = resetToken,
-            ExpiredAt = DateTime.UtcNow.AddMinutes(30),
+            OTP = otp,
+            ExpiresAt = now.AddMinutes(10),
             IsUsed = false,
-            CreatedAt = DateTime.UtcNow
-        });
+            CreatedAt = now
+        };
 
+        await _otpTokenRepository.AddAsync(otpToken);
+
+        // Print OTP to console for development/testing
+        Console.WriteLine($"🔐 [PASSWORD RESET OTP] Email: {user.Email} | OTP: {otp} | Expires: 10 minutes");
+
+        // Send OTP via email
         await _emailService.SendEmailAsync(
             dto.Email,
             "Reset Your Password",
-            $"Your password reset token is: {resetToken}");
+            $"Your password reset OTP is: {otp}. It will expire in 10 minutes. Do not share this OTP with anyone.");
 
         return new AuthRequestDto { Success = true, Message = "If that email exists, a reset link has been sent." };
     }
@@ -113,6 +126,10 @@ public class AuthService : IAuthService
                     };
 
                     await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+                    
+                    // Print OTP to console for development
+                    Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
+                    
                     await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
 
                     return new AuthRequestDto()
@@ -577,6 +594,63 @@ public class AuthService : IAuthService
         Message = "Password reset successful."
     };
 }
+
+    public async Task<AuthRequestDto> ResetPasswordWithOtpAsync(string email, string otp, string newPassword, string confirmPassword)
+    {
+        // Step 1: Validate password match
+        if (newPassword != confirmPassword)
+        {
+            return new AuthRequestDto
+            {
+                Success = false,
+                Message = "Passwords do not match."
+            };
+        }
+
+        // Step 2: Find user
+        var user = await _userRepository.FindByEmailAsync(email);
+        if (user == null)
+        {
+            return new AuthRequestDto
+            {
+                Success = false,
+                Message = "User not found."
+            };
+        }
+
+        // Step 3: Validate OTP
+        var otpToken = await _otpTokenRepository.GetByOtpCodeAsync(user.Id, otp);
+        if (otpToken == null || otpToken.IsUsed || otpToken.ExpiresAt < DateTime.UtcNow)
+        {
+            return new AuthRequestDto
+            {
+                Success = false,
+                Message = "Invalid or expired OTP."
+            };
+        }
+
+        // Step 4: Update password
+        var updated = await _userRepository.UpdatePasswordAsync(user.Id, newPassword);
+        if (!updated)
+        {
+            return new AuthRequestDto
+            {
+                Success = false,
+                Message = "Unable to reset password."
+            };
+        }
+
+        // Step 5: Mark OTP as used
+        otpToken.IsUsed = true;
+        otpToken.VerifiedAt = DateTime.UtcNow;
+        await _otpTokenRepository.UpdateAsync(otpToken);
+
+        return new AuthRequestDto
+        {
+            Success = true,
+            Message = "Password reset successful."
+        };
+    }
 
     public async Task<AuthRequestDto> ToggleTwoFactorAsync(string userId, ToggleTwoFactorRequestDto request)
     {
