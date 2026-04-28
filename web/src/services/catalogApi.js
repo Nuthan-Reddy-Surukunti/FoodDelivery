@@ -3,8 +3,8 @@ import api from './api'
 const catalogApi = {
   // ─── Restaurants ───────────────────────────────────────────────────────────
 
-  async getRestaurants() {
-    const response = await api.get('/gateway/catalog/restaurants')
+  async getRestaurants(params = {}) {
+    const response = await api.get('/gateway/catalog/restaurants', { params })
     return response.data
   },
 

@@ -17,4 +17,3 @@ public interface IOrderPlacementService
 
     Task<PartnerStatsDto> GetPartnerStatsAsync(Guid restaurantId, CancellationToken cancellationToken = default);
 }
-

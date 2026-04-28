@@ -10,7 +10,7 @@ import catalogApi from '../services/catalogApi'
 
 // ─── Menu Item Modal ─────────────────────────────────────────────────────────
 
-const emptyItem = { name: '', description: '', price: '', categoryId: '', isVeg: true, prepTime: '', imageUrl: '' }
+const emptyItem = { name: '', description: '', price: '', categoryId: '', isVeg: true, prepTime: '', imageUrl: '', isAvailable: true }
 
 const MenuItemModal = ({ isOpen, onClose, onSave, categories, initial }) => {
   const [form, setForm] = useState(initial || emptyItem)
@@ -55,10 +55,16 @@ const MenuItemModal = ({ isOpen, onClose, onSave, categories, initial }) => {
             {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" name="isVeg" checked={form.isVeg} onChange={onChange} className="h-4 w-4 rounded" />
-          <span className="text-sm font-medium">Vegetarian item</span>
-        </label>
+        <div className="flex gap-6">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="isVeg" checked={form.isVeg} onChange={onChange} className="h-4 w-4 rounded" />
+            <span className="text-sm font-medium">Vegetarian item</span>
+          </label>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="isAvailable" checked={form.isAvailable} onChange={onChange} className="h-4 w-4 rounded text-primary" />
+            <span className="text-sm font-medium text-on-surface">Available (In Stock)</span>
+          </label>
+        </div>
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="secondary" onClick={onClose}>Cancel</Button>
           <Button type="submit" disabled={saving}>{saving ? 'Saving...' : 'Save Item'}</Button>
@@ -239,6 +245,7 @@ export const MenuManagementPage = () => {
         isVeg: form.isVeg,
         prepTime: form.prepTime ? Number(form.prepTime) : null,
         imageUrl: form.imageUrl || null,
+        availabilityStatus: form.isAvailable ? 1 : 2, // 1: Available, 2: OutOfStock
       }
       if (itemModal.item) {
         await catalogApi.updateMenuItem(itemModal.item.id, payload)
@@ -269,6 +276,7 @@ export const MenuManagementPage = () => {
   }
 
   const openEditItem = (item) => {
+    const isAvailable = item.availabilityStatus === 1 || item.availabilityStatus === 'Available' || item.availabilityStatus == null;
     setItemModal({
       open: true,
       item: {
@@ -276,6 +284,7 @@ export const MenuManagementPage = () => {
         price: String(item.price),
         prepTime: item.prepTime != null ? String(item.prepTime) : '',
         categoryId: categories.find(c => c.name === item.categoryName)?.id || '',
+        isAvailable: isAvailable
       }
     })
   }
@@ -287,9 +296,9 @@ export const MenuManagementPage = () => {
     : items
 
   const availabilityLabel = (status) => {
-    if (status === 0 || status === 'Available') return { label: 'Available', cls: 'text-green-600' }
-    if (status === 1 || status === 'OutOfStock') return { label: 'Out of Stock', cls: 'text-red-500' }
-    return { label: 'Unavailable', cls: 'text-gray-500' }
+    if (status === 1 || status === 'Available' || status == null) return { label: 'Available', cls: 'text-green-600 font-semibold bg-green-50 px-2 py-0.5 rounded' }
+    if (status === 2 || status === 'OutOfStock') return { label: 'Out of Stock', cls: 'text-red-600 font-semibold bg-red-50 px-2 py-0.5 rounded' }
+    return { label: 'Unavailable', cls: 'text-gray-500 font-semibold bg-gray-50 px-2 py-0.5 rounded' }
   }
 
   return (

@@ -170,10 +170,20 @@ public class OrderPlacementService : IOrderPlacementService
         var completed = orders.Count(o => o.OrderStatus == OrderStatus.Delivered);
         var cancelled = orders.Count(o => o.OrderStatus == OrderStatus.CancelRequestedByCustomer || o.OrderStatus == OrderStatus.Refunded);
 
-        var completedOrders = orders.Where(o => o.OrderStatus == OrderStatus.Delivered);
+        var completedOrders = orders.Where(o => o.OrderStatus == OrderStatus.Delivered).ToList();
         var totalRevenue = completedOrders.Sum(o => o.TotalAmount);
         var todayOrders = orders.Where(o => o.CreatedAt.Date == today).ToList();
         var todayRevenue = todayOrders.Where(o => o.OrderStatus == OrderStatus.Delivered).Sum(o => o.TotalAmount);
+
+        // Group by Date for the chart
+        var dailyRevenue = completedOrders
+            .GroupBy(o => o.CreatedAt.Date)
+            .OrderBy(g => g.Key)
+            .TakeLast(7) // Last 7 days
+            .ToDictionary(
+                g => g.Key.ToString("yyyy-MM-dd"),
+                g => g.Sum(o => o.TotalAmount)
+            );
 
         return new PartnerStatsDto
         {
@@ -185,6 +195,7 @@ public class OrderPlacementService : IOrderPlacementService
             TotalRevenue = totalRevenue,
             TodayRevenue = todayRevenue,
             TodayOrders = todayOrders.Count,
+            DailyRevenue = dailyRevenue
         };
     }
 }

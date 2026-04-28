@@ -6,12 +6,11 @@ const NAV_ITEMS = [
   { to: '/partner/dashboard', icon: 'dashboard', label: 'Dashboard' },
   { to: '/partner/queue', icon: 'receipt_long', label: 'Orders' },
   { to: '/partner/menu', icon: 'restaurant_menu', label: 'Menu' },
+  { to: '/partner/analytics', icon: 'analytics', label: 'Analytics' },
   { to: '/profile', icon: 'person', label: 'Profile' },
 ]
 
-const PLACEHOLDER_ITEMS = [
-  { icon: 'bar_chart', label: 'Analytics' },
-]
+const PLACEHOLDER_ITEMS = []
 
 export const PartnerLayout = ({ children, title = '' }) => {
   const location = useLocation()

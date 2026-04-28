@@ -25,6 +25,7 @@ const AddressManagementPage = lazy(() => import('./pages/AddressManagementPage')
 const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage').then((m) => ({ default: m.MyOrdersPage })))
 const OrderTrackingPage = lazy(() => import('./pages/OrderTrackingPage').then((m) => ({ default: m.OrderTrackingPage })))
 const PartnerDashboardPage = lazy(() => import('./pages/PartnerDashboardPage').then((m) => ({ default: m.PartnerDashboardPage })))
+const PartnerAnalyticsPage = lazy(() => import('./pages/partner/PartnerAnalyticsPage').then((m) => ({ default: m.PartnerAnalyticsPage })))
 const MenuManagementPage = lazy(() => import('./pages/MenuManagementPage').then((m) => ({ default: m.MenuManagementPage })))
 const OrderQueuePage = lazy(() => import('./pages/OrderQueuePage').then((m) => ({ default: m.OrderQueuePage })))
 const AdminOverviewPage = lazy(() => import('./pages/AdminOverviewPage').then((m) => ({ default: m.AdminOverviewPage })))
@@ -71,6 +72,7 @@ export default function App() {
                 <Route path="/partner/dashboard" element={<ProtectedRoute requiredRole="RestaurantPartner"><PartnerDashboardPage /></ProtectedRoute>} />
                 <Route path="/partner/menu" element={<ProtectedRoute requiredRole="RestaurantPartner"><MenuManagementPage /></ProtectedRoute>} />
                 <Route path="/partner/queue" element={<ProtectedRoute requiredRole="RestaurantPartner"><OrderQueuePage /></ProtectedRoute>} />
+                <Route path="/partner/analytics" element={<ProtectedRoute requiredRole="RestaurantPartner"><PartnerAnalyticsPage /></ProtectedRoute>} />
 
                 {/* Admin Routes - Protected (Admin only) */}
                 <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminOverviewPage /></ProtectedRoute>} />

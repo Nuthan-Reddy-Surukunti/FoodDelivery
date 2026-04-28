@@ -22,16 +22,14 @@ public class RestaurantService : IRestaurantService
         _publishEndpoint = publishEndpoint;
     }
 
-    public async Task<List<RestaurantDto>> GetAllRestaurantsAsync(string? userRole = null)
+    public async Task<List<RestaurantDto>> GetAllRestaurantsAsync(RestaurantQueryDto? query = null, string? userRole = null)
     {
-        var restaurants = await _repository.GetAllAsync();
-        
-        // Filter by active status unless user is Admin
-        if (userRole != "Admin")
-        {
-            restaurants = restaurants.Where(r => r.Status == Domain.Enums.RestaurantStatus.Active).ToList();
-        }
-        
+        Domain.Enums.RestaurantStatus? statusFilter = userRole != "Admin" ? Domain.Enums.RestaurantStatus.Active : null;
+
+        var restaurants = query == null
+            ? await _repository.GetFilteredAsync(statusFilter, null, null, null)
+            : await _repository.GetFilteredAsync(statusFilter, query.SearchTerm, query.Cuisine, query.IsVegetarianOnly);
+
         var restaurantDtos = _mapper.Map<List<RestaurantDto>>(restaurants);
         return restaurantDtos;
     }

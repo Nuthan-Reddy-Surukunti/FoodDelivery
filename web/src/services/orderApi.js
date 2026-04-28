@@ -43,6 +43,16 @@ const orderApi = {
     return response.data
   },
 
+  async getPartnerStats(restaurantId) {
+    const response = await api.get(`/gateway/orders/partner/${restaurantId}/stats`)
+    return response.data
+  },
+
+  async getAgentEarnings() {
+    const response = await api.get('/gateway/orders/deliveries/earnings')
+    return response.data
+  },
+
 	// Cart Operations
 	async clearCart(userId, restaurantId) {
 		const response = await api.delete('/gateway/carts', { params: { userId, restaurantId } })

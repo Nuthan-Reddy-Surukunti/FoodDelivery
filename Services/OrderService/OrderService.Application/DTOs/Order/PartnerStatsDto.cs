@@ -10,4 +10,5 @@ public class PartnerStatsDto
     public decimal TotalRevenue { get; set; }
     public decimal TodayRevenue { get; set; }
     public int TodayOrders { get; set; }
+    public Dictionary<string, decimal> DailyRevenue { get; set; } = new();
 }

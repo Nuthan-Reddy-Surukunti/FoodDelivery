@@ -6,6 +6,8 @@ using CatalogService.Domain.Enums;
 public interface IRestaurantRepository
 {
     Task<List<Restaurant>> GetAllAsync();
+    
+    Task<List<Restaurant>> GetFilteredAsync(RestaurantStatus? status, string? searchTerm, string? cuisine, bool? isVegetarianOnly);
 
     Task<Restaurant?> GetByIdAsync(Guid id);
 

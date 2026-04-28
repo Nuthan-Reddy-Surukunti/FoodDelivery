@@ -26,12 +26,19 @@ public class RestaurantsController : ControllerBase
     /// Get all restaurants - active only by default, all for Admin
     /// </summary>
     [HttpGet]
-    public async Task<ActionResult> GetAll()
+    [AllowAnonymous] // Allow unauthenticated access to view restaurants (if applicable)
+    public async Task<ActionResult> GetAll([FromQuery] RestaurantQueryDto query)
     {
         try
         {
-            var userRole = this.GetCurrentUserRole();
-            var result = await _restaurantService.GetAllRestaurantsAsync(userRole);
+            // Allow anonymous access if userRole is null
+            string? userRole = null;
+            if (User.Identity != null && User.Identity.IsAuthenticated)
+            {
+                userRole = this.GetCurrentUserRole();
+            }
+
+            var result = await _restaurantService.GetAllRestaurantsAsync(query, userRole);
             return Ok(result);
         }
         catch (Exception ex)

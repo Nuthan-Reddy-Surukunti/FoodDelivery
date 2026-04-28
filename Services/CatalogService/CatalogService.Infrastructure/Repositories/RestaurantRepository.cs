@@ -23,6 +23,37 @@ public class RestaurantRepository : IRestaurantRepository
         return restaurants;
     }
 
+    public async Task<List<Restaurant>> GetFilteredAsync(RestaurantStatus? status, string? searchTerm, string? cuisine, bool? isVegetarianOnly)
+    {
+        var query = _context.Restaurants.AsQueryable();
+
+        if (status.HasValue)
+        {
+            query = query.Where(r => r.Status == status.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var lowerTerm = searchTerm.ToLower();
+            query = query.Where(r => r.Name.ToLower().Contains(lowerTerm) || r.Description.ToLower().Contains(lowerTerm));
+        }
+
+        if (!string.IsNullOrWhiteSpace(cuisine))
+        {
+            if (Enum.TryParse<CuisineType>(cuisine, true, out var cuisineType))
+            {
+                query = query.Where(r => r.CuisineType == cuisineType);
+            }
+        }
+
+        if (isVegetarianOnly.HasValue && isVegetarianOnly.Value)
+        {
+            query = query.Where(r => r.MenuItems.All(m => m.IsVegetarian));
+        }
+
+        return await query.ToListAsync();
+    }
+
     public async Task<Restaurant?> GetByIdAsync(Guid id)
     {
         return await _context.Restaurants

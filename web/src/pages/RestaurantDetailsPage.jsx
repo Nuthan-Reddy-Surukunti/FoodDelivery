@@ -74,7 +74,7 @@ export const RestaurantDetailsPage = () => {
 
   const isAvailable = (item) => {
     const s = item.availabilityStatus
-    return s === 0 || s === 'Available' || s == null
+    return s === 1 || s === 'Available' || s == null
   }
 
   // Group items by category

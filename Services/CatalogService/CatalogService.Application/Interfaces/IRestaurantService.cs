@@ -5,7 +5,7 @@ using CatalogService.Application.DTOs.Restaurant;
 
 public interface IRestaurantService
 {
-    Task<List<RestaurantDto>> GetAllRestaurantsAsync(string? userRole = null);
+    Task<List<RestaurantDto>> GetAllRestaurantsAsync(RestaurantQueryDto? query = null, string? userRole = null);
 
     Task<RestaurantDetailDto> GetRestaurantByIdAsync(Guid id, string? userRole = null);
 

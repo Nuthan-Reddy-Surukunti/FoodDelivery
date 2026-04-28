@@ -179,12 +179,26 @@ export const HomePage = () => {
   const searchContainerRef = useRef(null)
   const debounceRef = useRef(null)
 
-  // Load all restaurants on mount
+  const [isVegetarianOnly, setIsVegetarianOnly] = useState(false)
+
+  // Fetch restaurants from backend when filters change
   useEffect(() => {
     let active = true
     setLoading(true)
     setError('')
-    catalogApi.getRestaurants()
+    
+    // Construct params for backend filtering
+    const params = {}
+    if (activeCuisine !== null) {
+      params.Cuisine = cuisineLabel(activeCuisine)
+    }
+    if (isVegetarianOnly) {
+      params.IsVegetarianOnly = true
+    }
+    // We keep 'query' filtering client-side for immediate responsiveness of the grid, 
+    // or we could pass it if we hit "enter". Let's pass it if there's a hard search.
+
+    catalogApi.getRestaurants(params)
       .then((res) => {
         if (!active) return
         const raw = Array.isArray(res) ? res : (res?.items || res?.data || [])
@@ -196,9 +210,9 @@ export const HomePage = () => {
       })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [])
+  }, [activeCuisine, isVegetarianOnly])
 
-  // Live search with 300ms debounce
+  // Live search with 300ms debounce (for dropdown)
   const doSearch = useCallback(async (q) => {
     if (q.length < 2) {
       setSearchResults({ restaurants: [], menuItems: [] })
@@ -240,19 +254,21 @@ export const HomePage = () => {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Filter restaurant grid by cuisine + query (client-side for the cards)
-  const availableCuisines = useMemo(() => {
-    const types = new Set(restaurantsData.map((r) => r.cuisineType))
-    return Array.from(types).filter((t) => t != null)
-  }, [restaurantsData])
-
+  // The backend handles Cuisine and Vegetarian filtering.
+  // We apply the text search 'query' filtering client-side on the returned results for smooth UI.
   const filtered = useMemo(() => {
     return restaurantsData.filter((r) => {
-      const cuisineMatch = activeCuisine === null || r.cuisineType === activeCuisine
       const queryMatch = !query || r.name.toLowerCase().includes(query.toLowerCase()) || r.cuisineLabel.toLowerCase().includes(query.toLowerCase())
-      return cuisineMatch && queryMatch
+      return queryMatch
     })
-  }, [restaurantsData, query, activeCuisine])
+  }, [restaurantsData, query])
+
+  // Hardcode available cuisines so the category switcher doesn't disappear when filtered
+  const availableCuisines = useMemo(() => {
+    return Object.keys(CUISINE_DISPLAY)
+      .filter(k => k !== '0') // Remove 'All'
+      .map(k => Number(k))
+  }, [])
 
   const featured = filtered[0] ?? null
   const secondary = filtered.slice(1, 3)
@@ -303,7 +319,7 @@ export const HomePage = () => {
             </button>
           </form>
 
-          {/* Live results dropdown */}
+            {/* Live results dropdown */}
           {dropdownOpen && (
             <SearchDropdown
               results={searchResults}
@@ -313,6 +329,23 @@ export const HomePage = () => {
               onSelectMenuItem={handleDropdownMenuItemSelect}
             />
           )}
+        </div>
+
+        {/* Quick Filters */}
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            onClick={() => setIsVegetarianOnly(!isVegetarianOnly)}
+            className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 border transition-colors ${
+              isVegetarianOnly 
+                ? 'bg-green-100 border-green-200 text-green-800' 
+                : 'bg-surface-container-low border-slate-200 text-on-surface hover:bg-slate-100'
+            }`}
+          >
+            <span className={`inline-flex h-4 w-4 items-center justify-center rounded-sm border flex-shrink-0 ${isVegetarianOnly ? 'border-green-600' : 'border-slate-400'}`}>
+              <span className={`h-2 w-2 rounded-full ${isVegetarianOnly ? 'bg-green-600' : 'bg-transparent'}`} />
+            </span>
+            Vegetarian Only
+          </button>
         </div>
       </section>
 
