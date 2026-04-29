@@ -20,7 +20,7 @@ export const AgentLayout = ({ children, title = '' }) => {
   return (
     <div className="bg-background text-on-background h-screen w-full overflow-hidden flex font-sans">
       {/* ── Left sidebar ── */}
-      <aside className="hidden md:flex bg-white dark:bg-slate-900 h-screen w-64 border-r border-slate-200 dark:border-slate-800 shadow-sm flex-col py-6 z-20 shrink-0">
+      <aside className="hidden md:flex bg-white h-screen w-64 border-r border-slate-200 shadow-sm flex-col py-6 z-20 shrink-0">
         <div className="px-6 mb-8 flex items-center gap-3">
           <Link 
             to="/profile" 
@@ -30,8 +30,8 @@ export const AgentLayout = ({ children, title = '' }) => {
             {(user?.email?.[0] || 'A').toUpperCase()}
           </Link>
           <div>
-            <h1 className="text-sm font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h1>
-            <p className="text-[11px] text-slate-500">Delivery Dashboard</p>
+            <h1 className="text-sm font-bold text-slate-900 tracking-tight">QuickBite</h1>
+            <p className="text-xs text-slate-500">Delivery Dashboard</p>
           </div>
         </div>
 
@@ -42,7 +42,7 @@ export const AgentLayout = ({ children, title = '' }) => {
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'text-blue-600 dark:text-blue-400 bg-blue-50/60 dark:bg-blue-900/20 font-semibold' : 'text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive ? 'text-primary bg-primary/10 font-semibold' : 'text-slate-600 hover:text-primary hover:bg-slate-50'}`}
               >
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
                   {icon}
@@ -58,7 +58,7 @@ export const AgentLayout = ({ children, title = '' }) => {
               type="button"
               aria-disabled="true"
               title="Coming soon"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:text-primary hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-primary hover:bg-slate-50 transition-colors"
             >
               <span className="material-symbols-outlined">{icon}</span>
               {label}
@@ -79,7 +79,7 @@ export const AgentLayout = ({ children, title = '' }) => {
 
       {/* ── Main content ── */}
       <main className="flex-1 flex flex-col h-full overflow-hidden">
-        <header className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md w-full border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-6 py-3 h-16 sticky top-0 z-40">
+        <header className="bg-white/95 backdrop-blur-md w-full border-b border-slate-200 flex justify-between items-center px-6 py-3 h-16 sticky top-0 z-40">
           <div className="flex items-center gap-3">
             <Link 
               to="/profile" 
@@ -88,14 +88,14 @@ export const AgentLayout = ({ children, title = '' }) => {
             >
               {(user?.email?.[0] || 'A').toUpperCase()}
             </Link>
-            <h2 className="text-lg font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">QuickBite</h2>
           </div>
           <div className="flex items-center gap-4">
             <button className="bg-primary text-on-primary text-sm font-medium px-4 py-2 rounded-full flex items-center gap-2 shadow-sm active:scale-95 transition-transform">
               <span className="w-2 h-2 rounded-full bg-green-400" />
               Online
             </button>
-            <button className="text-slate-600 dark:text-slate-400 hover:text-blue-500 dark:hover:text-blue-300 flex items-center justify-center" aria-label="Help">
+            <button className="text-slate-600 hover:text-primary flex items-center justify-center" aria-label="Help">
               <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 0" }}>help_outline</span>
             </button>
           </div>
@@ -110,17 +110,17 @@ export const AgentLayout = ({ children, title = '' }) => {
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden bg-white dark:bg-slate-900 fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-2 pt-2 h-20 rounded-t-2xl border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+      <nav className="md:hidden bg-white fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-2 pt-2 h-20 rounded-t-2xl border-t border-slate-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
         {NAV_ITEMS.map(({ to, icon, label }) => {
           const isActive = location.pathname === to
           return (
             <Link
               key={to}
               to={to}
-              className={`flex flex-col items-center justify-center rounded-xl px-3 py-1.5 transition-transform active:scale-90 w-16 ${isActive ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`flex flex-col items-center justify-center rounded-xl px-3 py-1.5 transition-transform active:scale-90 w-16 ${isActive ? 'text-primary bg-primary/10' : 'text-slate-500'}`}
             >
               <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>{icon}</span>
-              <span className="text-[11px] font-medium mt-0.5">{label}</span>
+              <span className="text-xs font-medium mt-0.5">{label}</span>
             </Link>
           )
         })}
@@ -131,10 +131,10 @@ export const AgentLayout = ({ children, title = '' }) => {
             type="button"
             aria-disabled="true"
             title="Coming soon"
-            className="flex flex-col items-center justify-center text-slate-400 dark:text-slate-500 px-3 py-1.5 rounded-xl w-16 transition-transform active:scale-90"
+            className="flex flex-col items-center justify-center text-slate-500 px-3 py-1.5 rounded-xl w-16 transition-transform active:scale-90"
           >
             <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>{icon}</span>
-            <span className="text-[11px] font-medium mt-0.5">{label}</span>
+            <span className="text-xs font-medium mt-0.5">{label}</span>
           </button>
         ))}
       </nav>

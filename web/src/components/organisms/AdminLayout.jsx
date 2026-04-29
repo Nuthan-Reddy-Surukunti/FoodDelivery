@@ -23,11 +23,11 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
   return (
     <div className="bg-background text-on-background h-screen w-full overflow-hidden flex font-sans">
       {/* ── Fixed Left Sidebar ── */}
-      <aside className="hidden md:flex bg-white dark:bg-slate-900 h-screen w-64 border-r border-slate-200 dark:border-slate-800 shadow-sm dark:shadow-none flex-col p-4 z-20 shrink-0">
+      <aside className="hidden md:flex bg-white h-screen w-64 border-r border-slate-200 shadow-sm flex-col p-4 z-20 shrink-0">
         {/* Logo */}
         <div className="mb-8 px-4 flex flex-col gap-1">
           <div>
-            <h1 className="text-xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400">FoodDash Admin</h1>
+            <h1 className="text-xl font-bold tracking-tight text-slate-900">FoodDash Admin</h1>
             <p className="text-xs font-medium text-slate-500">Enterprise Control</p>
           </div>
         </div>
@@ -40,7 +40,7 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-200 ease-in-out ${isActive ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 font-semibold' : 'text-slate-500 dark:text-slate-400 font-medium hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-200 ease-in-out ${isActive ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900'}`}
               >
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
                   {icon}
@@ -68,13 +68,13 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
       {/* ── Main content ── */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Top header bar */}
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md w-full border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-8 h-16 sticky top-0 z-40">
+        <header className="bg-white/95 backdrop-blur-md w-full border-b border-slate-200 flex justify-between items-center px-8 h-16 sticky top-0 z-40">
           <div className="flex items-center gap-4">
             {/* Mobile menu icon */}
             <div className="md:hidden">
               <span className="material-symbols-outlined text-slate-600 cursor-pointer">menu</span>
             </div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title || 'Dashboard'}</h2>
+            <h2 className="text-lg font-bold text-slate-900">{title || 'Dashboard'}</h2>
           </div>
 
           <div className="flex items-center gap-6">
@@ -84,14 +84,14 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
                 <input type="text" placeholder={searchPlaceholder} className="pl-10 pr-4 py-2 bg-slate-100 rounded-full border-none focus:ring-2 focus:ring-primary text-sm w-64 placeholder:text-slate-400 outline-none" />
               </div>
             )}
-            <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
-              <button className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer active:opacity-70" aria-label="Notifications">
+            <div className="flex items-center gap-4 text-slate-500">
+              <button className="hover:text-primary transition-colors cursor-pointer active:opacity-70" aria-label="Notifications">
                 <span className="material-symbols-outlined">notifications</span>
               </button>
-              <button className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer active:opacity-70" aria-label="Settings">
+              <button className="hover:text-primary transition-colors cursor-pointer active:opacity-70" aria-label="Settings">
                 <span className="material-symbols-outlined">settings</span>
               </button>
-              <button className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors cursor-pointer active:opacity-70" aria-label="Help">
+              <button className="hover:text-primary transition-colors cursor-pointer active:opacity-70" aria-label="Help">
                 <span className="material-symbols-outlined">help</span>
               </button>
               <Link 

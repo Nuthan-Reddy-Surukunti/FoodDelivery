@@ -25,7 +25,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
   return (
     <div className="bg-background text-on-background h-screen w-full overflow-hidden flex font-sans">
       {/* ── Left sidebar ── */}
-      <aside className="hidden md:flex bg-white dark:bg-slate-900 h-screen w-64 border-r border-slate-200 dark:border-slate-800 shadow-sm flex-col py-6 z-20 shrink-0">
+      <aside className="hidden md:flex bg-white h-screen w-64 border-r border-slate-200 shadow-sm flex-col py-6 z-20 shrink-0">
         {/* Logo */}
         <div className="px-6 mb-8 flex items-center gap-3">
           <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
@@ -33,7 +33,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
           </div>
           <div>
             <h1 className="text-sm font-bold text-primary">QuickBite Partner</h1>
-            <p className="text-[11px] text-slate-500">Restaurant Dashboard</p>
+            <p className="text-xs text-slate-500">Restaurant Dashboard</p>
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isActive ? 'text-blue-600 dark:text-blue-400 font-semibold border-r-2 border-blue-600 bg-blue-50/50 dark:bg-blue-900/10 opacity-80' : 'text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isActive ? 'text-primary font-semibold bg-primary/10' : 'text-slate-600 hover:text-primary hover:bg-slate-50'}`}
               >
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
                   {icon}
@@ -61,7 +61,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
               type="button"
               aria-disabled="true"
               title="Coming soon"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200"
+              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-primary hover:bg-slate-50 transition-colors duration-200"
             >
               <span className="material-symbols-outlined">{icon}</span>
               {label}
@@ -72,7 +72,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
             type="button"
             aria-disabled="true"
             title="Coming soon"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 mt-auto"
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 hover:text-primary hover:bg-slate-50 transition-colors duration-200 mt-auto"
           >
             <span className="material-symbols-outlined">settings</span>
             Settings
@@ -93,21 +93,19 @@ export const PartnerLayout = ({ children, title = '' }) => {
       {/* ── Main content ── */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Top bar */}
-        <header className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md w-full border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-6 py-3 h-16 sticky top-0 z-40">
+        <header className="bg-white/95 backdrop-blur-md w-full border-b border-slate-200 flex justify-between items-center px-6 py-3 h-16 sticky top-0 z-40">
           <div className="flex items-center gap-4">
             <div className="md:hidden">
               <span className="material-symbols-outlined text-slate-600 cursor-pointer hover:text-blue-500 transition-colors">menu</span>
             </div>
-            <h2 className="text-lg font-black text-blue-700 dark:text-blue-400 tracking-tight">QuickBite</h2>
+            <h2 className="text-lg font-bold text-slate-900 tracking-tight">QuickBite</h2>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden sm:flex items-center bg-slate-100 rounded-full p-1 border border-slate-200/70">
-              <button className="px-4 py-1.5 rounded-full bg-primary text-white text-sm font-medium shadow-sm transition-transform active:scale-95 duration-100">Go Online</button>
-              <button className="px-4 py-1.5 rounded-full text-slate-500 hover:text-primary transition-colors text-sm font-medium">Go Offline</button>
             </div>
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <span className="material-symbols-outlined hover:text-blue-500 dark:hover:text-blue-300 cursor-pointer">notifications</span>
-              <span className="material-symbols-outlined hover:text-blue-500 dark:hover:text-blue-300 cursor-pointer">help_outline</span>
+            <div className="flex items-center gap-2 text-slate-600">
+              <span className="material-symbols-outlined hover:text-primary cursor-pointer">notifications</span>
+              <span className="material-symbols-outlined hover:text-primary cursor-pointer">help_outline</span>
             </div>
             <Link 
               to="/profile" 
@@ -139,7 +137,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
               className={`flex flex-col items-center justify-center rounded-xl px-3 py-1.5 tap-highlight-transparent transition-transform active:scale-90 ${isActive ? 'text-primary' : 'text-slate-400'}`}
             >
               <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>{icon}</span>
-              <span className="text-[11px] font-medium mt-0.5">{label}</span>
+              <span className="text-xs font-medium mt-0.5">{label}</span>
             </Link>
           )
         })}
@@ -151,7 +149,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
           className="flex flex-col items-center justify-center rounded-xl px-3 py-1.5 tap-highlight-transparent transition-transform active:scale-90 text-slate-400"
         >
           <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>bar_chart</span>
-          <span className="text-[11px] font-medium mt-0.5">Analytics</span>
+          <span className="text-xs font-medium mt-0.5">Analytics</span>
         </button>
       </nav>
     </div>

@@ -10,6 +10,13 @@ const VegDot = ({ isVeg }) => (
   </span>
 )
 
+const isGenericItemName = (name) => /^item\s*\d+$/i.test((name || '').trim())
+const getItemDisplayName = (item) => {
+  const candidates = [item.menuItemName, item.itemName, item.name, item.title]
+  const valid = candidates.find((value) => value && !isGenericItemName(value))
+  return valid || 'Menu Item'
+}
+
 export const CartPage = () => {
   const navigate = useNavigate()
   const { showSuccess, showError } = useNotification()
@@ -94,7 +101,7 @@ export const CartPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <VegDot isVeg={item.isVeg ?? true} />
-                        <h3 className="font-semibold text-on-surface text-sm">{item.name}</h3>
+                        <h3 className="font-semibold text-on-surface text-sm">{getItemDisplayName(item)}</h3>
                       </div>
                       <p className="text-primary font-bold text-base">₹{Number(item.price).toFixed(2)}</p>
                     </div>

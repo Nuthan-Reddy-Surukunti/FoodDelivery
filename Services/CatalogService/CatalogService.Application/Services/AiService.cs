@@ -1,8 +1,8 @@
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
+
 using System.Text.Json;
-using Google.GenAI;
-using Google.GenAI.Types;
-using GType = Google.GenAI.Types.Type;
+using System.Text.Json.Serialization;
 using CatalogService.Application.DTOs.Ai;
 using CatalogService.Application.DTOs.MenuItem;
 using CatalogService.Application.DTOs.Search;
@@ -210,83 +210,83 @@ Help users eat well, save money, and order effortlessly.
 Valid Cuisines (use exact spelling): Italian, Chinese, Indian, Mexican, American, Thai, Japanese, Continental, FastFood, Vegan, Mediterranean.
 ";
 
-    // ─── SDK Tool Definitions ─────────────────────────────────────────────
-    private static readonly List<Tool> SdkTools = new()
+    // ─── LM Studio Tool Definitions (OpenAI format) ───────────────────────────
+    private static readonly object[] LmTools = new object[]
     {
-        new Tool
-        {
-            FunctionDeclarations = new List<FunctionDeclaration>
-            {
-                new FunctionDeclaration
-                {
-                    Name        = "search_catalog",
-                    Description = "Search for restaurants. Use for restaurant-level queries. Set minRating=4.0 for 'best' requests.",
-                    Parameters  = new Schema
+        new {
+            type = "function",
+            function = new {
+                name        = "search_catalog",
+                description = "Search for restaurants. Use for restaurant-level queries. Set minRating=4.0 for 'best' requests.",
+                parameters  = new {
+                    type       = "object",
+                    properties = new Dictionary<string, object>
                     {
-                        Type       = GType.Object,
-                        Properties = new Dictionary<string, Schema>
-                        {
-                            { "query",           new Schema { Type = GType.String, Description = "Restaurant name keyword. Leave empty for cuisine-only searches." } },
-                            { "cuisineType",     new Schema { Type = GType.String, Description = "One of: Italian, Chinese, Indian, Mexican, American, Thai, Japanese, Continental, FastFood, Vegan, Mediterranean." } },
-                            { "minRating",       new Schema { Type = GType.Number, Description = "Minimum star rating (1-5). Use 4.0 for 'best' requests." } },
-                            { "city",            new Schema { Type = GType.String, Description = "City name to filter by." } },
-                            { "maxDeliveryTime", new Schema { Type = GType.Number, Description = "Maximum delivery time in minutes." } },
-                        }
+                        { "query",           new { type = "string",  description = "Restaurant name keyword. Leave empty for cuisine-only searches." } },
+                        { "cuisineType",     new { type = "string",  description = "One of: Italian, Chinese, Indian, Mexican, American, Thai, Japanese, Continental, FastFood, Vegan, Mediterranean." } },
+                        { "minRating",       new { type = "number",  description = "Minimum star rating (1-5). Use 4.0 for 'best' requests." } },
+                        { "city",            new { type = "string",  description = "City name to filter by." } },
+                        { "maxDeliveryTime", new { type = "number",  description = "Maximum delivery time in minutes." } },
                     }
-                },
-                new FunctionDeclaration
-                {
-                    Name        = "search_menu_items",
-                    Description = "Search for specific food items, dishes, or ingredients. Use for food/dish-level queries.",
-                    Parameters  = new Schema
-                    {
-                        Type       = GType.Object,
-                        Properties = new Dictionary<string, Schema>
-                        {
-                            { "query",        new Schema { Type = GType.String,  Description = "Dish name, ingredient, or keyword. Can be empty if filtering by cuisine." } },
-                            { "cuisineType",  new Schema { Type = GType.String,  Description = "Filter by cuisine: Italian, Chinese, Indian, Mexican, American, Thai, Japanese, Continental, FastFood, Vegan, Mediterranean." } },
-                            { "maxPrice",     new Schema { Type = GType.Number,  Description = "Maximum item price (e.g. 300 for 'under ₹300')." } },
-                            { "minPrice",     new Schema { Type = GType.Number,  Description = "Minimum item price." } },
-                            { "isVeg",        new Schema { Type = GType.Boolean, Description = "true for vegetarian only, false for non-veg only." } },
-                            { "restaurantId", new Schema { Type = GType.String,  Description = "Optional restaurant UUID to search within." } },
-                        }
-                    }
-                },
-                new FunctionDeclaration
-                {
-                    Name        = "get_restaurant_menu",
-                    Description = "Get all menu items for a specific restaurant. Only use when you have a restaurantId from a prior search result.",
-                    Parameters  = new Schema
-                    {
-                        Type       = GType.Object,
-                        Required   = new List<string> { "restaurantId" },
-                        Properties = new Dictionary<string, Schema>
-                        {
-                            { "restaurantId", new Schema { Type = GType.String, Description = "UUID of the restaurant from a previous search_catalog result." } },
-                        }
-                    }
-                },
-                new FunctionDeclaration
-                {
-                    Name        = "get_order_status",
-                    Description = "Get current status of the user's most recent or a specific order. Use when user asks 'where is my order', 'track order', or 'order status'.",
-                    Parameters  = new Schema
-                    {
-                        Type       = GType.Object,
-                        Properties = new Dictionary<string, Schema>
-                        {
-                            { "orderId", new Schema { Type = GType.String, Description = "Optional specific order UUID. Leave empty to fetch the most recent order." } },
-                        }
-                    }
-                },
-                new FunctionDeclaration
-                {
-                    Name        = "get_last_order",
-                    Description = "Retrieve the user's last placed order for reordering. Use when user says 'reorder', 'same as last time', or 'my last order'.",
-                    Parameters  = new Schema { Type = GType.Object, Properties = new Dictionary<string, Schema>() }
-                },
+                }
             }
-        }
+        },
+        new {
+            type = "function",
+            function = new {
+                name        = "search_menu_items",
+                description = "Search for specific food items, dishes, or ingredients. Use for food/dish-level queries.",
+                parameters  = new {
+                    type       = "object",
+                    properties = new Dictionary<string, object>
+                    {
+                        { "query",        new { type = "string",  description = "Dish name, ingredient, or keyword. Can be empty if filtering by cuisine." } },
+                        { "cuisineType",  new { type = "string",  description = "Filter by cuisine: Italian, Chinese, Indian, Mexican, American, Thai, Japanese, Continental, FastFood, Vegan, Mediterranean." } },
+                        { "maxPrice",     new { type = "number",  description = "Maximum item price (e.g. 300 for 'under ₹300')." } },
+                        { "minPrice",     new { type = "number",  description = "Minimum item price." } },
+                        { "isVeg",        new { type = "boolean", description = "true for vegetarian only, false for non-veg only." } },
+                        { "restaurantId", new { type = "string",  description = "Optional restaurant UUID to search within." } },
+                    }
+                }
+            }
+        },
+        new {
+            type = "function",
+            function = new {
+                name        = "get_restaurant_menu",
+                description = "Get all menu items for a specific restaurant. Only use when you have a restaurantId from a prior search result.",
+                parameters  = new {
+                    type       = "object",
+                    required   = new[] { "restaurantId" },
+                    properties = new Dictionary<string, object>
+                    {
+                        { "restaurantId", new { type = "string", description = "UUID of the restaurant from a previous search_catalog result." } },
+                    }
+                }
+            }
+        },
+        new {
+            type = "function",
+            function = new {
+                name        = "get_order_status",
+                description = "Get current status of the user's most recent or a specific order. Use when user asks 'where is my order', 'track order', or 'order status'.",
+                parameters  = new {
+                    type       = "object",
+                    properties = new Dictionary<string, object>
+                    {
+                        { "orderId", new { type = "string", description = "Optional specific order UUID. Leave empty to fetch the most recent order." } },
+                    }
+                }
+            }
+        },
+        new {
+            type = "function",
+            function = new {
+                name        = "get_last_order",
+                description = "Retrieve the user's last placed order for reordering. Use when user says 'reorder', 'same as last time', or 'my last order'.",
+                parameters  = new { type = "object", properties = new { } }
+            }
+        },
     };
 
     public AiService(
@@ -303,126 +303,124 @@ Valid Cuisines (use exact spelling): Italian, Chinese, Indian, Mexican, American
         _logger = logger;
     }
 
+    // ─── LM Studio base URL ───────────────────────────────────────────────────
+    private string LmBaseUrl => _config["LmStudio:BaseUrl"] ?? "http://127.0.0.1:1234";
+    private string LmModel   => _config["LmStudio:Model"]   ?? "qwen/qwen3-1.7b";
+
     // ─── Public Entry Point ────────────────────────────────────────────────────
     public async Task<AiChatResponseDto> GetChatResponseAsync(
         AiChatRequestDto request,
         Guid? userId = null,
         string? authToken = null)
     {
-        var apiKey = _config["GEMINI_API_KEY"];
-        if (string.IsNullOrEmpty(apiKey))
+        // Build OpenAI-format message list: system prompt + conversation history
+        var messages = new List<object>
         {
-            _logger.LogError("GEMINI_API_KEY is not configured.");
-            return new AiChatResponseDto { Text = "Sorry, AI features are temporarily unavailable." };
+            new { role = "system", content = SystemPrompt }
+        };
+
+        foreach (var m in request.Messages)
+        {
+            // Normalize Gemini-style 'model' role → OpenAI 'assistant'
+            var role = m.Role == "model" ? "assistant" : m.Role;
+            messages.Add(new { role, content = m.Text ?? string.Empty });
         }
 
-        var contents = request.Messages.Select(m => new Content
-        {
-            Role = m.Role == "model" ? "model" : "user",
-            Parts = new List<Part> { new Part { Text = m.Text } }
-        }).ToList();
-
-        return await RunGeminiLoopAsync(apiKey, contents, userId, authToken);
+        return await RunLocalLlmLoopAsync(messages, userId, authToken);
     }
 
-    // ─── Core Gemini Function-Calling Loop (Google.GenAI SDK) ────────────────
-    private async Task<AiChatResponseDto> RunGeminiLoopAsync(
-        string apiKey,
-        List<Content> contents,
+    // ─── Core LM Studio Function-Calling Loop (OpenAI-compatible) ────────────
+    private async Task<AiChatResponseDto> RunLocalLlmLoopAsync(
+        List<object> messages,
         Guid? userId,
         string? authToken,
         int maxIterations = 5)
     {
         var responseDto = new AiChatResponseDto();
-
-        using var geminiClient = new Client(apiKey: apiKey);
+        var jsonOpts    = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
         for (int i = 0; i < maxIterations; i++)
         {
+            // Build request body — thinking enabled via budget_tokens
+            var requestBody = new
+            {
+                model       = LmModel,
+                messages,
+                tools       = LmTools,
+                tool_choice = "auto",
+                thinking    = new { type = "enabled", budget_tokens = 1024 },
+                max_tokens  = 2048,
+                temperature = 0.7,
+                stream      = false
+            };
 
-
-            GenerateContentResponse? sdkResponse;
+            JsonElement root;
             try
             {
-                sdkResponse = await geminiClient.Models.GenerateContentAsync(
-                    model:    "gemini-3-flash-preview",
-                    contents: contents,
-                    config:   new GenerateContentConfig
-                    {
-                        SystemInstruction = new Content
-                        {
-                            Role  = "user",
-                            Parts = new List<Part> { new Part { Text = SystemPrompt } }
-                        },
-                        Tools = SdkTools
-                    });
+                var httpResponse = await _httpClient.PostAsJsonAsync(
+                    $"{LmBaseUrl}/v1/chat/completions", requestBody);
+
+                if (!httpResponse.IsSuccessStatusCode)
+                {
+                    var err = await httpResponse.Content.ReadAsStringAsync();
+                    _logger.LogError("LM Studio returned {Code}: {Body}", (int)httpResponse.StatusCode, err);
+                    return new AiChatResponseDto { Text = "Sorry, I'm having trouble thinking right now." };
+                }
+
+                root = (await JsonDocument.ParseAsync(
+                    await httpResponse.Content.ReadAsStreamAsync())).RootElement.Clone();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error calling Gemini SDK");
+                _logger.LogError(ex, "Error calling LM Studio at {Url}", LmBaseUrl);
                 return new AiChatResponseDto { Text = "Sorry, I'm having trouble connecting right now." };
             }
 
-            var candidates = sdkResponse?.Candidates;
-            if (candidates == null || candidates.Count == 0)
-                return new AiChatResponseDto { Text = "I couldn't understand that — could you rephrase?" };
+            // Parse response
+            var choice       = root.GetProperty("choices")[0];
+            var finishReason = choice.GetProperty("finish_reason").GetString();
+            var message      = choice.GetProperty("message");
+            var content      = message.TryGetProperty("content", out var c) ? c.GetString() : null;
 
-            var modelContent = candidates[0].Content;
-            var parts        = modelContent?.Parts ?? new List<Part>();
-
-            // Collect function calls and text from this turn
-            var functionCalls = new List<(string name, JsonElement args)>();
-            string? textFallback = null;
-
-            foreach (var part in parts)
+            // ── Final text answer (no tool calls) ────────────────────────────
+            if (finishReason != "tool_calls")
             {
-                if (part.FunctionCall != null)
-                {
-                    var name = part.FunctionCall.Name ?? string.Empty;
-                    // Serialize dict → JsonElement so all existing tool methods stay unchanged
-                    var argsJson = JsonSerializer.Serialize(
-                        part.FunctionCall.Args ?? new Dictionary<string, object?>());
-                    functionCalls.Add((name, JsonDocument.Parse(argsJson).RootElement.Clone()));
-                }
-                else if (part.Text != null)
-                {
-                    textFallback = part.Text;
-                }
-            }
-
-            // No function calls → this is the final text answer
-            if (functionCalls.Count == 0)
-            {
-                responseDto.Text = textFallback ?? "How else can I help you today?";
+                responseDto.Text = !string.IsNullOrWhiteSpace(content)
+                    ? content!
+                    : "How else can I help you today?";
                 return responseDto;
             }
 
-            // Add model's turn (with function calls) to history
-            if (modelContent != null)
-                contents.Add(modelContent);
+            // ── Tool calls ───────────────────────────────────────────────────
+            var toolCalls = message.GetProperty("tool_calls");
 
-            // Execute all function calls and collect results
-            var functionResultParts = new List<Part>();
-
-            foreach (var (name, args) in functionCalls)
+            // Add assistant turn (with tool_calls) to history
+            messages.Add(new
             {
-                var result     = await ExecuteToolAsync(name, args, userId, authToken, responseDto);
-                var resultJson = JsonSerializer.Serialize(result);
-                var resultDict = JsonSerializer.Deserialize<Dictionary<string, object>>(resultJson)
-                                 ?? new Dictionary<string, object> { { "output", resultJson } };
+                role       = "assistant",
+                content    = content ?? string.Empty,
+                tool_calls = JsonSerializer.Deserialize<List<JsonElement>>(toolCalls.GetRawText())
+            });
 
-                functionResultParts.Add(new Part
+            // Execute each tool and append results
+            foreach (var tc in toolCalls.EnumerateArray())
+            {
+                var toolCallId = tc.GetProperty("id").GetString() ?? "";
+                var fn         = tc.GetProperty("function");
+                var toolName   = fn.GetProperty("name").GetString() ?? "";
+                var argsRaw    = fn.GetProperty("arguments").GetString() ?? "{}";
+                var args       = JsonDocument.Parse(argsRaw).RootElement.Clone();
+
+                var result     = await ExecuteToolAsync(toolName, args, userId, authToken, responseDto);
+                var resultJson = JsonSerializer.Serialize(result);
+
+                messages.Add(new
                 {
-                    FunctionResponse = new FunctionResponse { Name = name, Response = resultDict }
+                    role         = "tool",
+                    tool_call_id = toolCallId,
+                    content      = resultJson
                 });
             }
-
-            // Send function results back for Gemini to reason about
-            contents.Add(new Content
-            {
-                Role  = "user",
-                Parts = functionResultParts
-            });
         }
 
         return new AiChatResponseDto { Text = "I processed your request but couldn't formulate a response. Please try again." };
@@ -712,27 +710,34 @@ Valid Cuisines (use exact spelling): Italian, Chinese, Indian, Mexican, American
         };
     }
 
-    // ─── Connectivity Check ───────────────────────────────────────────────────
+    // ─── Connectivity Check (pings LM Studio native /api/v1/models) ───────────
     public async Task<bool> CheckConnectivityAsync()
     {
         try
         {
-            var apiKey = _config["GEMINI_API_KEY"];
-            if (string.IsNullOrEmpty(apiKey)) return false;
+            var response = await _httpClient.GetAsync($"{LmBaseUrl}/api/v1/models");
+            if (!response.IsSuccessStatusCode) return false;
 
-            using var geminiClient = new Client(apiKey: apiKey);
-            var response = await geminiClient.Models.GenerateContentAsync(
-                model:    "gemini-3-flash-preview",
-                contents: "Hi",
-                config:   null);
+            var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync());
 
-            return response?.Candidates?.Count > 0;
+            // LM Studio native API returns { "models": [...] }
+            // A model is considered "ready" when it has at least one loaded instance
+            if (!body.RootElement.TryGetProperty("models", out var models)) return false;
+
+            foreach (var model in models.EnumerateArray())
+            {
+                if (model.TryGetProperty("loaded_instances", out var instances)
+                    && instances.GetArrayLength() > 0)
+                    return true;
+            }
+
+            return false; // No model is actually loaded/running
         }
         catch (Exception ex)
         {
-            // Log the real Gemini error so we can debug model/key issues
-            _logger.LogWarning("Gemini connectivity check failed: {Type} — {Message}", ex.GetType().Name, ex.Message);
+            _logger.LogWarning("LM Studio connectivity check failed: {Type} — {Message}", ex.GetType().Name, ex.Message);
             return false;
         }
     }
 }
+

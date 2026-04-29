@@ -1,18 +1,12 @@
-import { useMemo, useState, useEffect } from 'react'
-import { Button } from '../atoms/Button'
+import { useState, useEffect } from 'react'
 import { AddressForm } from './AddressForm'
-import { AddressList } from './AddressList'
-import { StepperIndicator } from '../molecules/StepperIndicator'
 import orderApi from '../../services/orderApi'
 import { useNotification } from '../../hooks/useNotification'
 
-const steps = ['Address', 'Review']
-
-export const CheckoutForm = ({ timeSlots = [], onSubmit, loading = false }) => {
-  const [currentStep, setCurrentStep] = useState(0)
+export const CheckoutForm = ({ onCheckoutDataChange }) => {
   const [addresses, setAddresses] = useState([])
   const [selectedAddressId, setSelectedAddressId] = useState(null)
-  const [selectedSlot, setSelectedSlot] = useState(null)
+  const [selectedDeliveryOption, setSelectedDeliveryOption] = useState('standard')
   const [loadingAddresses, setLoadingAddresses] = useState(true)
   const [showAddressForm, setShowAddressForm] = useState(false)
   const [isSavingAddress, setIsSavingAddress] = useState(false)
@@ -21,6 +15,13 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit, loading = false }) => {
   useEffect(() => {
     loadAddresses()
   }, [])
+
+  useEffect(() => {
+    onCheckoutDataChange?.({
+      addressId: selectedAddressId,
+      deliveryOption: selectedDeliveryOption,
+    })
+  }, [selectedAddressId, selectedDeliveryOption, onCheckoutDataChange])
 
   const loadAddresses = async () => {
     try {
@@ -64,82 +65,129 @@ export const CheckoutForm = ({ timeSlots = [], onSubmit, loading = false }) => {
   }
 
   const selectedAddressObj = addresses.find(a => a.id === selectedAddressId)
-  const finalAddress = selectedAddressObj
-    ? `${selectedAddressObj.street}, ${selectedAddressObj.city}, ${selectedAddressObj.state} - ${selectedAddressObj.pinCode}`
-    : ''
 
-  const canProceed = useMemo(() => {
-    if (currentStep === 0) return !!selectedAddressId && !showAddressForm
-    return true
-  }, [currentStep, selectedAddressId, showAddressForm])
-
-  const next = () => setCurrentStep((s) => Math.min(s + 1, steps.length - 1))
-  const back = () => setCurrentStep((s) => Math.max(s - 1, 0))
-
-  const handleSubmit = () => {
-    if (loading) return
-    onSubmit?.({ 
-      addressId: selectedAddressId,
-      address: finalAddress, 
-      slot: selectedSlot 
-    })
+  const addressIcon = (label) => {
+    const lower = (label || '').toLowerCase()
+    if (lower.includes('work') || lower.includes('office')) return 'work'
+    return 'home'
   }
 
   return (
-    <div className="space-y-4 rounded-2xl border border-outline p-4">
-      <StepperIndicator steps={steps} currentStep={currentStep} />
-
-      {currentStep === 0 ? (
-        <div className="space-y-4">
-          {!loadingAddresses && addresses.length > 0 && !showAddressForm && (
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold">Select a Saved Address</h3>
-                <Button variant="secondary" onClick={() => setShowAddressForm(true)}>
-                  + Add New
-                </Button>
-              </div>
-              <AddressList
-                addresses={addresses}
-                selectable
-                selectedId={selectedAddressId}
-                onSelect={(addr) => setSelectedAddressId(addr.id)}
-              />
-            </div>
-          )}
-
-          {showAddressForm && !loadingAddresses && (
-            <div className="mb-4">
-              <AddressForm 
-                onSubmit={handleAddressSubmit} 
-                onCancel={addresses.length > 0 ? () => setShowAddressForm(false) : undefined}
-                loading={isSavingAddress} 
-              />
-            </div>
-          )}
-
-          {loadingAddresses && (
-            <div className="text-center text-on-surface-variant">Loading addresses...</div>
+    <div className="space-y-6">
+      <section className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-slate-100">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-title-lg font-semibold text-on-surface">Delivery Address</h2>
+          {addresses.length > 0 && !showAddressForm && (
+            <button
+              type="button"
+              onClick={() => setShowAddressForm(true)}
+              className="inline-flex items-center gap-1.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity"
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Add New
+            </button>
           )}
         </div>
-      ) : null}
 
-      {currentStep === 1 ? (
-        <div className="rounded-xl bg-surface-dim p-3 text-sm">
-          <p><span className="font-semibold">Address:</span> {finalAddress}</p>
-        </div>
-      ) : null}
-
-      <div className="flex justify-between">
-        <Button variant="secondary" onClick={back} disabled={currentStep === 0 || loading}>Back</Button>
-        {currentStep < steps.length - 1 ? (
-          <Button onClick={next} disabled={!canProceed}>Next</Button>
-        ) : (
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Placing Order...' : 'Place Order'}
-          </Button>
+        {loadingAddresses && (
+          <div className="text-sm text-on-surface-variant">Loading addresses...</div>
         )}
-      </div>
+
+        {!loadingAddresses && showAddressForm && (
+          <AddressForm
+            onSubmit={handleAddressSubmit}
+            onCancel={addresses.length > 0 ? () => setShowAddressForm(false) : undefined}
+            loading={isSavingAddress}
+          />
+        )}
+
+        {!loadingAddresses && !showAddressForm && addresses.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {addresses.map((address) => {
+              const isSelected = selectedAddressId === address.id
+              return (
+                <button
+                  key={address.id}
+                  type="button"
+                  onClick={() => setSelectedAddressId(address.id)}
+                  className={`relative text-left p-4 rounded-xl transition-colors border ${isSelected ? 'border-2 border-primary bg-surface-bright' : 'border border-outline-variant bg-surface-container-lowest hover:bg-surface-container-low'}`}
+                >
+                  <div className="absolute top-4 right-4">
+                    <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: isSelected ? "'FILL' 1" : "'FILL' 0" }}>
+                      {isSelected ? 'radio_button_checked' : 'radio_button_unchecked'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="material-symbols-outlined text-on-surface-variant text-[20px]">{addressIcon(address.label)}</span>
+                    <span className="font-semibold text-sm text-on-surface">{address.label || 'Address'}</span>
+                    {address.isDefault && (
+                      <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-xs font-medium">Default</span>
+                    )}
+                  </div>
+
+                  <p className="text-sm text-on-surface-variant leading-6">
+                    {address.street}, {address.city}, {address.state} {address.pinCode}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        {!loadingAddresses && !showAddressForm && addresses.length === 0 && (
+          <div className="rounded-xl border border-outline-variant bg-surface-container-low p-4">
+            <p className="text-sm text-on-surface-variant mb-3">No saved addresses. Add one to continue.</p>
+            <button
+              type="button"
+              onClick={() => setShowAddressForm(true)}
+              className="inline-flex items-center gap-1.5 text-primary text-sm font-semibold hover:opacity-80 transition-opacity"
+            >
+              <span className="material-symbols-outlined text-base">add</span>
+              Add Address
+            </button>
+          </div>
+        )}
+      </section>
+
+      <section className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-slate-100">
+        <h2 className="text-title-lg font-semibold text-on-surface mb-6">Delivery Options</h2>
+        <div className="space-y-4">
+          <label className="flex items-start gap-4 p-4 rounded-xl border border-outline-variant bg-surface-container-lowest cursor-pointer hover:bg-surface-container-low transition-colors">
+            <input
+              className="mt-1 text-primary focus:ring-primary border-outline"
+              name="delivery_option"
+              type="radio"
+              checked={selectedDeliveryOption === 'standard'}
+              onChange={() => setSelectedDeliveryOption('standard')}
+            />
+            <div className="flex-1">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-semibold text-sm text-on-surface">Standard Delivery</span>
+                <span className="font-semibold text-sm text-on-surface">Free</span>
+              </div>
+              <p className="text-sm text-on-surface-variant">Estimated arrival: 30-45 mins</p>
+            </div>
+          </label>
+
+          <label className="flex items-start gap-4 p-4 rounded-xl border border-outline-variant bg-surface-container-lowest cursor-pointer hover:bg-surface-container-low transition-colors">
+            <input
+              className="mt-1 text-primary focus:ring-primary border-outline"
+              name="delivery_option"
+              type="radio"
+              checked={selectedDeliveryOption === 'priority'}
+              onChange={() => setSelectedDeliveryOption('priority')}
+            />
+            <div className="flex-1">
+              <div className="flex justify-between items-center mb-1">
+                <span className="font-semibold text-sm text-on-surface">Priority Delivery</span>
+                <span className="font-semibold text-sm text-on-surface">+₹49</span>
+              </div>
+              <p className="text-sm text-on-surface-variant">Delivered directly to you. Est: 20-30 mins</p>
+            </div>
+          </label>
+        </div>
+      </section>
     </div>
   )
 }

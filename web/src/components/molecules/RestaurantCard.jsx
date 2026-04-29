@@ -39,6 +39,7 @@ export const RestaurantCard = ({ restaurant, onOpen }) => {
               <span className="text-5xl">{emoji}</span>
             </div>
           )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/10 to-transparent pointer-events-none" />
           {/* Delivery time badge */}
           {restaurant.deliveryTime && restaurant.deliveryTime !== 'N/A' && (
             <div className="absolute bottom-2 right-2 bg-black/60 text-white text-xs font-semibold px-2 py-1 rounded-lg backdrop-blur-sm flex items-center gap-1">

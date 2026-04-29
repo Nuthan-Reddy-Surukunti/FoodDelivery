@@ -37,6 +37,36 @@ const isActive = (status) =>
 const fmtDate = (iso) =>
   iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) : ''
 
+const fmtShortDate = (iso) =>
+  iso ? new Date(iso).toLocaleDateString('en-IN', { dateStyle: 'medium' }) : ''
+
+const fmtShortTime = (iso) =>
+  iso ? new Date(iso).toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true }) : ''
+
+const PAYMENT_METHOD_LABEL = {
+  1: 'Digital Wallet',
+  Wallet: 'Digital Wallet',
+  2: 'Credit / Debit Card',
+  Card: 'Credit / Debit Card',
+  3: 'Cash on Delivery',
+  CashOnDelivery: 'Cash on Delivery',
+}
+
+const buildRestaurantTitle = (restaurantName) => {
+  if (!restaurantName) return 'Order details'
+  return `Order from ${restaurantName}`
+}
+
+const isGenericItemName = (name) => /^item\s*\d+$/i.test((name || '').trim())
+
+const extractItemNames = (order) => {
+  const items = Array.isArray(order.items) ? order.items : []
+  const names = items
+    .map((item) => item.menuItemName || item.name || item.itemName)
+    .filter((name) => name && !isGenericItemName(name))
+  return [...new Set(names)]
+}
+
 const normalizeOrder = (item) => ({
   id: item.orderId || item.id,
   restaurantId: item.restaurantId,
@@ -45,6 +75,10 @@ const normalizeOrder = (item) => ({
   status: item.orderStatus || item.status || 'Unknown',
   createdAt: item.createdAt || item.placedAt,
   itemCount: item.items?.length ?? item.itemCount ?? 0,
+  itemNames: extractItemNames(item),
+  deliveryAddress: item.deliveryAddress,
+  estimatedDeliveryAt: item.estimatedDeliveryAt || item.estimatedDeliveryTime,
+  paymentMethod: item.payment?.paymentMethod || item.paymentMethod,
   imageUrl: item.restaurantImageUrl ?? null,
 })
 
@@ -117,6 +151,13 @@ export const MyOrdersPage = () => {
     return true
   })
 
+  const summarizeAddress = (address) => {
+    if (!address) return 'Delivery address not available'
+    const parts = [address.street || address.addressLine1, address.city, address.state, address.pincode || address.pinCode]
+      .filter(Boolean)
+    return parts.length ? parts.join(', ') : 'Delivery address not available'
+  }
+
   return (
     <div className="bg-background min-h-screen">
       <main className="pt-8 px-6 pb-16 max-w-5xl mx-auto w-full">
@@ -177,37 +218,72 @@ export const MyOrdersPage = () => {
             return (
               <div
                 key={order.id}
-                className={`bg-white border border-outline-variant rounded-xl p-6 shadow-sm flex flex-col md:flex-row gap-6 items-start md:items-center justify-between ${cancelled ? 'opacity-70' : ''}`}
+                className={`bg-white border border-outline-variant rounded-2xl p-6 shadow-sm flex flex-col gap-5 ${cancelled ? 'opacity-70' : ''}`}
               >
-                <div className="flex gap-5 items-center w-full md:w-auto">
-                  {/* Restaurant image placeholder */}
-                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center text-3xl">
-                    {order.imageUrl ? (
-                      <img src={order.imageUrl} alt={order.restaurantName} className={`w-full h-full object-cover ${cancelled ? 'grayscale' : ''}`} />
-                    ) : '🏪'}
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className={`${badgeClass} text-xs font-semibold px-2.5 py-1 rounded-full`}>{statusText}</span>
-                      <span className="text-on-surface-variant text-sm">#{String(order.id).split('-')[0].toUpperCase()}</span>
+                <div className="flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
+                  <div className="flex gap-5 items-start w-full lg:w-auto">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center text-3xl border border-outline-variant/50">
+                      {order.imageUrl ? (
+                        <img src={order.imageUrl} alt={order.restaurantName} className={`w-full h-full object-cover ${cancelled ? 'grayscale' : ''}`} />
+                      ) : '🏪'}
                     </div>
-                    <h2 className="text-xl font-semibold text-on-surface leading-tight">
-                      {order.restaurantName || 'Restaurant'}
-                    </h2>
-                    <p className="text-sm text-on-surface-variant">
-                      {order.itemCount > 0 ? `${order.itemCount} item${order.itemCount > 1 ? 's' : ''} · ` : ''}{fmtDate(order.createdAt)}
-                    </p>
+                    <div className="flex flex-col gap-2 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className={`${badgeClass} text-xs font-semibold px-2.5 py-1 rounded-full`}>{statusText}</span>
+                        <span className="text-on-surface-variant text-sm">#{String(order.id).split('-')[0].toUpperCase()}</span>
+                      </div>
+                      <h2 className="text-xl font-semibold text-on-surface leading-tight">
+                        {buildRestaurantTitle(order.restaurantName)}
+                      </h2>
+                      <p className="text-sm text-on-surface-variant">
+                        {order.itemNames?.length > 0
+                          ? `${order.itemNames.slice(0, 3).join(', ')}${order.itemNames.length > 3 ? ` +${order.itemNames.length - 3} more` : ''}`
+                          : (order.itemCount > 0 ? `${order.itemCount} item${order.itemCount > 1 ? 's' : ''}` : 'No items listed')}
+                      </p>
+                      <div className="flex flex-wrap gap-2 text-xs text-on-surface-variant">
+                        <span className="rounded-full bg-slate-50 border border-slate-200 px-3 py-1">
+                          Ordered {fmtShortDate(order.createdAt)}{fmtShortTime(order.createdAt) ? ` · ${fmtShortTime(order.createdAt)}` : ''}
+                        </span>
+                        <span className="rounded-full bg-slate-50 border border-slate-200 px-3 py-1">
+                          Payment: {PAYMENT_METHOD_LABEL[order.paymentMethod] || 'Cash on Delivery'}
+                        </span>
+                        <span className="rounded-full bg-slate-50 border border-slate-200 px-3 py-1">
+                          Total ₹{order.amount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 w-full lg:max-w-3xl">
+                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">Delivery</p>
+                      <p className="text-sm text-on-surface line-clamp-2">{summarizeAddress(order.deliveryAddress)}</p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">Items</p>
+                      <p className="text-sm text-on-surface line-clamp-2">
+                        {order.itemNames?.length > 0
+                          ? order.itemNames.slice(0, 2).join(', ')
+                          : `${order.itemCount} item${order.itemCount > 1 ? 's' : ''}`}
+                      </p>
+                    </div>
+                    <div className="rounded-xl bg-slate-50 border border-slate-200 p-3 sm:col-span-2 lg:col-span-1">
+                      <p className="text-xs uppercase tracking-wide text-slate-500 font-semibold mb-1">ETA</p>
+                      <p className="text-sm text-on-surface">
+                        {order.estimatedDeliveryAt ? fmtDate(order.estimatedDeliveryAt) : (isActive(order.status) ? 'Tracking in progress' : 'Completed')}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="flex flex-row md:flex-col items-center md:items-end justify-between w-full md:w-auto gap-4 md:gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100">
                   <div className={`text-xl font-bold text-on-surface ${cancelled ? 'line-through text-outline' : ''}`}>
                     ₹{order.amount.toFixed(2)}
                   </div>
                   {isActive(order.status) ? (
                     <Link
                       to={`/track/${order.id}`}
-                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                     >
                       <span className="material-symbols-outlined text-sm">local_shipping</span>
                       Track Order
@@ -223,18 +299,27 @@ export const MyOrdersPage = () => {
                       </button>
                     </div>
                   ) : order.status === 'Delivered' ? (
-                    <button
-                      onClick={() => handleReorder(order.id)}
-                      disabled={reordering === order.id}
-                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60"
-                    >
-                      <span className="material-symbols-outlined text-sm">replay</span>
-                      {reordering === order.id ? 'Reordering...' : 'Reorder'}
-                    </button>
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                      <Link
+                        to={`/track/${order.id}`}
+                        className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+                      >
+                        <span className="material-symbols-outlined text-sm">receipt_long</span>
+                        View Status
+                      </Link>
+                      <button
+                        onClick={() => handleReorder(order.id)}
+                        disabled={reordering === order.id}
+                        className="bg-slate-100 hover:bg-slate-200 text-on-surface text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-60 w-full sm:w-auto justify-center"
+                      >
+                        <span className="material-symbols-outlined text-sm">replay</span>
+                        {reordering === order.id ? 'Reordering...' : 'Reorder'}
+                      </button>
+                    </div>
                   ) : (
                     <Link
                       to={`/track/${order.id}`}
-                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2"
+                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                     >
                       <span className="material-symbols-outlined text-sm">refresh</span>
                       View Details

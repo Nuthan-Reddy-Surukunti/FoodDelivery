@@ -295,10 +295,11 @@ export const HomePage = () => {
   return (
     <div className="bg-background min-h-screen">
       {/* ── Hero Search Section ── */}
-      <section className="px-6 pt-8 pb-6 max-w-7xl mx-auto animate-fade-in-up stagger-1">
-        <h1 className="text-[32px] font-bold text-gradient-primary leading-tight max-w-md mb-6 inline-block">
+      <section className="px-6 pt-8 pb-6 max-w-7xl mx-auto">
+        <h1 className="text-display-xl font-bold text-slate-900 leading-tight max-w-xl mb-3">
           What are you craving today?
         </h1>
+        <p className="text-body-lg text-slate-600 mb-6">Discover top-rated restaurants and order in minutes.</p>
 
         {/* Search box with live dropdown */}
         <div className="relative w-full max-w-2xl" ref={searchContainerRef}>
@@ -314,7 +315,7 @@ export const HomePage = () => {
               onFocus={() => query.length >= 2 && setDropdownOpen(true)}
               placeholder="Search restaurants or dishes..."
               autoComplete="off"
-              className="block w-full pl-12 pr-32 py-4 bg-surface-container-low border border-slate-200 rounded-full text-base text-on-surface placeholder:text-on-surface-variant focus:ring-2 focus:ring-primary focus:border-primary shadow-sm transition-shadow outline-none"
+              className="block w-full pl-12 pr-32 py-4 bg-white border border-slate-300 rounded-full text-base text-slate-900 placeholder:text-slate-500 focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm transition-shadow outline-none"
             />
             <button
               type="submit"
@@ -356,7 +357,7 @@ export const HomePage = () => {
 
       {/* ── Cuisine Carousel ── */}
       {availableCuisines.length > 0 && (
-        <section className="pb-8 animate-fade-in-up stagger-2">
+        <section className="pb-8">
           <div className="px-6 max-w-7xl mx-auto mb-4">
             <h2 className="text-xl font-semibold text-on-surface">Categories</h2>
           </div>
@@ -393,7 +394,7 @@ export const HomePage = () => {
       )}
 
       {/* ── Main Content ── */}
-      <section className="px-6 pb-16 max-w-7xl mx-auto animate-fade-in-up stagger-3">
+      <section className="px-6 pb-16 max-w-7xl mx-auto">
         <div className="flex justify-between items-end mb-6">
           <h2 className="text-2xl font-bold text-on-surface">Popular Near You</h2>
           <button
@@ -435,7 +436,7 @@ export const HomePage = () => {
               {featured && (
                 <div
                   onClick={() => goToRestaurant(featured.id)}
-                  className="md:col-span-2 relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer hover-lift h-[300px]"
+                  className="md:col-span-2 relative rounded-xl overflow-hidden bg-white shadow-sm border border-slate-200 group cursor-pointer hover:shadow-md transition-shadow h-[300px]"
                 >
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-slate-900/60" />
                   {featured.imageUrl ? (
@@ -446,19 +447,19 @@ export const HomePage = () => {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
+                  <div className="absolute top-4 right-4 bg-white px-3 py-1 rounded-full flex items-center gap-1 shadow-sm">
                     <StarIcon />
                     <span className="text-sm font-semibold text-on-surface">{featured.rating}</span>
                   </div>
                   <div className="absolute bottom-0 left-0 p-6 w-full">
                     <h3 className="text-2xl font-bold text-white mb-2">{featured.name}</h3>
                     <div className="flex flex-wrap gap-3 items-center">
-                      <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white flex items-center gap-1">
+                      <span className="bg-white/20 px-3 py-1 rounded-full text-xs text-white flex items-center gap-1">
                         <span className="material-symbols-outlined text-sm">storefront</span>
                         {featured.cuisineLabel}
                       </span>
                       {featured.deliveryTime && (
-                        <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs text-white flex items-center gap-1">
+                        <span className="bg-white/20 px-3 py-1 rounded-full text-xs text-white flex items-center gap-1">
                           <span className="material-symbols-outlined text-sm">schedule</span>
                           {featured.deliveryTime} min
                         </span>
@@ -474,7 +475,7 @@ export const HomePage = () => {
                     <div
                       key={r.id}
                       onClick={() => goToRestaurant(r.id)}
-                      className="flex-1 relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer hover-lift"
+                      className="flex-1 relative rounded-xl overflow-hidden bg-white shadow-sm border border-slate-200 group cursor-pointer hover:shadow-md transition-shadow"
                     >
                       {r.imageUrl ? (
                         <img src={r.imageUrl} alt={r.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -484,7 +485,7 @@ export const HomePage = () => {
                         </div>
                       )}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <div className="absolute top-3 right-3 bg-white px-2 py-0.5 rounded-full flex items-center gap-1">
                         <StarIcon />
                         <span className="text-xs font-semibold text-on-surface">{r.rating}</span>
                       </div>
@@ -505,7 +506,7 @@ export const HomePage = () => {
                   <div
                     key={r.id}
                     onClick={() => goToRestaurant(r.id)}
-                    className="relative rounded-xl overflow-hidden bg-surface-container-lowest shadow-sm border border-slate-200 group cursor-pointer hover-lift h-[180px]"
+                    className="relative rounded-xl overflow-hidden bg-white shadow-sm border border-slate-200 group cursor-pointer hover:shadow-md transition-shadow h-[180px]"
                   >
                     {r.imageUrl ? (
                       <img src={r.imageUrl} alt={r.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
@@ -515,7 +516,7 @@ export const HomePage = () => {
                       </div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <div className="absolute top-3 right-3 bg-white px-2 py-0.5 rounded-full flex items-center gap-1">
                       <StarIcon />
                       <span className="text-xs font-semibold text-on-surface">{r.rating}</span>
                     </div>
