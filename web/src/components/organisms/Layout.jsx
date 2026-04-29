@@ -46,17 +46,23 @@ export const Layout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col">
-      {/* ── TopNavBar ── */}
-      <nav className="bg-white/95 backdrop-blur-md sticky top-0 w-full z-50 border-b border-slate-100 shadow-sm">
-        <div className="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
+      {/* ── Soft Ambient Mesh Background ── */}
+      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-400/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[20%] right-[-10%] w-[35%] h-[35%] bg-purple-400/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[40%] h-[40%] bg-emerald-400/10 rounded-full blur-[120px]" />
+      </div>
+
+      <nav className="bg-white/80 backdrop-blur-xl border-b border-slate-200 sticky top-0 z-40 shadow-sm relative">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
 
           {/* Brand */}
-          <Link to="/" className="flex items-center gap-2.5 group" aria-label="QuickBite home">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-              <span className="text-base">🍔</span>
+          <Link to="/" className="flex items-center gap-2 group">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
+              <span className="material-symbols-outlined text-white text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>restaurant</span>
             </div>
-            <span className="text-lg font-extrabold tracking-tight text-slate-900">
-              Quick<span className="text-primary">Bite</span>
+            <span className="text-xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent tracking-tight">
+              QuickBite
             </span>
           </Link>
 
@@ -72,7 +78,7 @@ export const Layout = ({ children }) => {
             {isCustomer && (
               <Link
                 to="/cart"
-                className="relative p-2.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-primary transition-all"
+                className="relative p-2.5 rounded-xl hover:bg-slate-100/80 text-slate-700 hover:text-primary transition-all"
                 aria-label="Cart"
               >
                 <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>shopping_cart</span>
@@ -86,7 +92,7 @@ export const Layout = ({ children }) => {
 
             {isAuthenticated ? (
               <>
-                <button className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-primary transition-all" aria-label="Notifications">
+                <button className="p-2.5 rounded-xl hover:bg-slate-100/80 text-slate-700 hover:text-primary transition-all" aria-label="Notifications">
                   <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
                 </button>
                 <Link
@@ -98,7 +104,7 @@ export const Layout = ({ children }) => {
                 </Link>
                 <button
                   onClick={() => { logout(); navigate('/login') }}
-                  className="p-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all"
+                  className="p-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50/80 transition-all"
                   aria-label="Logout"
                 >
                   <span className="material-symbols-outlined text-xl">power_settings_new</span>
@@ -106,7 +112,7 @@ export const Layout = ({ children }) => {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-slate-50">
+                <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-slate-50/80">
                   Login
                 </Link>
                 <Link to="/register" className="bg-gradient-to-r from-primary to-indigo-600 text-white rounded-xl px-5 py-2 text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
@@ -118,7 +124,7 @@ export const Layout = ({ children }) => {
         </div>
       </nav>
 
-      <main className="flex-1">
+      <main className="flex-1 relative z-10">
         {children}
       </main>
 

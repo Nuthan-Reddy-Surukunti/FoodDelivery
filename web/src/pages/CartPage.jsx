@@ -75,17 +75,17 @@ export const CartPage = () => {
   const total = Math.max(0, subtotal - discount + deliveryFee)
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* ── Gradient Header Banner ── */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-primary px-6 py-8">
+    <div className="min-h-screen bg-transparent">
+      {/* ── Soft Tinted Header Banner ── */}
+      <div className="bg-gradient-to-r from-blue-50/80 via-indigo-50/80 to-purple-50/80 backdrop-blur-sm border-b border-indigo-100/50 px-6 py-8 relative z-10">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <span className="material-symbols-outlined text-white text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_cart</span>
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-indigo-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-primary text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>shopping_cart</span>
             </div>
             <div>
-              <h1 className="text-2xl font-extrabold text-white">Your Cart</h1>
-              <p className="text-white/60 text-sm">{items.length} item{items.length > 1 ? 's' : ''} from your restaurant</p>
+              <h1 className="text-2xl font-extrabold text-slate-900">Your Cart</h1>
+              <p className="text-slate-500 font-medium text-sm mt-0.5">{items.length} item{items.length > 1 ? 's' : ''} from your restaurant</p>
             </div>
           </div>
         </div>

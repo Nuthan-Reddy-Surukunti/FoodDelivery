@@ -103,7 +103,7 @@ export const RestaurantDetailsPage = () => {
   }
 
   if (loading) return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       <div className="h-64 bg-slate-200 animate-pulse" />
       <div className="max-w-5xl mx-auto px-6 py-8 space-y-4">
         <div className="h-8 w-64 bg-slate-200 animate-pulse rounded-xl" />
@@ -126,7 +126,7 @@ export const RestaurantDetailsPage = () => {
   const rating = Number(restaurant.rating ?? 0).toFixed(1)
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-transparent pb-32">
       {/* ── Hero ── */}
       <section className="relative h-64 md:h-96 w-full">
         <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent z-10" />

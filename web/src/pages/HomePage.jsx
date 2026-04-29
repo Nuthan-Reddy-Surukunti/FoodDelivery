@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import catalogApi from '../services/catalogApi'
+import { AppFeaturesSection } from '../components/organisms/AppFeaturesSection'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CUISINE_DISPLAY = {
@@ -293,7 +294,7 @@ export const HomePage = () => {
   }
 
   return (
-    <div className="bg-slate-50 min-h-screen">
+    <div className="bg-transparent min-h-screen">
       {/* ── Hero Search Section ── */}
       <section 
         className="relative px-6 pt-10 pb-10 bg-slate-900 overflow-hidden"
@@ -529,38 +530,11 @@ export const HomePage = () => {
               )}
             </div>
 
-            {/* Remaining restaurants row */}
-            {rest.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {rest.map((r) => (
-                  <div
-                    key={r.id}
-                    onClick={() => goToRestaurant(r.id)}
-                    className="relative rounded-xl overflow-hidden bg-white shadow-sm border border-slate-200 group cursor-pointer hover:shadow-md transition-shadow h-[180px]"
-                  >
-                    {r.imageUrl ? (
-                      <img src={r.imageUrl} alt={r.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : (
-                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-slate-600 flex items-center justify-center text-4xl">
-                        {cuisineEmoji(r.cuisineType)}
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                    <div className="absolute top-3 right-3 bg-white px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <StarIcon />
-                      <span className="text-xs font-semibold text-on-surface">{r.rating}</span>
-                    </div>
-                    <div className="absolute bottom-0 left-0 p-4 w-full">
-                      <h3 className="text-base font-semibold text-white mb-0.5">{r.name}</h3>
-                      <p className="text-xs text-white/80">{r.cuisineLabel}{r.deliveryTime ? ` • ${r.deliveryTime} min` : ''}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
           </>
         )}
       </section>
+
+      <AppFeaturesSection />
 
       {/* ── Footer ── */}
       <footer className="bg-slate-900 py-12">

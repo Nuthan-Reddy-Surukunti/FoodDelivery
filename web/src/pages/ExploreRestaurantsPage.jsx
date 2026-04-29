@@ -48,7 +48,7 @@ export const ExploreRestaurantsPage = () => {
   })
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-transparent">
       {/* Header */}
       <div className="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-4">

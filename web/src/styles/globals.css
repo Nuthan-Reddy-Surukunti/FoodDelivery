@@ -38,11 +38,11 @@
 
   /* Shadows */
   .shadow-ambient {
-    box-shadow: 0 4px 16px rgba(25, 120, 229, 0.08);
+    box-shadow: 0 4px 16px rgba(225, 29, 72, 0.08);
   }
 
   .shadow-glow-primary {
-    box-shadow: 0 0 30px rgba(25, 120, 229, 0.25);
+    box-shadow: 0 0 30px rgba(225, 29, 72, 0.25);
   }
 
   /* Tap highlight */
@@ -52,14 +52,14 @@
 
   /* ── Text Gradients ── */
   .text-gradient-primary {
-    background: linear-gradient(135deg, #1978e5 0%, #01B574 100%);
+    background: linear-gradient(135deg, #e11d48 0%, #f97316 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .text-gradient-brand {
-    background: linear-gradient(to right, #1978e5, #6366f1);
+    background: linear-gradient(to right, #e11d48, #be123c);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -74,11 +74,11 @@
 
   /* ── Gradient Backgrounds ── */
   .gradient-header-blue {
-    background: linear-gradient(135deg, #1978e5 0%, #1461cc 50%, #0f172a 100%);
+    background: linear-gradient(135deg, #e11d48 0%, #be123c 50%, #0f172a 100%);
   }
 
   .gradient-header-food {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #1978e5 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #e11d48 100%);
   }
 
   .gradient-card {

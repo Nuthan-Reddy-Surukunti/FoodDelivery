@@ -67,7 +67,7 @@ export const ProfilePage = () => {
   const content = (
     <div className="relative max-w-4xl mx-auto px-6 py-10">
       {/* ── Profile Hero Header ── */}
-      <div className="mb-10 flex flex-col sm:flex-row items-center sm:items-end gap-5 p-6 bg-white rounded-2xl border border-slate-100 shadow-sm">
+      <div className="mb-10 flex flex-col sm:flex-row items-center sm:items-end gap-5 p-6 bg-white/70 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm relative z-10">
         {/* Avatar */}
         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-primary/25 flex-shrink-0">
           {user?.name?.charAt(0)?.toUpperCase() || 'U'}
@@ -105,8 +105,8 @@ export const ProfilePage = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* ── Left Sidebar: Profile Summary ── */}
-        <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white rounded-2xl p-8 text-center border border-slate-200 shadow-sm overflow-hidden relative">
+        <div className="lg:col-span-1 space-y-6 relative z-10">
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-8 text-center border border-white/50 shadow-sm overflow-hidden relative">
             <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-primary/15 to-primary/5" />
             
             <div className="relative mb-6">
@@ -135,7 +135,7 @@ export const ProfilePage = () => {
           </div>
 
           {/* Quick Stats/Badges */}
-          <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-6 border border-white/50 shadow-sm relative z-10">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Account Stats</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
@@ -156,11 +156,9 @@ export const ProfilePage = () => {
           </div>
         </div>
 
-        {/* ── Main Content: Details & Security ── */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Personal Information */}
-          <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+        {/* ── Right Content: Forms & Settings ── */}
+        <div className="lg:col-span-2 space-y-8 relative z-10">
+          <div className="bg-white/70 backdrop-blur-md rounded-2xl p-8 border border-white/50 shadow-sm relative z-10">
             <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                 <span className="material-symbols-outlined text-primary">person</span>
@@ -228,10 +226,10 @@ export const ProfilePage = () => {
                 </div>
               </div>
             )}
-          </section>
+            </div>
 
           {/* Security & Settings */}
-          <section className="bg-white rounded-2xl p-8 border border-slate-200 shadow-sm">
+          <section className="bg-white/70 backdrop-blur-md rounded-2xl p-8 border border-white/50 shadow-sm relative z-10">
             <h3 className="text-xl font-bold text-slate-900 mb-8 flex items-center gap-3">
               <span className="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center">
                 <span className="material-symbols-outlined text-emerald-600">security</span>
@@ -328,7 +326,7 @@ export const ProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-transparent">
       {content}
     </div>
   )

@@ -13,15 +13,15 @@ export default {
     extend: {
       colors: {
         // Horizon UI Color Palette
-        primary: '#1978e5',
-        'primary-container': '#1461cc',
+        primary: '#e11d48', // rose-600 (Zomato-inspired red)
+        'primary-container': '#be123c', // rose-700
         'on-primary': '#ffffff',
         'on-primary-container': '#ffffff',
-        'inverse-primary': '#93c5fd',
-        'primary-fixed': '#bfdbfe',
-        'primary-fixed-dim': '#93c5fd',
-        'on-primary-fixed': '#1e3a8a',
-        'on-primary-fixed-variant': '#1e3a8a',
+        'inverse-primary': '#fda4af', // rose-300
+        'primary-fixed': '#ffe4e6', // rose-100
+        'primary-fixed-dim': '#fecdd3', // rose-200
+        'on-primary-fixed': '#881337', // rose-900
+        'on-primary-fixed-variant': '#9f1239', // rose-800
 
         secondary: '#475569',
         'secondary-container': '#e2e8f0',
@@ -62,7 +62,7 @@ export default {
         'inverse-on-surface': '#f1f5f9',
         outline: '#94a3b8',
         'outline-variant': '#cbd5e1',
-        'surface-tint': '#1978e5',
+        'surface-tint': '#e11d48', // rose-600
         'surface-variant': '#f1f5f9',
       },
       borderRadius: {
