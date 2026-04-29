@@ -33,6 +33,9 @@ export const CartProvider = ({ children }) => {
   const addItem = useCallback((item, newRestaurantId) => {
     // Only allow items from one restaurant at a time
     if (restaurantId && restaurantId !== newRestaurantId) {
+      if (!window.confirm('Adding items from a different restaurant will clear your current cart. Do you want to continue?')) {
+        return;
+      }
       setItems([])
       setRestaurantId(newRestaurantId)
     } else {

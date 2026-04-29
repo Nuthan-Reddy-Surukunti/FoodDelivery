@@ -228,13 +228,22 @@ export const AiChatWidget = () => {
               <div key={idx} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
 
                 {/* Bubble */}
-                <div className={`max-w-[90%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${
-                  msg.role === 'user'
-                    ? 'bg-primary text-white rounded-tr-none'
-                    : 'bg-white text-slate-800 border border-slate-100 shadow-sm rounded-tl-none'
-                }`}>
-                  {msg.text}
-                </div>
+                <div 
+                  className={`max-w-[90%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap leading-relaxed ${
+                    msg.role === 'user'
+                      ? 'bg-primary text-white rounded-tr-none'
+                      : 'bg-white text-slate-800 border border-slate-100 shadow-sm rounded-tl-none'
+                  }`}
+                  dangerouslySetInnerHTML={{
+                    __html: msg.text
+                      ? msg.text
+                          .replace(/\*\*(.*?)\*\*/g, '<b class="font-bold">$1</b>')
+                          .replace(/\*(.*?)\*/g, '<i class="italic">$1</i>')
+                          .replace(/^- (.*)/gm, '• $1')
+                          .replace(/^(\d+)\. (.*)/gm, '<b class="font-bold">$1.</b> $2')
+                      : ''
+                  }}
+                />
 
                 {/* Restaurant Cards */}
                 {msg.recommendedRestaurants?.length > 0 && (

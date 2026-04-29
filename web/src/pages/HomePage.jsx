@@ -5,19 +5,19 @@ import { AppFeaturesSection } from '../components/organisms/AppFeaturesSection'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CUISINE_DISPLAY = {
-  0:  { label: 'All',           enumName: null,            emoji: '🍽️' },
-  1:  { label: 'Italian',       enumName: 'Italian',       emoji: '🍕' },
-  2:  { label: 'Chinese',       enumName: 'Chinese',       emoji: '🥢' },
-  3:  { label: 'Indian',        enumName: 'Indian',        emoji: '🍛' },
-  4:  { label: 'Mexican',       enumName: 'Mexican',       emoji: '🌮' },
-  5:  { label: 'American',      enumName: 'American',      emoji: '🍔' },
-  6:  { label: 'Thai',          enumName: 'Thai',          emoji: '🍜' },
-  7:  { label: 'Japanese',      enumName: 'Japanese',      emoji: '🍱' },
-  8:  { label: 'Continental',   enumName: 'Continental',   emoji: '🥘' },
-  9:  { label: 'Fast Food',     enumName: 'FastFood',      emoji: '🍟' },
-  10: { label: 'Vegan',         enumName: 'Vegan',         emoji: '🥗' },
-  11: { label: 'Mediterranean', enumName: 'Mediterranean', emoji: '🥙' },
-  12: { label: 'Other',         enumName: 'Other',         emoji: '🍽️' },
+  0:  { label: 'All',           enumName: null,            emoji: '🍽️', imageUrl: '/images/categories/all.png' },
+  1:  { label: 'Italian',       enumName: 'Italian',       emoji: '🍕', imageUrl: '/images/categories/italian.png' },
+  2:  { label: 'Chinese',       enumName: 'Chinese',       emoji: '🥢', imageUrl: '/images/categories/chinese.png' },
+  3:  { label: 'Indian',        enumName: 'Indian',        emoji: '🍛', imageUrl: '/images/categories/indian.png' },
+  4:  { label: 'Mexican',       enumName: 'Mexican',       emoji: '🌮', imageUrl: '/images/categories/mexican.png' },
+  5:  { label: 'American',      enumName: 'American',      emoji: '🍔', imageUrl: '/images/categories/american.png' },
+  6:  { label: 'Thai',          enumName: 'Thai',          emoji: '🍜', imageUrl: '/images/categories/thai.png' },
+  7:  { label: 'Japanese',      enumName: 'Japanese',      emoji: '🍱', imageUrl: '/images/categories/japanese.png' },
+  8:  { label: 'Continental',   enumName: 'Continental',   emoji: '🥘', imageUrl: '/images/categories/continental.png' },
+  9:  { label: 'Fast Food',     enumName: 'FastFood',      emoji: '🍟', imageUrl: '/images/categories/fastfood.png' },
+  10: { label: 'Vegan',         enumName: 'Vegan',         emoji: '🥗', imageUrl: '/images/categories/vegan.png' },
+  11: { label: 'Mediterranean', enumName: 'Mediterranean', emoji: '🥙', imageUrl: '/images/categories/mediterranean.png' },
+  12: { label: 'Other',         enumName: 'Other',         emoji: '🍽️', imageUrl: '/images/categories/other.png' },
 }
 
 const cuisineLabel = (type) =>
@@ -38,6 +38,23 @@ const normalizeRestaurant = (item) => ({
 })
 
 // ── Sub-components ────────────────────────────────────────────────────────────
+const CategoryIcon = ({ imageUrl, emoji }) => {
+  const [imgError, setImgError] = useState(false)
+  
+  if (!imageUrl || imgError) {
+    return <span className="group-hover:scale-110 transition-transform">{emoji}</span>
+  }
+  
+  return (
+    <img 
+      src={imageUrl} 
+      alt="category" 
+      className="w-14 h-14 object-contain group-hover:scale-110 transition-transform drop-shadow-sm" 
+      onError={() => setImgError(true)} 
+    />
+  )
+}
+
 const SkeletonCard = ({ className = '' }) => (
   <div className={`rounded-xl skeleton-shimmer ${className}`} />
 )
@@ -392,10 +409,10 @@ export const HomePage = () => {
             >
               <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all ${
                 activeCuisine === null
-                  ? 'bg-primary shadow-lg shadow-primary/20 scale-110'
+                  ? 'bg-white ring-2 ring-primary ring-offset-2 shadow-lg shadow-primary/20 scale-110'
                   : 'bg-white shadow-sm border border-slate-100 group-hover:shadow-md group-hover:-translate-y-1'
               }`}>
-                🍽️
+                <CategoryIcon imageUrl={CUISINE_DISPLAY[0].imageUrl} emoji={CUISINE_DISPLAY[0].emoji} />
               </div>
               <span className={`text-xs font-bold ${ activeCuisine === null ? 'text-primary' : 'text-slate-600' }`}>All</span>
             </button>
@@ -411,10 +428,10 @@ export const HomePage = () => {
                 >
                   <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all ${
                     isActive
-                      ? `bg-primary shadow-lg shadow-primary/20 scale-110`
+                      ? `bg-white ring-2 ring-primary ring-offset-2 shadow-lg shadow-primary/20 scale-110`
                       : `bg-white shadow-sm border border-slate-100 group-hover:shadow-md group-hover:-translate-y-1`
                   }`}>
-                    <span className="group-hover:scale-110 transition-transform">{meta.emoji}</span>
+                    <CategoryIcon imageUrl={meta.imageUrl} emoji={meta.emoji} />
                   </div>
                   <span className={`text-xs font-bold ${ isActive ? 'text-primary' : 'text-slate-600' }`}>{meta.label}</span>
                 </button>
