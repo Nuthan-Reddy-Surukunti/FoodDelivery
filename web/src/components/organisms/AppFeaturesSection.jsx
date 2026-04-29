@@ -36,19 +36,19 @@ export const AppFeaturesSection = () => {
             <FloatingCard 
               iconSrc="/images/features/icon_healthy.png" 
               title="Healthy" 
-              positionClasses="-left-12 top-10" 
+              positionClasses="left-0 top-6" 
               delay={0}
             />
             <FloatingCard 
               iconSrc="/images/features/icon_veg.png" 
               title="Veg Mode" 
-              positionClasses="left-8 top-1/2 -translate-y-1/2" 
+              positionClasses="-left-16 top-1/2 -translate-y-1/2" 
               delay={1.5}
             />
             <FloatingCard 
               iconSrc="/images/features/icon_party.png" 
               title="Plan a Party" 
-              positionClasses="-left-6 bottom-10" 
+              positionClasses="left-0 bottom-6" 
               delay={0.8}
             />
 
@@ -56,19 +56,19 @@ export const AppFeaturesSection = () => {
             <FloatingCard 
               iconSrc="/images/features/icon_offers.png" 
               title="Offers" 
-              positionClasses="-right-12 top-10" 
+              positionClasses="right-0 top-6" 
               delay={1}
             />
             <FloatingCard 
               iconSrc="/images/features/icon_gourmet.png" 
               title="Gourmet" 
-              positionClasses="right-8 top-1/2 -translate-y-1/2" 
+              positionClasses="-right-16 top-1/2 -translate-y-1/2" 
               delay={0.5}
             />
             <FloatingCard 
               iconSrc="/images/features/icon_schedule.png" 
               title="Schedule" 
-              positionClasses="-right-6 bottom-10" 
+              positionClasses="right-0 bottom-6" 
               delay={2}
             />
           </div>
