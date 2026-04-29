@@ -12,7 +12,7 @@ const CUISINE_OPTIONS = [
   { label: 'Italian', value: 1 }, { label: 'Chinese', value: 2 }, { label: 'Indian', value: 3 },
   { label: 'Mexican', value: 4 }, { label: 'American', value: 5 }, { label: 'Thai', value: 6 },
   { label: 'Japanese', value: 7 }, { label: 'Continental', value: 8 }, { label: 'Fast Food', value: 9 },
-  { label: 'Vegan', value: 10 }, { label: 'Mediterranean', value: 11 }, { label: 'Other', value: 12 },
+  { label: 'Vegan', value: 10 }, { label: 'Mediterranean', value: 11 }
 ]
 
 const STATUS_BADGE = {

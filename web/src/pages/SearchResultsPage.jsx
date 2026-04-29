@@ -5,9 +5,9 @@ import catalogApi from '../services/catalogApi'
 const CUISINE_DISPLAY = {
   0: 'All', 1: 'Italian', 2: 'Chinese', 3: 'Indian',
   4: 'Japanese', 5: 'Mexican', 6: 'American', 7: 'Thai',
-  8: 'Mediterranean', 9: 'Other',
+  8: 'Mediterranean'
 }
-const cuisineLabel = (type) => CUISINE_DISPLAY[type] || (typeof type === 'string' ? type : 'Other')
+const cuisineLabel = (type) => CUISINE_DISPLAY[type] || (typeof type === 'string' ? type : 'General')
 const cuisineEmoji = (t) => ['🍽️','🍕','🥢','🍛','🍱','🌮','🍔','🍜','🥙','🍽️'][Number(t)] || '🍽️'
 
 const StarIcon = () => (

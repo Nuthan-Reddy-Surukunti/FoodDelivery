@@ -52,7 +52,7 @@ export const LoginPage = () => {
         {/* Brand Badge */}
         <div className="absolute top-8 left-8 z-10">
           <div className="flex items-center gap-2.5 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2.5 rounded-2xl shadow-lg">
-            <span className="text-2xl">🍔</span>
+            <img src="/quickbite-logo-glow.png" alt="QuickBite Logo" className="w-8 h-8 object-contain animate-logo-shimmer" />
             <span className="text-lg font-extrabold text-white tracking-tight">QuickBite</span>
           </div>
         </div>
@@ -92,7 +92,7 @@ export const LoginPage = () => {
           {/* Mobile Brand */}
           <div className="md:hidden text-center mb-8">
             <div className="inline-flex items-center gap-2 mb-2">
-              <span className="text-3xl">🍔</span>
+              <img src="/quickbite-logo-glow.png" alt="QuickBite Logo" className="w-10 h-10 object-contain animate-logo-shimmer" />
               <span className="text-2xl font-extrabold text-primary">QuickBite</span>
             </div>
           </div>

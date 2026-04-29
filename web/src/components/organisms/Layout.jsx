@@ -58,9 +58,7 @@ export const Layout = ({ children }) => {
 
           {/* Brand */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center shadow-md shadow-primary/20 group-hover:scale-105 transition-transform">
-              <span className="material-symbols-outlined text-white text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>restaurant</span>
-            </div>
+            <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-9 h-9 object-contain group-hover:scale-105 transition-transform" />
             <span className="text-xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent tracking-tight">
               QuickBite
             </span>

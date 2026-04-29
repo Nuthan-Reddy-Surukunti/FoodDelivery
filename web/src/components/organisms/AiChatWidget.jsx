@@ -83,7 +83,7 @@ export const AiChatWidget = () => {
   const [aiStatus, setAiStatus]   = useState('unknown') // 'unknown' | 'checking' | 'online' | 'offline'
   const [messages, setMessages]   = useState([{
     role: 'model',
-    text: "Hi! I'm QuickBite's AI Assistant 🍔\nWhat kind of food are you looking for today?",
+    text: "Hi! I'm QuickBite's AI Assistant\nWhat kind of food are you looking for today?",
     recommendedRestaurants: [],
     recommendedMenuItems:   [],
     orderStatus: null,

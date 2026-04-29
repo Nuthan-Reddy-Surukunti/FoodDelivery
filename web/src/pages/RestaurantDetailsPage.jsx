@@ -92,7 +92,7 @@ export const RestaurantDetailsPage = () => {
       }
     }
     const sections = catOrder.map(name => ({ name, items: map[name] })).filter(s => s.items.length > 0)
-    if (uncategorised.length > 0) sections.push({ name: 'Other', items: uncategorised })
+    if (uncategorised.length > 0) sections.push({ name: 'Menu Items', items: uncategorised })
     return sections
   })()
 

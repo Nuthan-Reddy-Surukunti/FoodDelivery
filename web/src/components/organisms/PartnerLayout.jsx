@@ -30,9 +30,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
         {/* Logo */}
         <div className="px-6 py-6 border-b border-white/5 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/50">
-              <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
-            </div>
+            <img src="/quickbite-logo-white.png" alt="QuickBite Logo" className="w-9 h-9 object-contain logo-glow-white" />
             <div>
               <p className="text-sm font-extrabold text-white tracking-tight">QuickBite</p>
               <p className="text-[11px] text-emerald-400/70 font-medium">Partner Portal</p>

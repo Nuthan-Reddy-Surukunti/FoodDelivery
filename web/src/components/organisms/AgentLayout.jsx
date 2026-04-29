@@ -32,9 +32,7 @@ export const AgentLayout = ({ children, title = '' }) => {
         {/* Logo */}
         <div className="px-6 py-6 border-b border-white/5 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg shadow-sky-900/50">
-              <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>local_shipping</span>
-            </div>
+            <img src="/quickbite-logo-white.png" alt="QuickBite Logo" className="w-9 h-9 object-contain logo-glow-white" />
             <div>
               <p className="text-sm font-extrabold text-white tracking-tight">QuickBite</p>
               <p className="text-[11px] text-sky-400/70 font-medium">Agent Portal</p>

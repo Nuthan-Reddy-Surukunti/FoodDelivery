@@ -17,11 +17,10 @@ const CUISINE_DISPLAY = {
   9:  { label: 'Fast Food',     enumName: 'FastFood',      emoji: '🍟', imageUrl: '/images/categories/fastfood.png' },
   10: { label: 'Vegan',         enumName: 'Vegan',         emoji: '🥗', imageUrl: '/images/categories/vegan.png' },
   11: { label: 'Mediterranean', enumName: 'Mediterranean', emoji: '🥙', imageUrl: '/images/categories/mediterranean.png' },
-  12: { label: 'Other',         enumName: 'Other',         emoji: '🍽️', imageUrl: '/images/categories/other.png' },
 }
 
 const cuisineLabel = (type) =>
-  CUISINE_DISPLAY[type]?.label || (typeof type === 'string' ? type : 'Other')
+  CUISINE_DISPLAY[type]?.label || (typeof type === 'string' ? type : 'General')
 const cuisineEmoji = (type) => CUISINE_DISPLAY[type]?.emoji || '🍽️'
 const cuisineEnumName = (type) => CUISINE_DISPLAY[type]?.enumName || null
 
@@ -557,7 +556,7 @@ export const HomePage = () => {
       <footer className="bg-slate-900 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-6 text-sm">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center text-base">🍔</div>
+            <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-9 h-9 object-contain" />
             <span className="text-xl font-extrabold text-white">QuickBite</span>
           </div>
           <div className="flex gap-6">

@@ -1,12 +1,14 @@
 import React from 'react';
 
 const FloatingCard = ({ iconSrc, title, positionClasses, delay }) => (
-  <div 
-    className={`absolute bg-white rounded-3xl shadow-xl border border-slate-100 p-5 flex flex-col items-center justify-center gap-3 transform transition-transform hover:scale-105 cursor-pointer z-20 ${positionClasses}`}
-    style={{ animation: `float 6s ease-in-out infinite ${delay}s` }}
-  >
-    <img src={iconSrc} alt={title} className="w-20 h-20 object-contain drop-shadow-md" />
-    <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{title}</span>
+  <div className={`absolute z-20 ${positionClasses}`}>
+    <div 
+      className="bg-white rounded-3xl shadow-xl border border-slate-100 p-5 flex flex-col items-center justify-center gap-3 transform transition-transform hover:scale-105 cursor-pointer"
+      style={{ animation: `float 6s ease-in-out infinite ${delay}s` }}
+    >
+      <img src={iconSrc} alt={title} className="w-20 h-20 object-contain drop-shadow-md" />
+      <span className="text-sm font-bold text-slate-700 whitespace-nowrap">{title}</span>
+    </div>
   </div>
 );
 

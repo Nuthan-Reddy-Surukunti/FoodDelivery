@@ -30,9 +30,7 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
         {/* Logo */}
         <div className="px-6 py-6 border-b border-white/5 relative z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-gradient-to-br from-primary to-indigo-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-              <span className="text-white text-base">🍔</span>
-            </div>
+            <img src="/quickbite-logo-white.png" alt="QuickBite Logo" className="w-9 h-9 object-contain logo-glow-white" />
             <div>
               <p className="text-sm font-extrabold text-white tracking-tight">QuickBite</p>
               <p className="text-[11px] text-slate-400 font-medium">Admin Portal</p>

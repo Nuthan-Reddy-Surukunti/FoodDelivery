@@ -365,7 +365,7 @@ export const MyOrdersPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-8 max-w-7xl mx-auto">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-7 h-7 bg-gradient-to-br from-primary to-indigo-600 rounded-lg flex items-center justify-center text-sm">🍔</div>
+              <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-8 h-8 object-contain" />
               <span className="text-base font-extrabold text-white">QuickBite</span>
             </div>
             <p className="text-sm text-slate-400">© 2024 QuickBite Food Delivery. All rights reserved.</p>

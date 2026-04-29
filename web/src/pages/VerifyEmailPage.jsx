@@ -78,7 +78,7 @@ export const VerifyEmailPage = () => {
         <div className="w-full max-w-md px-8 py-12 relative z-10">
           <div className="lg:hidden text-center mb-8">
             <div className="inline-flex items-center gap-2">
-              <span className="text-3xl">🍔</span>
+              <img src="/quickbite-logo-glow.png" alt="QuickBite Logo" className="w-10 h-10 object-contain animate-logo-shimmer" />
               <span className="text-2xl font-extrabold text-primary">QuickBite</span>
             </div>
           </div>

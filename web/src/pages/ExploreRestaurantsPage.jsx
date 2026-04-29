@@ -5,7 +5,7 @@ import catalogApi from '../services/catalogApi'
 
 const CUISINE_LABELS = {
   1: 'Italian', 2: 'Chinese', 3: 'Indian', 4: 'Japanese', 5: 'Mexican',
-  6: 'American', 7: 'Thai', 8: 'Mediterranean', 9: 'Fast Food', 10: 'Vegan', 11: 'Other'
+  6: 'American', 7: 'Thai', 8: 'Mediterranean', 9: 'Fast Food', 10: 'Vegan'
 }
 
 export const ExploreRestaurantsPage = () => {
@@ -23,7 +23,7 @@ export const ExploreRestaurantsPage = () => {
         const mapped = raw.map(item => ({
           id: item.id,
           name: item.name,
-          cuisine: CUISINE_LABELS[item.cuisineType] || item.cuisineType || 'Other',
+          cuisine: CUISINE_LABELS[item.cuisineType] || item.cuisineType || 'General',
           rating: Number(item.averageRating || item.rating || 0),
           deliveryTime: item.deliveryTime ? `${item.deliveryTime} mins` : 'N/A',
           imageUrl: item.imageUrl ?? null,

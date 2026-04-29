@@ -6,7 +6,10 @@ export const Header = ({ user, totalItems = 0, onLogout, onToggleTheme, isDark }
   return (
     <header className="sticky top-0 z-40 border-b border-outline bg-surface/95 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
-        <Link to="/" className="text-xl font-bold text-primary">QuickBite</Link>
+        <Link to="/" className="flex items-center gap-2">
+          <img src="/quickbite-logo.png" alt="QuickBite Logo" className="h-8 w-auto" />
+          <span className="text-xl font-bold text-primary">QuickBite</span>
+        </Link>
 
         <div className="flex items-center gap-3">
           <button type="button" onClick={onToggleTheme} className="rounded-lg p-2 hover:bg-surface-dim" aria-label="Toggle theme">
