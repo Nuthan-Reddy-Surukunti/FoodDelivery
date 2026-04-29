@@ -21,26 +21,24 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
   }
 
   return (
-    <div className="bg-background text-on-background h-screen w-full overflow-hidden flex font-sans">
+    <div className="bg-surface text-on-surface h-screen w-full overflow-hidden flex font-sans">
       {/* ── Fixed Left Sidebar ── */}
       <aside className="hidden md:flex bg-white h-screen w-64 border-r border-slate-200 shadow-sm flex-col p-4 z-20 shrink-0">
         {/* Logo */}
         <div className="mb-8 px-4 flex flex-col gap-1">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-slate-900">FoodDash Admin</h1>
-            <p className="text-xs font-medium text-slate-500">Enterprise Control</p>
-          </div>
+          <span className="text-xl font-extrabold tracking-tight text-primary">FoodDash Admin</span>
+          <span className="text-xs font-medium text-slate-500">Enterprise Control</span>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 flex flex-col gap-2">
+        <nav className="flex-1 flex flex-col gap-1">
           {NAV_ITEMS.map(({ to, icon, label }) => {
             const isActive = location.pathname === to || (to !== '/admin' && location.pathname.startsWith(to))
             return (
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-200 ease-in-out ${isActive ? 'bg-primary/10 text-primary font-semibold' : 'text-slate-600 font-medium hover:bg-slate-50 hover:text-slate-900'}`}
+                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-all duration-200 ease-in-out active:scale-95 ${isActive ? 'text-slate-900 dark:text-slate-100 font-semibold bg-slate-100 dark:bg-slate-800' : 'text-slate-600 dark:text-slate-400 font-medium hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800/50'}`}
               >
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
                   {icon}
@@ -51,8 +49,8 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
           })}
         </nav>
 
-        <div className="mt-auto">
-          <button className="w-full bg-primary text-on-primary py-3 rounded-lg text-sm font-medium hover:bg-primary-container transition-colors shadow-sm mb-2">
+        <div className="mt-auto space-y-2">
+          <button className="w-full bg-primary text-on-primary py-3 rounded-lg font-label-md text-label-md hover:bg-primary-container hover:text-on-primary-container transition-colors shadow-sm">
             Generate Reports
           </button>
           <button
@@ -68,35 +66,39 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
       {/* ── Main content ── */}
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         {/* Top header bar */}
-        <header className="bg-white/95 backdrop-blur-md w-full border-b border-slate-200 flex justify-between items-center px-8 h-16 sticky top-0 z-40">
+        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md w-full border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-8 h-16 sticky top-0 z-40">
           <div className="flex items-center gap-4">
             {/* Mobile menu icon */}
             <div className="md:hidden">
               <span className="material-symbols-outlined text-slate-600 cursor-pointer">menu</span>
             </div>
-            <h2 className="text-lg font-bold text-slate-900">{title || 'Dashboard'}</h2>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white">{title || 'Dashboard'}</h2>
           </div>
 
           <div className="flex items-center gap-6">
             {searchPlaceholder && (
               <div className="relative hidden md:block">
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
-                <input type="text" placeholder={searchPlaceholder} className="pl-10 pr-4 py-2 bg-slate-100 rounded-full border-none focus:ring-2 focus:ring-primary text-sm w-64 placeholder:text-slate-400 outline-none" />
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline text-[20px]">search</span>
+                <input 
+                  type="text" 
+                  placeholder={searchPlaceholder} 
+                  className="pl-10 pr-4 py-2 bg-surface-container rounded-full border-none focus:ring-2 focus:ring-primary text-sm w-64 placeholder:text-outline-variant outline-none dark:bg-slate-800 dark:text-white" 
+                />
               </div>
             )}
-            <div className="flex items-center gap-4 text-slate-500">
-              <button className="hover:text-primary transition-colors cursor-pointer active:opacity-70" aria-label="Notifications">
+            <div className="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+              <button className="hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer active:opacity-70" aria-label="Notifications">
                 <span className="material-symbols-outlined">notifications</span>
               </button>
-              <button className="hover:text-primary transition-colors cursor-pointer active:opacity-70" aria-label="Settings">
+              <button className="hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer active:opacity-70" aria-label="Settings">
                 <span className="material-symbols-outlined">settings</span>
               </button>
-              <button className="hover:text-primary transition-colors cursor-pointer active:opacity-70" aria-label="Help">
+              <button className="hover:text-primary dark:hover:text-blue-400 transition-colors cursor-pointer active:opacity-70" aria-label="Help">
                 <span className="material-symbols-outlined">help</span>
               </button>
               <Link 
                 to="/profile" 
-                className="h-8 w-8 rounded-full bg-slate-100 border border-slate-200 text-slate-700 flex items-center justify-center text-sm font-semibold ml-2 hover:border-primary transition-colors"
+                className="h-8 w-8 rounded-full bg-secondary-container border border-outline-variant text-on-primary-fixed flex items-center justify-center text-xs font-semibold ml-2 hover:border-primary transition-colors dark:bg-slate-700 dark:border-slate-600"
                 aria-label="View Profile"
               >
                 {(user?.email?.[0] || 'A').toUpperCase()}
@@ -106,14 +108,8 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
         </header>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto p-6 scroll-smooth">
-          <div className="max-w-7xl mx-auto space-y-6 pb-24 md:pb-8">
-            {/* Page title */}
-            {title && (
-              <div>
-                <h2 className="text-[28px] font-bold text-on-background tracking-tight">{title}</h2>
-              </div>
-            )}
+        <div className="flex-1 overflow-y-auto p-margin scroll-smooth">
+          <div className="max-w-7xl mx-auto space-y-lg pb-24 md:pb-8">
             {children}
           </div>
         </div>

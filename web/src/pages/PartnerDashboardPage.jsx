@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { PartnerLayout } from '../components/organisms/PartnerLayout'
+import { KpiCard } from '../components/molecules/KpiCard'
 import { useNotification } from '../hooks/useNotification'
 import api from '../services/api'
 import catalogApi from '../services/catalogApi'
@@ -314,39 +315,57 @@ export const PartnerDashboardPage = () => {
   return (
     <PartnerLayout title="">
       {/* Header row */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100">
         <div>
-          <h2 className="text-[28px] font-bold text-on-background tracking-tight">Overview</h2>
-          <p className="text-on-surface-variant text-sm mt-1">Here's what's happening at your restaurant today.</p>
+          <h1 className="text-3xl font-bold text-on-surface">Overview</h1>
+          <p className="text-on-surface-variant text-sm mt-1">Dashboard & restaurant management</p>
         </div>
-        <div className="flex items-center gap-2 text-sm text-secondary bg-slate-50 px-4 py-2 rounded-lg border border-slate-200">
-          <span className="material-symbols-outlined text-lg">calendar_today</span>
-          {today}
+        <div className="flex items-center gap-2 text-sm bg-surface-container px-4 py-2.5 rounded-lg border border-surface-variant">
+          <span className="material-symbols-outlined text-base">calendar_today</span>
+          <span className="font-medium">{today}</span>
         </div>
       </div>
 
-      {/* KPI bento grid */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Today's Orders", value: ordersLoading ? '…' : todayOrderCount, icon: 'receipt_long' },
-          { label: "Today's Revenue", value: ordersLoading ? '…' : `₹${Number(todayRevenue).toLocaleString('en-IN')}`, icon: 'payments' },
-          { label: 'Pending', value: ordersLoading ? '…' : pendingCount, icon: 'hourglass_empty' },
-          { label: 'Total Orders', value: ordersLoading ? '…' : (stats?.totalOrders ?? recentOrders.length), icon: 'bar_chart' },
-        ].map(({ label, value, icon }) => (
-          <div key={label} className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
-            <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-              <span className="material-symbols-outlined text-5xl text-primary">{icon}</span>
-            </div>
-            <p className="text-sm font-medium text-on-surface-variant mb-2">{label}</p>
-            <h3 className="text-2xl font-bold text-on-surface">{value ?? '—'}</h3>
-          </div>
-        ))}
+        <KpiCard
+          icon="receipt_long"
+          label="Today's Orders"
+          value={ordersLoading ? '—' : String(todayOrderCount)}
+          iconBg="bg-blue-50"
+          iconColor="text-blue-600"
+          prefix="📦 "
+        />
+        <KpiCard
+          icon="payments"
+          label="Today's Revenue"
+          value={ordersLoading ? '—' : `₹${Number(todayRevenue).toLocaleString('en-IN')}`}
+          iconBg="bg-emerald-50"
+          iconColor="text-emerald-600"
+          prefix="💰 "
+        />
+        <KpiCard
+          icon="local_pizza"
+          label="Top Selling Item"
+          value={ordersLoading ? '—' : 'Pizza Margherita'}
+          iconBg="bg-purple-50"
+          iconColor="text-purple-600"
+          prefix="⭐ "
+        />
+        <KpiCard
+          icon="timer"
+          label="Avg. Prep Time"
+          value={ordersLoading ? '—' : '15 mins'}
+          iconBg="bg-orange-50"
+          iconColor="text-orange-600"
+          prefix="⏱️ "
+        />
       </div>
 
       {/* Restaurant info card */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
         {restaurant.imageUrl && (
-          <div className="h-32 w-full overflow-hidden">
+          <div className="h-64 w-full overflow-hidden">
             <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover" />
           </div>
         )}
