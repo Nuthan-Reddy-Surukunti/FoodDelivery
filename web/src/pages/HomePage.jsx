@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import catalogApi from '../services/catalogApi'
 import { AppFeaturesSection } from '../components/organisms/AppFeaturesSection'
+import { useAuth } from '../context/AuthContext'
+import { getHybridGreeting } from '../utils/greetingUtils'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const CUISINE_DISPLAY = {
@@ -184,6 +186,9 @@ const SearchDropdown = ({ results, loading, query, onSelectRestaurant, onSelectM
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const HomePage = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  
+  const greeting = getHybridGreeting(user?.role, user?.name || user?.email)
 
   // Restaurant list state
   const [restaurantsData, setRestaurantsData] = useState([])
@@ -335,9 +340,19 @@ export const HomePage = () => {
             </span>
           </div>
           <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight max-w-xl mb-3">
-            What are you <span className="text-yellow-400">craving</span> today?
-        </h1>
-          <p className="text-white/70 text-base mb-7">Discover top-rated restaurants and order in minutes.</p>
+            {user ? (
+              <>
+                {greeting.main} <span className="text-yellow-400">{greeting.sub}</span>
+              </>
+            ) : (
+              <>
+                What are you <span className="text-yellow-400">craving</span> today?
+              </>
+            )}
+          </h1>
+          <p className="text-white/70 text-base mb-7">
+            {user ? `Welcome back to QuickBite! Discover top-rated restaurants near you.` : `Discover top-rated restaurants and order in minutes.`}
+          </p>
 
         {/* Search box with live dropdown */}
         <div className="relative w-full max-w-2xl" ref={searchContainerRef}>

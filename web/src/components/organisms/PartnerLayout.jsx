@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { useAuth } from '../../context/AuthContext'
+import { getHybridGreeting } from '../../utils/greetingUtils'
 
 const NAV_ITEMS = [
   { to: '/partner/dashboard', icon: 'dashboard',       label: 'Dashboard',  color: 'text-emerald-400' },
@@ -14,6 +15,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const greeting = getHybridGreeting(user?.role, user?.name || user?.email)
 
   const handleLogout = () => {
     logout()
@@ -97,9 +99,9 @@ export const PartnerLayout = ({ children, title = '' }) => {
             </div>
             <div>
               <h1 className="text-base font-bold text-slate-900">
-                {title || <span className="text-gradient-primary">Restaurant Dashboard</span>}
+                {title || <span className="text-gradient-primary">{greeting.main}</span>}
               </h1>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">QuickBite Partner</p>
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">{greeting.sub}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

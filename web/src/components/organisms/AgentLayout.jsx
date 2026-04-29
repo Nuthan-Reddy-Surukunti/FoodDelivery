@@ -1,6 +1,7 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { useAuth } from '../../context/AuthContext'
+import { getHybridGreeting } from '../../utils/greetingUtils'
 
 const NAV_ITEMS = [
   { to: '/agent/active',   icon: 'local_shipping', label: 'Deliveries', color: 'text-sky-400' },
@@ -16,6 +17,7 @@ export const AgentLayout = ({ children, title = '' }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const greeting = getHybridGreeting(user?.role, user?.name || user?.email)
 
   const handleLogout = () => {
     logout()
@@ -114,8 +116,10 @@ export const AgentLayout = ({ children, title = '' }) => {
               <span className="material-symbols-outlined text-slate-600 cursor-pointer">menu</span>
             </div>
             <div>
-              <h1 className="text-base font-bold text-slate-900">{title || 'Delivery Dashboard'}</h1>
-              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">QuickBite Agent</p>
+              <h1 className="text-base font-bold text-slate-900">{title || greeting.main}</h1>
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">
+                {title && title !== 'Delivery Dashboard' ? 'QuickBite Agent' : greeting.sub}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">

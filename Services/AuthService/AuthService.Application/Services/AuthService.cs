@@ -247,6 +247,10 @@ public class AuthService : IAuthService
                     };
 
                     await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+                    
+                    // Print OTP to console for development
+                    Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
+                    
                     await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
 
                     return new AuthRequestDto()
@@ -355,6 +359,10 @@ public class AuthService : IAuthService
             };
 
             await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+            
+            // Print OTP to console for development
+            Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
+            
             await _emailService.SendEmailAsync(dto.Email,"Two Factor Email",$"Your Otp is {otp}");
 
             return new AuthRequestDto()
@@ -543,6 +551,11 @@ public class AuthService : IAuthService
                 CreatedAt = DateTime.UtcNow
             };
             await _emailVerificationTokenRepository.AddAsync(verificationToken);
+            
+            // Print OTP to console for development
+            Console.WriteLine($"🔐 [REGISTRATION OTP] Email: {newUser.Email} | OTP: {otp} | Expires: 10 minutes");
+            Console.Out.Flush();
+            
             await _emailService.SendEmailAsync(newUser.Email, "Verify Your Email", $"Your OTP is: {otp}");
 
             return new AuthRequestDto(){Success=true,Message="Registration successful. Please verify your email"};

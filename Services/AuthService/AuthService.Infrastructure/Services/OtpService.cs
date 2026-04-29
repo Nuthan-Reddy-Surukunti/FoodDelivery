@@ -38,6 +38,9 @@ public class OtpService : IOtpService
                 {
                     var remainingMinutes = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
 
+                    // Print reused OTP to console for development
+                    Console.WriteLine($"🔐 [REUSED OTP] User: {user.Email} | OTP: {existingOtp.OTP} | Expires in: {remainingMinutes} minutes");
+
                     await _emailService.SendEmailAsync(
                         user.Email,
                         "Your Login OTP",

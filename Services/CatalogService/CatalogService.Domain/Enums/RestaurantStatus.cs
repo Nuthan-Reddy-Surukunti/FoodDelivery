@@ -18,6 +18,11 @@ public enum RestaurantStatus
     Active = 1,
 
     /// <summary>
+    /// Alias for Active status to handle legacy or injected data
+    /// </summary>
+    Approved = 1,
+
+    /// <summary>
     /// Restaurant has been suspended or temporarily inactive
     /// </summary>
     Suspended = 2,
