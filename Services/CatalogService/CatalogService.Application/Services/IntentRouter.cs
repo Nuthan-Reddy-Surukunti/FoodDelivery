@@ -143,7 +143,7 @@ public static class IntentRouter
         filters.CuisineType != null;
 
     private static bool IsMealType(string msg) =>
-        Regex.IsMatch(msg, @"\bbreakfast\b|\blunch\b|\bdinner\b|\bsupper\b|\bsnack\b|\bbrunch\b|\bdessert\b|\bsweet\b|\bsweets\b");
+        Regex.IsMatch(msg, @"\bbreakfast\b|\blunch\b|\bdinner\b|\bsupper\b|\bsnack\b|\bbrunch\b|\bdessert\b|\bsweet\b|\bsweets\b|\bdesert\b|\bdeserts\b");
 
     private static bool IsRestaurant(string msg) =>
         Regex.IsMatch(msg, @"\brestaurant\b|\bplace\b|\beat at\b|\bwhere to eat\b|\bfood place\b|\beating place\b");
@@ -204,7 +204,7 @@ public static class IntentRouter
         // Strip known filter phrases to isolate the core keyword
         var query = msg;
         query = Regex.Replace(query, @"(?:under|below|less than|above|over|more than|within|in|upto|up to|minimum|max)\s*[₹rs\.]*\s*\d+(?:\.\d+)?\s*(?:rupees?|rs\.?|mins?|minutes?)?", "");
-        query = Regex.Replace(query, @"\b(?:i want|i need|show me|give me|find me|get me|suggest|looking for|search for|can you|could you|would you|ca you|can u|could u|would u|please|pls|plz|some|somewhat|little|bit|a bit|kind of|sort of)\b", "");
+        query = Regex.Replace(query, @"\b(?:i want|i need|show me|give me|find me|get me|suggest|looking for|search for|can you|could you|would you|ca you|can u|could u|would u|please|pls|plz|some|somewhat|bit|a bit|kind of|sort of|so|like|want|to|eat|somting|something|anything|any|really|very|actually|dish|dishes|dishers)\b", "");
         query = Regex.Replace(query, @"\b(?:veg|vegetarian|non.?veg|plant.based)\b", "");
         foreach (var cuisine in ValidCuisines)
             query = Regex.Replace(query, @"\b" + cuisine.ToLower() + @"\b", "");

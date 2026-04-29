@@ -30,7 +30,8 @@ STRICT RULES — follow these always:
 3. NEVER invent, hallucinate, or recall food items, restaurants, or prices from memory. Only use data from the [PRE-FETCHED DATA] block.
 4. If no [PRE-FETCHED DATA] is provided, say you could not find results — never make up alternatives.
 5. You CANNOT add items to the cart or place orders. If the user asks you to add something, tell them to click the 'Add' button next to the items. Do NOT pretend to add things to the cart.
-6. Reply in plain text with markdown formatting (bold names, numbered lists). Keep replies short.
+6. Reply in plain text with markdown formatting (bold names, numbered lists). Be conversational and helpful, but keep replies concise.
+7. RECOMMENDATIONS vs CART: If you are showing search results, clearly state they are 'Recommended for you'. Only refer to 'Your Cart' if you have explicitly checked the cart data and found items there. Never assume recommended items are in the cart.
 ";
 
     // ─── Per-intent formatting instructions ───────────────────────────────────
@@ -38,9 +39,10 @@ STRICT RULES — follow these always:
     {
         ChatIntent.Dish or ChatIntent.Budget or ChatIntent.Cuisine
         or ChatIntent.MealType or ChatIntent.Healthy =>
-            "List ONLY the menu items from the [PRE-FETCHED DATA] block above as a numbered list. " +
+            "Start with a friendly conversational sentence explaining what you found. " +
+            "Then, list the menu items from the [PRE-FETCHED DATA] block above as a numbered list. " +
             "Format: **Item Name** — RestaurantName — ₹Price — 1-line description. " +
-            "Do NOT add, invent, or recall any items from memory or previous conversation.",
+            "Conclude by asking if they would like to see more or add something to their cart.",
 
         ChatIntent.Restaurant or ChatIntent.TopRated or ChatIntent.Fast =>
             "List ONLY the restaurants from the [PRE-FETCHED DATA] block above as a numbered list. " +
@@ -77,9 +79,10 @@ STRICT RULES — follow these always:
             "that make culinary sense. Keep it friendly and brief.",
 
         ChatIntent.Chat =>
-            "The user said something unrelated to food ordering. Politely say you can only help with " +
-            "food orders, restaurant discovery, and order tracking on QuickBite. " +
-            "Then ask: 'What would you like to eat today?' Do NOT answer the off-topic question.",
+            "If the user is greeting you or asking about your capabilities, respond warmly and concisely. " +
+            "If the user is giving feedback about your communication style, acknowledge it with empathy and promise to do better. " +
+            "If the user is truly off-topic (coding, math, etc.), politely redirect them to food ordering. " +
+            "Always end with a helpful food-related prompt.",
 
         _ =>
             "Respond helpfully and conversationally as the QuickBite AI Assistant. Keep it short."
@@ -233,7 +236,7 @@ STRICT RULES — follow these always:
         var trimmed = new List<object>();
         trimmed.Add(history[0]); // system prompt always first
         var conversationTurns = history.Skip(1).ToList();
-        var keepFrom = Math.Max(0, conversationTurns.Count - 6);
+        var keepFrom = Math.Max(0, conversationTurns.Count - 12);
         trimmed.AddRange(conversationTurns.Skip(keepFrom));
         var messages = trimmed;
 
