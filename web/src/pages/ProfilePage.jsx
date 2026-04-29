@@ -66,11 +66,28 @@ export const ProfilePage = () => {
 
   const content = (
     <div className="relative max-w-4xl mx-auto px-6 py-10">
-      {/* Page Header */}
-      <header className="mb-10">
-        <h1 className="text-display-xl font-bold text-slate-900 leading-tight mb-2">Account Settings</h1>
-        <p className="text-slate-600">Manage your personal information, security, and preferences</p>
-      </header>
+      {/* ── Profile Hero Header ── */}
+      <div className="mb-10 flex flex-col sm:flex-row items-center sm:items-end gap-5 p-6 bg-white rounded-2xl border border-slate-100 shadow-sm">
+        {/* Avatar */}
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-primary/25 flex-shrink-0">
+          {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+        </div>
+        <div className="flex-1 text-center sm:text-left">
+          <h1 className="text-2xl font-extrabold text-slate-900">{user?.name || 'Your Profile'}</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{user?.email}</p>
+          <span className="inline-flex items-center gap-1.5 mt-2 bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">
+            <span className="material-symbols-outlined text-xs" style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>
+            {user?.role || 'Customer'}
+          </span>
+        </div>
+        <button
+          onClick={() => setIsEditing(!isEditing)}
+          className="btn-primary-gradient text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 flex-shrink-0"
+        >
+          <span className="material-symbols-outlined text-lg">{isEditing ? 'close' : 'edit_square'}</span>
+          {isEditing ? 'Cancel' : 'Edit Profile'}
+        </button>
+      </div>
 
       {/* Message Alert */}
       {message && (
@@ -312,7 +329,6 @@ export const ProfilePage = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* ── Background Mesh ── */}
       {content}
     </div>
   )

@@ -158,23 +158,49 @@ export const MyOrdersPage = () => {
     return parts.length ? parts.join(', ') : 'Delivery address not available'
   }
 
-  return (
-    <div className="bg-background min-h-screen">
-      <main className="pt-8 px-6 pb-16 max-w-5xl mx-auto w-full">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-[32px] font-bold text-on-surface mb-1">My Orders</h1>
-          <p className="text-on-surface-variant text-sm">View and manage your recent dining experiences.</p>
-        </div>
+  const STATUS_BORDER = {
+    Delivered:            'status-border-delivered',
+    Cancelled:            'status-border-cancelled',
+    RestaurantRejected:   'status-border-cancelled',
+    OutForDelivery:       'status-border-active',
+    PickedUp:             'status-border-active',
+    Preparing:            'status-border-preparing',
+    RestaurantAccepted:   'status-border-active',
+    Paid:                 'status-border-active',
+    CheckoutStarted:      'status-border-active',
+  }
 
-        {/* Filter tabs */}
-        <div className="flex gap-1 mb-8 border-b border-slate-200">
-          {[['all', 'All'], ['active', 'Active'], ['past', 'Past']].map(([key, label]) => (
+  return (
+    <div className="min-h-screen bg-slate-50">
+      {/* ── Gradient Header Banner ── */}
+      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 px-6 py-8">
+        <div className="max-w-5xl mx-auto">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center">
+              <span className="material-symbols-outlined text-white text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>receipt_long</span>
+            </div>
+            <div>
+              <h1 className="text-2xl font-extrabold text-white">My Orders</h1>
+              <p className="text-white/60 text-sm">Track and manage your dining experiences.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <main className="px-6 pb-16 max-w-5xl mx-auto w-full">
+        {/* ── Pill Filter Tabs ── */}
+        <div className="flex gap-2 my-6">
+          {[['all', 'All', '🧾'], ['active', 'Active', '🚴'], ['past', 'Past', '✅']].map(([key, label, emoji]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
-              className={`px-5 py-2.5 text-sm font-medium transition-colors ${tab === key ? 'text-primary border-b-2 border-primary' : 'text-slate-500 hover:text-on-surface'}`}
+              className={`px-5 py-2 rounded-full text-sm font-semibold flex items-center gap-1.5 transition-all ${
+                tab === key
+                  ? 'pill-tab-active'
+                  : 'pill-tab-inactive'
+              }`}
             >
+              <span>{emoji}</span>
               {label}
             </button>
           ))}
@@ -218,8 +244,9 @@ export const MyOrdersPage = () => {
             return (
               <div
                 key={order.id}
-                className={`bg-white border border-outline-variant rounded-2xl p-6 shadow-sm flex flex-col gap-5 ${cancelled ? 'opacity-70' : ''}`}
+                className={`bg-white border border-slate-100 rounded-2xl shadow-sm flex flex-col gap-5 overflow-hidden ${cancelled ? 'opacity-70' : ''} ${STATUS_BORDER[order.status] || 'border-l-4 border-l-slate-200'}`}
               >
+                <div className="p-6 flex flex-col gap-5">
                 <div className="flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
                   <div className="flex gap-5 items-start w-full lg:w-auto">
                     <div className="w-20 h-20 rounded-2xl overflow-hidden flex-shrink-0 bg-slate-100 flex items-center justify-center text-3xl border border-outline-variant/50">
@@ -326,6 +353,7 @@ export const MyOrdersPage = () => {
                     </Link>
                   )}
                 </div>
+                </div>
               </div>
             )
           })}
@@ -333,15 +361,18 @@ export const MyOrdersPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-50 border-t border-slate-200 py-12 mt-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-8 max-w-7xl mx-auto">
+      <footer className="bg-slate-900 py-10 mt-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-8 max-w-7xl mx-auto">
           <div>
-            <span className="text-lg font-bold text-on-surface block mb-2">QuickBite</span>
-            <p className="text-sm text-slate-500">© 2024 QuickBite Food Delivery. All rights reserved.</p>
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 bg-gradient-to-br from-primary to-indigo-600 rounded-lg flex items-center justify-center text-sm">🍔</div>
+              <span className="text-base font-extrabold text-white">QuickBite</span>
+            </div>
+            <p className="text-sm text-slate-400">© 2024 QuickBite Food Delivery. All rights reserved.</p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 md:justify-end items-center">
             {['About Us', 'Terms of Service', 'Privacy Policy', 'Help Center'].map(l => (
-              <a key={l} href="#" className="text-sm text-slate-500 hover:text-primary transition-colors">{l}</a>
+              <a key={l} href="#" className="text-sm text-slate-400 hover:text-white transition-colors">{l}</a>
             ))}
           </div>
         </div>

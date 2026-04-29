@@ -358,27 +358,34 @@ export const AiChatWidget = () => {
         </div>
       )}
 
-      {/* ── Floating Button ── */}
+      {/* ── Floating AI Button ── */}
       <button
         onClick={handleToggle}
-        className="w-14 h-14 rounded-full bg-primary text-white shadow-xl flex items-center justify-center hover:scale-105 active:scale-95 transition-all"
+        className={`flex items-center gap-2 px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 font-semibold text-sm ${
+          isOpen
+            ? 'bg-slate-800 text-white hover:bg-slate-700'
+            : 'bg-gradient-to-r from-primary to-indigo-600 text-white hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-0.5'
+        }`}
         aria-label="AI Assistant"
       >
-        {isOpen
-          ? <span className="material-symbols-outlined text-2xl">close</span>
-          : (
-            <div className="relative">
-              <span className="text-3xl">✨</span>
-              {/* Status dot on the floating button */}
-              <div className={`absolute -top-1 -right-1 w-3 h-3 border-2 border-white rounded-full ${
-                aiStatus === 'online'   ? 'bg-green-400' :
-                aiStatus === 'offline'  ? 'bg-red-500' :
-                aiStatus === 'checking' ? 'bg-yellow-400 animate-pulse' :
-                'bg-slate-400'
-              }`} />
-            </div>
-          )
-        }
+        {isOpen ? (
+          <>
+            <span className="material-symbols-outlined text-lg">close</span>
+            <span>Close</span>
+          </>
+        ) : (
+          <>
+            <span className="text-base">✦</span>
+            <span>AI Assistant</span>
+            {/* Status dot */}
+            <span className={`w-2 h-2 rounded-full ml-0.5 ${
+              aiStatus === 'online'   ? 'bg-emerald-400' :
+              aiStatus === 'offline'  ? 'bg-red-400' :
+              aiStatus === 'checking' ? 'bg-yellow-400 animate-pulse' :
+              'bg-white/50'
+            }`} />
+          </>
+        )}
       </button>
     </div>
   )

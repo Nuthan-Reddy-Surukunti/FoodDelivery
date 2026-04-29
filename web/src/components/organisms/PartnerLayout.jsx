@@ -3,14 +3,12 @@ import PropTypes from 'prop-types'
 import { useAuth } from '../../context/AuthContext'
 
 const NAV_ITEMS = [
-  { to: '/partner/dashboard', icon: 'dashboard', label: 'Dashboard' },
-  { to: '/partner/queue', icon: 'receipt_long', label: 'Orders' },
-  { to: '/partner/menu', icon: 'restaurant_menu', label: 'Menu' },
-  { to: '/partner/analytics', icon: 'analytics', label: 'Analytics' },
-  { to: '/profile', icon: 'person', label: 'Profile' },
+  { to: '/partner/dashboard', icon: 'dashboard',       label: 'Dashboard',  color: 'text-emerald-400' },
+  { to: '/partner/queue',     icon: 'receipt_long',    label: 'Orders',     color: 'text-orange-400' },
+  { to: '/partner/menu',      icon: 'restaurant_menu', label: 'Menu',       color: 'text-purple-400' },
+  { to: '/partner/analytics', icon: 'analytics',       label: 'Analytics',  color: 'text-sky-400' },
+  { to: '/profile',           icon: 'person',          label: 'Profile',    color: 'text-slate-400' },
 ]
-
-const PLACEHOLDER_ITEMS = []
 
 export const PartnerLayout = ({ children, title = '' }) => {
   const location = useLocation()
@@ -23,131 +21,131 @@ export const PartnerLayout = ({ children, title = '' }) => {
   }
 
   return (
-    <div className="bg-background text-on-background h-screen w-full overflow-hidden flex font-sans">
-      {/* ── Left sidebar ── */}
-      <aside className="hidden md:flex bg-white dark:bg-slate-900 h-screen w-64 border-r border-slate-200 dark:border-slate-800 shadow-sm flex-col py-6 z-20 shrink-0">
+    <div className="bg-slate-50 text-slate-900 h-screen w-full overflow-hidden flex font-sans">
+      {/* ── Dark Green Sidebar ── */}
+      <aside className="hidden md:flex bg-[#0d1f1a] h-screen w-64 flex-col shrink-0 z-20 relative">
+        {/* Subtle gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1a3d30]/50 to-transparent pointer-events-none" />
+
         {/* Logo */}
-        <div className="px-6 mb-8 flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-xl">storefront</span>
-          </div>
-          <div>
-            <h1 className="text-sm font-bold text-primary dark:text-blue-400">QuickBites Partner</h1>
-            <p className="text-xs text-slate-500 dark:text-slate-400">Restaurant Dashboard</p>
+        <div className="px-6 py-6 border-b border-white/5 relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/50">
+              <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
+            </div>
+            <div>
+              <p className="text-sm font-extrabold text-white tracking-tight">QuickBite</p>
+              <p className="text-[11px] text-emerald-400/70 font-medium">Partner Portal</p>
+            </div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 flex flex-col gap-1 px-3">
-          {NAV_ITEMS.map(({ to, icon, label }) => {
+        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto no-scrollbar relative z-10">
+          <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-3 mb-3">Restaurant Menu</p>
+          {NAV_ITEMS.map(({ to, icon, label, color }) => {
             const isActive = location.pathname === to
             return (
               <Link
                 key={to}
                 to={to}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all duration-150 ${isActive ? 'text-slate-900 dark:text-slate-100 font-semibold bg-slate-100 dark:bg-slate-800' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group ${
+                  isActive
+                    ? 'bg-white/10 text-white shadow-sm border border-white/10'
+                    : 'text-slate-400 hover:text-white hover:bg-white/5'
+                }`}
               >
-                <span className="material-symbols-outlined" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>
-                  {icon}
-                </span>
-                {label}
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors ${
+                  isActive ? 'bg-emerald-500/20' : 'bg-white/5 group-hover:bg-white/10'
+                }`}>
+                  <span
+                    className={`material-symbols-outlined text-[18px] ${isActive ? color : 'text-slate-400 group-hover:text-slate-200'}`}
+                    style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}
+                  >
+                    {icon}
+                  </span>
+                </div>
+                <span>{label}</span>
+                {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400" />}
               </Link>
             )
           })}
-
-          {PLACEHOLDER_ITEMS.map(({ icon, label }) => (
-            <button
-              key={label}
-              type="button"
-              aria-disabled="true"
-              title="Coming soon"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200"
-            >
-              <span className="material-symbols-outlined">{icon}</span>
-              {label}
-            </button>
-          ))}
-
-          <button
-            type="button"
-            aria-disabled="true"
-            title="Coming soon"
-            className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors duration-200 mt-auto"
-          >
-            <span className="material-symbols-outlined">settings</span>
-            Settings
-          </button>
         </nav>
 
-        <div className="px-3 mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/10 rounded-lg transition-colors"
-          >
-            <span className="material-symbols-outlined">logout</span>
-            Sign Out
-          </button>
+        {/* Bottom */}
+        <div className="px-3 py-4 border-t border-white/5 relative z-10">
+          <div className="flex items-center gap-3 px-3 py-2.5">
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {(user?.email?.[0] || 'P').toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{user?.name || user?.email || 'Partner'}</p>
+              <p className="text-[10px] text-emerald-400/70">Restaurant Partner</p>
+            </div>
+            <button onClick={handleLogout} className="text-slate-400 hover:text-rose-400 transition-colors" aria-label="Sign out">
+              <span className="material-symbols-outlined text-lg">logout</span>
+            </button>
+          </div>
         </div>
       </aside>
 
-      {/* ── Main content ── */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        {/* Top bar */}
-        <header className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-md w-full border-b border-slate-200 dark:border-slate-800 flex justify-between items-center px-6 py-3 h-16 sticky top-0 z-40">
-          <div className="flex items-center gap-4">
+      {/* ── Main Content ── */}
+      <main className="flex-1 flex flex-col h-full overflow-hidden">
+        {/* Top Header */}
+        <header className="bg-white w-full border-b border-slate-200 flex justify-between items-center px-6 h-16 sticky top-0 z-40 shadow-sm">
+          <div className="flex items-center gap-3">
             <div className="md:hidden">
-              <span className="material-symbols-outlined text-slate-600 dark:text-slate-400 cursor-pointer hover:text-primary dark:hover:text-blue-400 transition-colors">menu</span>
+              <span className="material-symbols-outlined text-slate-600 cursor-pointer">menu</span>
             </div>
-            <h2 className="text-base text-lg font-black text-primary dark:text-blue-400 tracking-tight">QuickBites</h2>
+            <div>
+              <h1 className="text-base font-bold text-slate-900">
+                {title || <span className="text-gradient-primary">Restaurant Dashboard</span>}
+              </h1>
+              <p className="text-[11px] text-slate-400 font-medium hidden sm:block">QuickBite Partner</p>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
-              <span className="material-symbols-outlined hover:text-primary dark:hover:text-blue-400 cursor-pointer scale-95 active:duration-100 transition-colors">notifications</span>
-              <span className="material-symbols-outlined hover:text-primary dark:hover:text-blue-400 cursor-pointer scale-95 active:duration-100 transition-colors">help_outline</span>
-            </div>
-            <Link 
-              to="/profile" 
-              className="w-8 h-8 rounded-full border border-outline-variant bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 flex items-center justify-center text-xs font-semibold hover:border-primary dark:hover:border-blue-400 transition-colors object-cover cursor-pointer"
-              aria-label="View Profile"
+          <div className="flex items-center gap-2">
+            <button className="p-2 rounded-xl text-slate-500 hover:text-primary hover:bg-slate-50 transition-all" aria-label="Notifications">
+              <span className="material-symbols-outlined text-xl">notifications</span>
+            </button>
+            <button className="p-2 rounded-xl text-slate-500 hover:text-primary hover:bg-slate-50 transition-all" aria-label="Help">
+              <span className="material-symbols-outlined text-xl">help_outline</span>
+            </button>
+            <Link
+              to="/profile"
+              className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white text-xs font-bold flex items-center justify-center ml-1 hover:shadow-md transition-all"
+              aria-label="Profile"
             >
               {(user?.email?.[0] || 'P').toUpperCase()}
             </Link>
           </div>
         </header>
 
-        {/* Scrollable content area */}
-        <div className="flex-1 overflow-y-auto p-margin scroll-smooth">
-          <div className="max-w-7xl mx-auto space-y-lg pb-24 md:pb-8">
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto bg-slate-50">
+          <div className="max-w-7xl mx-auto p-6 space-y-6 pb-24 md:pb-8">
             {children}
           </div>
         </div>
       </main>
 
       {/* Mobile bottom nav */}
-      <nav className="md:hidden bg-white dark:bg-slate-900 fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-2 pt-2 h-20 rounded-t-2xl border-t border-slate-200 dark:border-slate-800 shadow-lg">
+      <nav className="md:hidden bg-white fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-2 pt-2 h-20 rounded-t-2xl border-t border-slate-200 shadow-lg">
         {NAV_ITEMS.map(({ to, icon, label }) => {
           const isActive = location.pathname === to
           return (
             <Link
               key={to}
               to={to}
-              className={`flex flex-col items-center justify-center rounded-xl px-3 py-1.5 tap-highlight-transparent transition-transform active:scale-90 ${isActive ? 'text-primary dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}`}
+              className={`flex flex-col items-center justify-center rounded-xl px-3 py-1.5 tap-highlight-transparent transition-transform active:scale-90 ${
+                isActive ? 'text-emerald-600' : 'text-slate-400'
+              }`}
             >
               <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: isActive ? "'FILL' 1" : "'FILL' 0" }}>{icon}</span>
               <span className="text-xs font-medium mt-0.5">{label}</span>
             </Link>
           )
         })}
-
-        <button
-          type="button"
-          aria-disabled="true"
-          title="Coming soon"
-          className="flex flex-col items-center justify-center rounded-xl px-3 py-1.5 tap-highlight-transparent transition-transform active:scale-90 text-slate-400 dark:text-slate-500"
-        >
-          <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>bar_chart</span>
-          <span className="text-xs font-medium mt-0.5">Analytics</span>
-        </button>
       </nav>
     </div>
   )

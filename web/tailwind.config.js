@@ -7,8 +7,8 @@ export default {
   darkMode: 'class',
   theme: {
     fontFamily: {
-      inter: ['"Plus Jakarta Sans"', 'sans-serif'],
-      sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+      inter: ['"Inter"', 'sans-serif'],
+      sans: ['"Inter"', 'sans-serif'],
     },
     extend: {
       colors: {

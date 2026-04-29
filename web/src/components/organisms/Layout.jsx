@@ -20,9 +20,6 @@ export const Layout = ({ children }) => {
   const isProfileRelated = ['/profile', '/change-password', '/delete-account'].includes(location.pathname)
   const isNotCustomer = user?.role && !['Customer', 'customer'].includes(user.role)
 
-  // Admin and Partner use their own built-in sidebar layouts
-  // Agent uses mobile shell with bottom nav
-  // These pages should NOT have the global top nav
   const useCustomLayout = isAdminPage || isPartnerPage || isAgentPage || (isProfileRelated && isNotCustomer)
 
   if (isAuthPage || useCustomLayout) {
@@ -33,74 +30,75 @@ export const Layout = ({ children }) => {
     )
   }
 
-  // Customer top nav
   const isCustomer = user?.role === 'Customer' || user?.role === 'customer' || (!user?.role && isAuthenticated)
   const path = location.pathname
 
-  const isHome = path === '/'
+  const isHome    = path === '/'
   const isExplore = path === '/explore' || path.startsWith('/restaurant') || path.startsWith('/search')
-  const isOrders = path === '/orders' || path.startsWith('/track')
+  const isOrders  = path === '/orders' || path.startsWith('/track')
+
+  const navLinkClass = (active) =>
+    `relative font-semibold text-sm transition-all duration-200 pb-0.5 ${
+      active
+        ? 'text-primary after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full'
+        : 'text-slate-600 hover:text-primary'
+    }`
 
   return (
     <div className="min-h-screen bg-background text-on-background flex flex-col">
-      {/* ── QuickBite TopNavBar ── */}
-      <nav className="bg-white/95 backdrop-blur-md sticky top-0 w-full z-50 border-b border-slate-200">
+      {/* ── TopNavBar ── */}
+      <nav className="bg-white/95 backdrop-blur-md sticky top-0 w-full z-50 border-b border-slate-100 shadow-sm">
         <div className="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
-          <div className="flex items-center gap-6 min-w-0">
-            <Link to="/" className="text-xl font-bold tracking-tight text-slate-900 whitespace-nowrap">
-              QuickBite
-            </Link>
-          </div>
 
-          {/* Center links */}
+          {/* Brand */}
+          <Link to="/" className="flex items-center gap-2.5 group" aria-label="QuickBite home">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+              <span className="text-base">🍔</span>
+            </div>
+            <span className="text-lg font-extrabold tracking-tight text-slate-900">
+              Quick<span className="text-primary">Bite</span>
+            </span>
+          </Link>
+
+          {/* Center Nav Links */}
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              to="/"
-              className={`font-medium transition-colors duration-200 ${isHome ? 'text-primary border-b-2 border-primary pb-0.5' : 'text-slate-600 hover:text-primary'}`}
-            >
-              Home
-            </Link>
-            <Link
-              to="/explore"
-              className={`font-medium transition-colors duration-200 ${isExplore ? 'text-primary border-b-2 border-primary pb-0.5' : 'text-slate-600 hover:text-primary'}`}
-            >
-              Explore
-            </Link>
-            <Link
-              to="/orders"
-              className={`font-medium transition-colors duration-200 ${isOrders ? 'text-primary border-b-2 border-primary pb-0.5' : 'text-slate-600 hover:text-primary'}`}
-            >
-              Orders
-            </Link>
+            <Link to="/"        className={navLinkClass(isHome)}>Home</Link>
+            <Link to="/explore" className={navLinkClass(isExplore)}>Explore</Link>
+            <Link to="/orders"  className={navLinkClass(isOrders)}>Orders</Link>
           </div>
 
-          {/* Right actions */}
-          <div className="flex items-center gap-4 text-slate-700">
+          {/* Right Actions */}
+          <div className="flex items-center gap-2">
             {isCustomer && (
               <Link
                 to="/cart"
-                className="relative p-2 rounded-full hover:text-primary/80 transition-colors duration-200"
+                className="relative p-2.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-primary transition-all"
                 aria-label="Cart"
               >
                 <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>shopping_cart</span>
                 {totalItems > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
                     {totalItems}
                   </span>
                 )}
               </Link>
             )}
+
             {isAuthenticated ? (
               <>
-                <button className="p-2 rounded-full hover:text-primary/80 transition-colors duration-200" aria-label="Notifications">
+                <button className="p-2.5 rounded-xl hover:bg-slate-100 text-slate-700 hover:text-primary transition-all" aria-label="Notifications">
                   <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
                 </button>
-                <Link to="/profile" className="w-8 h-8 rounded-full border border-slate-200 bg-slate-100 text-slate-700 text-sm font-semibold flex items-center justify-center" aria-label="Profile">
-                  {(user?.email?.[0] || 'U').toUpperCase()}
+                <Link
+                  to="/profile"
+                  className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white text-sm font-bold flex items-center justify-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
+                  aria-label="Profile"
+                >
+                  {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
                 </Link>
                 <button
                   onClick={() => { logout(); navigate('/login') }}
-                  className="p-2 rounded-full text-slate-500 hover:text-red-600 hover:bg-red-50 transition-colors duration-200"
+                  className="p-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-all"
                   aria-label="Logout"
                 >
                   <span className="material-symbols-outlined text-xl">power_settings_new</span>
@@ -108,8 +106,12 @@ export const Layout = ({ children }) => {
               </>
             ) : (
               <>
-                <Link to="/login" className="text-sm font-medium text-slate-600 hover:text-primary transition-colors px-3 py-2">Login</Link>
-                <Link to="/register" className="bg-primary text-on-primary rounded-full px-5 py-2 text-sm font-semibold hover:bg-primary-container transition-colors">Sign Up</Link>
+                <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-slate-50">
+                  Login
+                </Link>
+                <Link to="/register" className="bg-gradient-to-r from-primary to-indigo-600 text-white rounded-xl px-5 py-2 text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+                  Sign Up
+                </Link>
               </>
             )}
           </div>
@@ -120,7 +122,7 @@ export const Layout = ({ children }) => {
         {children}
       </main>
 
-      {/* AI Chat Widget (Only visible to Customers or Guests) */}
+      {/* AI Chat Widget */}
       {(isCustomer || (!isAuthenticated && !isAuthPage)) && (
         <AiChatWidget />
       )}

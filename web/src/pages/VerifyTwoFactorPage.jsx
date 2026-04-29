@@ -5,13 +5,13 @@ import { useFormValidation } from '../hooks/useFormValidation'
 import { useAuth } from '../context/AuthContext'
 import { authApi } from '../services/authApi'
 import { getRoleHomePath } from '../utils/authRoutes'
+import { AuthHeroPanel } from './RegisterPage'
 
 export const VerifyTwoFactorPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
   const { setAuthUser } = useAuth()
 
-  // Get temp credentials from login redirect
   const tempToken = location.state?.tempToken
   const userId = location.state?.userId
   const email = location.state?.email
@@ -19,17 +19,17 @@ export const VerifyTwoFactorPage = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [submitError, setSubmitError] = useState(null)
 
-  // Redirect if no temp token
   if (!tempToken || !userId) {
     return (
-      <div className="bg-background min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-stack-md">
-          <h1 className="font-display-xl text-display-xl text-on-background">Invalid Session</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">
-            Your session has expired. Please login again.
-          </p>
-          <Link to="/login" className="inline-block bg-primary text-on-primary px-6 py-3 rounded-[16px] hover:bg-surface-tint transition-colors">
-            Back to Login
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-4 p-8">
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+            <Icon name="warning" size={28} className="text-amber-500" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Invalid Session</h1>
+          <p className="text-slate-500 text-sm">Your session has expired. Please login again.</p>
+          <Link to="/login" className="inline-flex items-center gap-2 btn-primary-gradient text-white px-6 py-3 rounded-xl text-sm font-semibold">
+            Back to Login <Icon name="arrow_forward" size={16} />
           </Link>
         </div>
       </div>
@@ -43,10 +43,7 @@ export const VerifyTwoFactorPage = () => {
       setIsLoading(true)
       try {
         const result = await authApi.verifyTwoFactor(tempToken, values.otp)
-        
-        // After 2FA verification, complete login
         if (result.token && result.user) {
-          // Update context with user and token
           setAuthUser(result.user, result.token)
           navigate(getRoleHomePath(result.user?.role), { replace: true })
         }
@@ -59,122 +56,102 @@ export const VerifyTwoFactorPage = () => {
   )
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col md:flex-row antialiased overflow-hidden">
-      {/* Left Hemisphere: Image */}
-      <div className="hidden md:flex md:w-1/2 lg:w-[55%] relative h-screen bg-surface-container-highest">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDdjmT2L_2KIUrrbZxlduKbIzQ7MpYbPNULULA35xiJYwnM-H-2XWOHJlUfOeiBltg8pj8ZGY-rfQ8FIBVizFa5NF2uMc5fQ6k4dbGHslYwb25PY_ZZ-byNDB0N0JeCWyd_ZRrwK6DQ6vd5g0IFwyJ1enFCkZVU2hGTUaW7ft_PLYTLm-uPw6E2o0LU6ITwgRGJ3u4KH0BUOPgZsI2tZ9AZHKpIyQT88pbMxA_tOrFwy2ydHvvkmoMe2_b_QTfYdUpZEUCGyGh3CbZE')",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-surface-variant/20 to-transparent" />
+    <div className="min-h-screen flex font-sans antialiased overflow-hidden">
+      <AuthHeroPanel
+        title={<>Two-factor <span className="text-emerald-400">security.</span></>}
+        subtitle="Enter the 6-digit code from your email or authenticator app to complete login."
+        badge="Your account is protected"
+      />
 
-        <div className="absolute top-8 left-8">
-          <h1 className="font-headline-md text-headline-md text-primary bg-surface-container-lowest/90 px-4 py-2 rounded-[16px] shadow-ambient backdrop-blur-md">
-            QuickBite
-          </h1>
-        </div>
+      <div className="w-full lg:w-[48%] h-screen overflow-hidden flex items-center justify-center bg-slate-50 relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/2 animate-blob pointer-events-none" />
 
-        <div className="absolute bottom-16 left-8 right-8">
-          <h2 className="font-display-xl text-display-xl text-on-primary drop-shadow-md mb-stack-sm">
-            Two-Factor Authentication
-          </h2>
-          <p className="font-body-lg text-body-lg text-on-primary drop-shadow-sm max-w-md">
-            Enter the code from your authenticator app to complete login.
-          </p>
-        </div>
-      </div>
-
-      {/* Right Hemisphere: 2FA Form */}
-      <div className="w-full md:w-1/2 lg:w-[45%] h-screen overflow-y-auto flex items-center justify-center p-container-padding bg-surface">
-        <div className="w-full max-w-md space-y-stack-lg">
-          {/* Mobile Brand Header */}
-          <div className="md:hidden text-center mb-8">
-            <h1 className="font-headline-md text-headline-md text-primary">QuickBite</h1>
+        <div className="w-full max-w-md px-8 py-12 relative z-10">
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center gap-2">
+              <span className="text-3xl">🍔</span>
+              <span className="text-2xl font-extrabold text-primary">QuickBite</span>
+            </div>
           </div>
 
-          {/* Header */}
-          <div className="space-y-stack-sm text-center md:text-left">
-            <h2 className="font-display-xl text-display-xl text-on-background">Two-Factor Code</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Enter the 6-digit code from your authenticator app
+          {/* Icon + Header */}
+          <div className="mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-indigo-200 animate-bounce-in">
+              <Icon name="shield_lock" size={28} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 mb-1.5">Two-Factor Code 🔐</h1>
+            <p className="text-slate-500 text-sm">
+              {email ? <>Sent to <strong className="text-slate-700">{email}</strong></> : 'Enter the code from your authenticator app'}
             </p>
           </div>
 
-          {/* Info Card */}
-          <div className="bg-primary-fixed/50 border border-primary/20 rounded-[16px] p-4 flex items-start gap-3">
-            <Icon name="info" size={20} className="text-primary mt-1 flex-shrink-0" />
-            <p className="font-body-md text-body-md text-on-background">
-              Check your authenticator app (Google Authenticator, Microsoft Authenticator, etc.)
-            </p>
+          {/* Info note */}
+          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-start gap-3 mb-6">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Icon name="info" size={15} className="text-blue-600" />
+            </div>
+            <p className="text-sm text-blue-700">Check your email or authenticator app (Google Authenticator, Microsoft Authenticator, etc.)</p>
           </div>
 
-          {/* Error Alert */}
+          {/* Error */}
           {submitError && (
-            <div className="bg-error-container text-on-error-container p-4 rounded-[16px] flex items-center space-x-2">
-              <Icon name="error" size={20} />
-              <span className="font-body-md text-body-md">{submitError}</span>
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-center gap-3 mb-6 animate-scale-in">
+              <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon name="error" size={16} />
+              </div>
+              <span className="text-sm font-medium">{submitError}</span>
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={form.handleSubmit} className="space-y-stack-md">
-            {/* OTP Input */}
-            <div className="space-y-unit">
-              <label className="font-label-md text-label-md text-on-surface ml-4 block" htmlFor="otp">
-                Authentication Code
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <Icon name="security" size={20} className="text-outline" />
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-100 p-8">
+            <form onSubmit={form.handleSubmit} className="space-y-5">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700 block" htmlFor="tfa-otp">Authentication Code</label>
+                <div className="relative">
+                  <Icon name="security" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    id="tfa-otp"
+                    name="otp"
+                    placeholder="000000"
+                    maxLength="6"
+                    autoFocus
+                    className="w-full input-premium py-4 pl-11 pr-4 text-2xl text-center tracking-[0.5em] font-bold rounded-xl placeholder:text-slate-300 placeholder:text-lg placeholder:tracking-normal"
+                    value={form.values.otp}
+                    onChange={(e) => {
+                      const filtered = e.target.value.replace(/\D/g, '')
+                      form.handleChange({ target: { name: 'otp', value: filtered } })
+                    }}
+                    onBlur={form.handleBlur}
+                    required
+                  />
                 </div>
-                <input
-                  type="text"
-                  id="otp"
-                  name="otp"
-                  placeholder="000000"
-                  maxLength="6"
-                  className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-6 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient text-center tracking-widest text-2xl"
-                  value={form.values.otp}
-                  onChange={(e) => {
-                    const filteredValue = e.target.value.replace(/\D/g, '')
-                    form.handleChange({
-                      target: {
-                        name: 'otp',
-                        value: filteredValue
-                      }
-                    })
-                  }}
-                  onBlur={form.handleBlur}
-                  required
-                  autoFocus
-                />
+                <p className="text-xs text-slate-400 text-center">Enter your 6-digit authentication code</p>
               </div>
-            </div>
 
-            {/* Submit Button */}
-            <div className="pt-stack-md">
               <button
+                id="verify-2fa-submit-btn"
                 type="submit"
                 disabled={isLoading || form.values.otp.length !== 6}
-                className="w-full rounded-[16px] bg-primary text-on-primary py-4 font-title-lg text-title-lg shadow-ambient hover:bg-surface-tint active:scale-95 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full btn-primary-gradient text-white py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>{isLoading ? 'Verifying...' : 'Verify & Login'}</span>
-                {!isLoading && <Icon name="arrow_forward" size={20} />}
+                {isLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  <>Verify &amp; Login <Icon name="arrow_forward" size={16} /></>
+                )}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
 
-          {/* Support Link */}
-          <div className="text-center pt-stack-sm">
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Don't have an authenticator app?{' '}
-              <a href="#" className="font-title-lg text-title-lg text-primary hover:text-surface-tint transition-colors">
-                Learn more
-              </a>
-            </p>
+          <div className="text-center mt-6">
+            <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors font-medium">
+              <Icon name="arrow_back" size={16} />
+              Back to Login
+            </Link>
           </div>
         </div>
       </div>

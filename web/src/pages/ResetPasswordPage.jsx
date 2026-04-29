@@ -3,13 +3,14 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { Icon } from '../components/atoms/Icon'
 import { useFormValidation } from '../hooks/useFormValidation'
 import { authApi } from '../services/authApi'
+import { AuthHeroPanel } from './RegisterPage'
 
 export const ResetPasswordPage = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const token = searchParams.get('token')
   const email = searchParams.get('email')
-  const isOtpFlow = !!email && !token // OTP flow if email is present without token
+  const isOtpFlow = !!email && !token
 
   const [isLoading, setIsLoading] = useState(false)
   const [submitError, setSubmitError] = useState(null)
@@ -17,24 +18,23 @@ export const ResetPasswordPage = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // Redirect if no params
   if (!token && !email) {
     return (
-      <div className="bg-background min-h-screen flex items-center justify-center">
-        <div className="text-center space-y-stack-md">
-          <h1 className="font-display-xl text-display-xl text-on-background">Invalid Reset Link</h1>
-          <p className="font-body-md text-body-md text-on-surface-variant">
-            The reset link is expired or invalid. Please request a new one.
-          </p>
-          <Link to="/forgot-password" className="inline-block bg-primary text-on-primary px-6 py-3 rounded-[16px] hover:bg-surface-tint transition-colors">
-            Request New Link
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center space-y-4 p-8">
+          <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto">
+            <Icon name="error" size={28} className="text-rose-500" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Invalid Reset Link</h1>
+          <p className="text-slate-500 text-sm">The reset link is expired or invalid. Please request a new one.</p>
+          <Link to="/forgot-password" className="inline-flex items-center gap-2 btn-primary-gradient text-white px-6 py-3 rounded-xl text-sm font-semibold">
+            Request New OTP <Icon name="arrow_forward" size={16} />
           </Link>
         </div>
       </div>
     )
   }
 
-  // OTP Flow Form
   const otpForm = useFormValidation(
     { otp: '', password: '', confirmPassword: '' },
     async (values) => {
@@ -42,24 +42,17 @@ export const ResetPasswordPage = () => {
         otpForm.setErrors?.({ confirmPassword: 'Passwords do not match' })
         return
       }
-
-      setSubmitError(null)
-      setSuccessMessage(null)
-      setIsLoading(true)
+      setSubmitError(null); setSuccessMessage(null); setIsLoading(true)
       try {
-        // Call the new OTP-based password reset endpoint
         await authApi.resetPasswordWithOtp(email, values.otp, values.password, values.confirmPassword)
-        setSuccessMessage('✅ Password reset successfully! Redirecting to login...')
+        setSuccessMessage('Password reset successfully! Redirecting to login...')
         setTimeout(() => navigate('/login'), 2000)
       } catch (error) {
         setSubmitError(error.message || 'Failed to reset password. Please check your OTP and try again.')
-      } finally {
-        setIsLoading(false)
-      }
+      } finally { setIsLoading(false) }
     }
   )
 
-  // Token Flow Form (legacy)
   const tokenForm = useFormValidation(
     { password: '', confirmPassword: '' },
     async (values) => {
@@ -67,206 +60,138 @@ export const ResetPasswordPage = () => {
         tokenForm.setErrors?.({ confirmPassword: 'Passwords do not match' })
         return
       }
-
-      setSubmitError(null)
-      setSuccessMessage(null)
-      setIsLoading(true)
+      setSubmitError(null); setSuccessMessage(null); setIsLoading(true)
       try {
         await authApi.resetPassword(email, token, values.password)
-        setSuccessMessage('✅ Password reset successfully! Redirecting to login...')
+        setSuccessMessage('Password reset successfully! Redirecting to login...')
         setTimeout(() => navigate('/login'), 2000)
       } catch (error) {
         setSubmitError(error.message || 'Failed to reset password. Please try again.')
-      } finally {
-        setIsLoading(false)
-      }
+      } finally { setIsLoading(false) }
     }
   )
 
   const form = isOtpFlow ? otpForm : tokenForm
 
+  const inputClass = 'w-full input-premium py-3.5 pl-11 pr-11 text-sm rounded-xl placeholder:text-slate-400'
+
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col md:flex-row antialiased overflow-hidden">
-      {/* Left Hemisphere: Image */}
-      <div className="hidden md:flex md:w-1/2 lg:w-[55%] relative h-screen bg-surface-container-highest">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDdjmT2L_2KIUrrbZxlduKbIzQ7MpYbPNULULA35xiJYwnM-H-2XWOHJlUfOeiBltg8pj8ZGY-rfQ8FIBVizFa5NF2uMc5fQ6k4dbGHslYwb25PY_ZZ-byNDB0N0JeCWyd_ZRrwK6DQ6vd5g0IFwyJ1enFCkZVU2hGTUaW7ft_PLYTLm-uPw6E2o0LU6ITwgRGJ3u4KH0BUOPgZsI2tZ9AZHKpIyQT88pbMxA_tOrFwy2ydHvvkmoMe2_b_QTfYdUpZEUCGyGh3CbZE')",
-          }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-surface-variant/20 to-transparent" />
+    <div className="min-h-screen flex font-sans antialiased overflow-hidden">
+      <AuthHeroPanel
+        title={<>Create a new <span className="text-yellow-400">password.</span></>}
+        subtitle="Enter a strong password to secure your QuickBite account and get back to ordering."
+        badge="Secure password reset"
+      />
 
-        <div className="absolute top-8 left-8">
-          <h1 className="font-headline-md text-headline-md text-primary bg-surface-container-lowest/90 px-4 py-2 rounded-[16px] shadow-ambient backdrop-blur-md">
-            QuickBite
-          </h1>
-        </div>
+      <div className="w-full lg:w-[48%] h-screen overflow-hidden flex items-center justify-center bg-slate-50 relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-blue-100 rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/2 animate-blob pointer-events-none" />
 
-        <div className="absolute bottom-16 left-8 right-8">
-          <h2 className="font-display-xl text-display-xl text-on-primary drop-shadow-md mb-stack-sm">
-            Create new password
-          </h2>
-          <p className="font-body-lg text-body-lg text-on-primary drop-shadow-sm max-w-md">
-            Enter a strong password to secure your QuickBite account.
-          </p>
-        </div>
-      </div>
-
-      {/* Right Hemisphere: Reset Password Form */}
-      <div className="w-full md:w-1/2 lg:w-[45%] h-screen overflow-y-auto flex items-center justify-center p-container-padding bg-surface">
-        <div className="w-full max-w-md space-y-stack-lg">
-          {/* Mobile Brand Header */}
-          <div className="md:hidden text-center mb-8">
-            <h1 className="font-headline-md text-headline-md text-primary">QuickBite</h1>
+        <div className="w-full max-w-md px-8 py-12 relative z-10">
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center gap-2">
+              <span className="text-3xl">🍔</span>
+              <span className="text-2xl font-extrabold text-primary">QuickBite</span>
+            </div>
           </div>
 
-          {/* Header */}
-          <div className="space-y-stack-sm text-center md:text-left">
-            <h2 className="font-display-xl text-display-xl text-on-background">Reset Password</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              {isOtpFlow 
-                ? 'Enter the OTP from the console and your new password.' 
-                : 'Enter a new password for your account.'}
+          <div className="mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-indigo-600 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-primary/20 animate-bounce-in">
+              <Icon name="lock_reset" size={28} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 mb-1.5">Reset Password 🔑</h1>
+            <p className="text-slate-500 text-sm">
+              {isOtpFlow ? 'Enter the OTP from your email and set a new password.' : 'Set a new password for your account.'}
             </p>
           </div>
 
-          {/* Success Message */}
+          {/* Alerts */}
           {successMessage && (
-            <div className="bg-tertiary-fixed text-on-tertiary-fixed p-4 rounded-[16px] flex items-center gap-2">
-              <Icon name="check_circle" size={20} />
-              <span className="font-body-md">{successMessage}</span>
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 mb-6 animate-bounce-in">
+              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon name="check_circle" size={16} />
+              </div>
+              <span className="text-sm font-medium">{successMessage}</span>
             </div>
           )}
-
-          {/* Error Alert */}
           {submitError && (
-            <div className="bg-error-container text-on-error-container p-4 rounded-[16px] flex items-center space-x-2">
-              <Icon name="error" size={20} />
-              <span className="font-body-md text-body-md">{submitError}</span>
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-center gap-3 mb-6 animate-scale-in">
+              <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon name="error" size={16} />
+              </div>
+              <span className="text-sm font-medium">{submitError}</span>
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={form.handleSubmit} className="space-y-stack-md">
-            {/* OTP Field (Only for OTP Flow) */}
-            {isOtpFlow && (
-              <div className="space-y-unit">
-                <label className="font-label-md text-label-md text-on-surface ml-4 block" htmlFor="otp">
-                  One-Time Password (OTP)
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                    <Icon name="pin" size={20} className="text-outline" />
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-100 p-8">
+            <form onSubmit={form.handleSubmit} className="space-y-5">
+              {/* OTP field (OTP flow only) */}
+              {isOtpFlow && (
+                <div className="space-y-1.5">
+                  <label className="text-sm font-semibold text-slate-700 block" htmlFor="reset-otp">One-Time Password</label>
+                  <div className="relative">
+                    <Icon name="pin" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                    <input type="text" id="reset-otp" name="otp" placeholder="6-digit OTP" maxLength="6"
+                      className="w-full input-premium py-3.5 pl-11 pr-4 text-sm rounded-xl placeholder:text-slate-400"
+                      value={form.values.otp || ''} onChange={form.handleChange} onBlur={form.handleBlur} required />
                   </div>
-                  <input
-                    type="text"
-                    id="otp"
-                    name="otp"
-                    placeholder="Enter 6-digit OTP"
-                    maxLength="6"
-                    className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-6 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient"
-                    value={form.values.otp || ''}
-                    onChange={form.handleChange}
-                    onBlur={form.handleBlur}
-                    required
-                  />
+                  <p className="text-xs text-slate-400">Check your email or AuthService console for the OTP.</p>
                 </div>
-                <p className="font-caption-sm text-caption-sm text-on-surface-variant px-2">
-                  Check your AuthService console for the OTP. It expires in 10 minutes.
-                </p>
-                {form.touched.otp && form.errors.otp && (
-                  <p className="font-caption-sm text-caption-sm text-error ml-4">{form.errors.otp}</p>
+              )}
+
+              {/* New Password */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700 block" htmlFor="reset-password">New Password</label>
+                <div className="relative">
+                  <Icon name="lock" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input type={showPassword ? 'text' : 'password'} id="reset-password" name="password" placeholder="At least 8 characters"
+                    className={inputClass} value={form.values.password} onChange={form.handleChange} onBlur={form.handleBlur} required />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                    <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={17} />
+                  </button>
+                </div>
+                {form.touched.password && form.errors.password && (
+                  <p className="text-rose-500 text-xs">{form.errors.password}</p>
                 )}
               </div>
-            )}
 
-            {/* New Password */}
-            <div className="space-y-unit">
-              <label className="font-label-md text-label-md text-on-surface ml-4 block" htmlFor="password">
-                New Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <Icon name="lock" size={20} className="text-outline" />
+              {/* Confirm Password */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700 block" htmlFor="reset-confirm">Confirm Password</label>
+                <div className="relative">
+                  <Icon name="lock" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input type={showConfirmPassword ? 'text' : 'password'} id="reset-confirm" name="confirmPassword" placeholder="Repeat password"
+                    className={inputClass} value={form.values.confirmPassword} onChange={form.handleChange} onBlur={form.handleBlur} required />
+                  <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors">
+                    <Icon name={showConfirmPassword ? 'visibility_off' : 'visibility'} size={17} />
+                  </button>
                 </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  id="password"
-                  name="password"
-                  placeholder="••••••••"
-                  className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-12 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient"
-                  value={form.values.password}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors"
-                >
-                  <Icon name={showPassword ? 'visibility_off' : 'visibility'} size={20} />
-                </button>
+                {form.touched.confirmPassword && form.errors.confirmPassword && (
+                  <p className="text-rose-500 text-xs">{form.errors.confirmPassword}</p>
+                )}
               </div>
-              <p className="font-caption-sm text-caption-sm text-on-surface-variant px-2">
-                Must be at least 8 characters.
-              </p>
-              {form.touched.password && form.errors.password && (
-                <p className="font-caption-sm text-caption-sm text-error ml-4">{form.errors.password}</p>
-              )}
-            </div>
 
-            {/* Confirm Password */}
-            <div className="space-y-unit">
-              <label className="font-label-md text-label-md text-on-surface ml-4 block" htmlFor="confirmPassword">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <Icon name="lock" size={20} className="text-outline" />
-                </div>
-                <input
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  placeholder="••••••••"
-                  className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-12 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient"
-                  value={form.values.confirmPassword}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-outline hover:text-primary transition-colors"
-                >
-                  <Icon name={showConfirmPassword ? 'visibility_off' : 'visibility'} size={20} />
-                </button>
-              </div>
-              {form.touched.confirmPassword && form.errors.confirmPassword && (
-                <p className="font-caption-sm text-caption-sm text-error ml-4">{form.errors.confirmPassword}</p>
-              )}
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-stack-md">
               <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-[16px] bg-primary text-on-primary py-4 font-title-lg text-title-lg shadow-ambient hover:bg-surface-tint active:scale-95 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                id="reset-password-submit-btn"
+                type="submit" disabled={isLoading}
+                className="w-full btn-primary-gradient text-white py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>{isLoading ? 'Resetting...' : 'Reset Password'}</span>
-                {!isLoading && <Icon name="arrow_forward" size={20} />}
+                {isLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Resetting...
+                  </>
+                ) : (
+                  <>Reset Password <Icon name="arrow_forward" size={16} /></>
+                )}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
 
-          {/* Back to Login */}
-          <div className="text-center pt-stack-sm">
-            <Link to="/login" className="font-body-md text-body-md text-primary hover:text-surface-tint transition-colors">
+          <div className="text-center mt-6">
+            <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors font-medium">
+              <Icon name="arrow_back" size={16} />
               Back to Login
             </Link>
           </div>

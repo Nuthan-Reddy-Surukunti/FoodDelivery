@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Icon } from '../components/atoms/Icon'
 import { useFormValidation } from '../hooks/useFormValidation'
 import { authApi } from '../services/authApi'
+import { AuthHeroPanel } from './RegisterPage'
 
 export const ForgotPasswordPage = () => {
   const navigate = useNavigate()
@@ -17,10 +18,9 @@ export const ForgotPasswordPage = () => {
       setSuccessMessage(null)
       setIsLoading(true)
       try {
-        const response = await authApi.forgotPassword(values.email)
-        setSuccessMessage('✅ OTP sent! Check the AuthService console for your one-time password. You will be redirected to enter the OTP shortly.')
+        await authApi.forgotPassword(values.email)
+        setSuccessMessage('OTP sent! Check your email (or AuthService console) for your one-time password.')
         form.resetForm?.()
-        // Redirect to reset password page after showing message
         setTimeout(() => navigate(`/reset-password?email=${encodeURIComponent(values.email)}`), 3500)
       } catch (error) {
         setSubmitError(error.message || 'Failed to send reset link. Please try again.')
@@ -31,121 +31,91 @@ export const ForgotPasswordPage = () => {
   )
 
   return (
-    <div className="bg-background text-on-background min-h-screen flex flex-col md:flex-row antialiased overflow-hidden">
-      {/* Left Hemisphere: Image */}
-      <div className="hidden md:flex md:w-1/2 lg:w-[55%] relative h-screen bg-surface-container-highest">
-        {/* Background Image */}
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{
-            backgroundImage:
-              "url('https://lh3.googleusercontent.com/aida-public/AB6AXuDdjmT2L_2KIUrrbZxlduKbIzQ7MpYbPNULULA35xiJYwnM-H-2XWOHJlUfOeiBltg8pj8ZGY-rfQ8FIBVizFa5NF2uMc5fQ6k4dbGHslYwb25PY_ZZ-byNDB0N0JeCWyd_ZRrwK6DQ6vd5g0IFwyJ1enFCkZVU2hGTUaW7ft_PLYTLm-uPw6E2o0LU6ITwgRGJ3u4KH0BUOPgZsI2tZ9AZHKpIyQT88pbMxA_tOrFwy2ydHvvkmoMe2_b_QTfYdUpZEUCGyGh3CbZE')",
-          }}
-        />
-        {/* Gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-surface-variant/20 to-transparent" />
+    <div className="min-h-screen flex font-sans antialiased overflow-hidden">
+      <AuthHeroPanel
+        title={<>Reset your <span className="text-orange-400">access.</span></>}
+        subtitle="We'll send you a secure OTP to get back to your food ordering journey."
+        badge="Secure password reset"
+      />
 
-        {/* Brand Badge */}
-        <div className="absolute top-8 left-8">
-          <h1 className="font-headline-md text-headline-md text-primary bg-surface-container-lowest/90 px-4 py-2 rounded-[16px] shadow-ambient backdrop-blur-md">
-            QuickBite
-          </h1>
-        </div>
+      <div className="w-full lg:w-[48%] h-screen overflow-hidden flex items-center justify-center bg-slate-50 relative">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100 rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/2 animate-blob pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-56 h-56 bg-blue-100 rounded-full blur-3xl opacity-35 translate-y-1/2 -translate-x-1/2 animate-blob-delay2 pointer-events-none" />
 
-        {/* Sensorial Text */}
-        <div className="absolute bottom-16 left-8 right-8">
-          <h2 className="font-display-xl text-display-xl text-on-primary drop-shadow-md mb-stack-sm">
-            Reset your access
-          </h2>
-          <p className="font-body-lg text-body-lg text-on-primary drop-shadow-sm max-w-md">
-            We'll send you a link to reset your password and get back to your food ordering.
-          </p>
-        </div>
-      </div>
-
-      {/* Right Hemisphere: Forgot Password Form */}
-      <div className="w-full md:w-1/2 lg:w-[45%] h-screen overflow-y-auto flex items-center justify-center p-container-padding bg-surface">
-        <div className="w-full max-w-md space-y-stack-lg">
-          {/* Mobile Brand Header */}
-          <div className="md:hidden text-center mb-8">
-            <h1 className="font-headline-md text-headline-md text-primary">QuickBite</h1>
+        <div className="w-full max-w-md px-8 py-12 relative z-10">
+          {/* Mobile brand */}
+          <div className="lg:hidden text-center mb-8">
+            <div className="inline-flex items-center gap-2">
+              <span className="text-3xl">🍔</span>
+              <span className="text-2xl font-extrabold text-primary">QuickBite</span>
+            </div>
           </div>
 
-          {/* Header */}
-          <div className="space-y-stack-sm text-center md:text-left">
-            <h2 className="font-display-xl text-display-xl text-on-background">Forgot Password?</h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Enter your email and we'll send you a link to reset your password.
-            </p>
+          {/* Icon + Header */}
+          <div className="mb-8">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-indigo-500 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-primary/20">
+              <Icon name="lock_reset" size={28} className="text-white" />
+            </div>
+            <h1 className="text-3xl font-extrabold text-slate-900 mb-1.5">Forgot Password?</h1>
+            <p className="text-slate-500 text-sm">Enter your email and we'll send you an OTP to reset your password.</p>
           </div>
 
-          {/* Success Message */}
+          {/* Success */}
           {successMessage && (
-            <div className="bg-tertiary-fixed text-on-tertiary-fixed p-4 rounded-[16px] flex items-center gap-2">
-              <Icon name="check_circle" size={20} />
-              <span className="font-body-md">{successMessage}</span>
-            </div>
-          )}
-
-          {/* Error Alert */}
-          {submitError && (
-            <div className="bg-error-container text-on-error-container p-4 rounded-[16px] flex items-center space-x-2">
-              <Icon name="error" size={20} />
-              <span className="font-body-md text-body-md">{submitError}</span>
-            </div>
-          )}
-
-          {/* Form */}
-          <form onSubmit={form.handleSubmit} className="space-y-stack-md">
-            {/* Email Input */}
-            <div className="space-y-unit">
-              <label className="font-label-md text-label-md text-on-surface ml-4 block" htmlFor="email">
-                Email Address
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-                  <Icon name="mail" size={20} className="text-outline" />
-                </div>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  placeholder="Enter your email"
-                  className="w-full rounded-[16px] bg-surface-container-low border border-transparent focus:border-primary focus:bg-surface-container-lowest focus:ring-2 focus:ring-primary/20 py-4 pl-12 pr-6 font-body-md text-body-md text-on-surface placeholder:text-outline transition-all shadow-ambient"
-                  value={form.values.email}
-                  onChange={form.handleChange}
-                  onBlur={form.handleBlur}
-                  required
-                />
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 p-4 rounded-2xl flex items-center gap-3 mb-6 animate-bounce-in">
+              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 animate-bounce-in">
+                <Icon name="check_circle" size={16} />
               </div>
-              {form.touched.email && form.errors.email && (
-                <p className="hidden font-caption-sm text-caption-sm text-error ml-4 mt-1">
-                  {form.errors.email}
-                </p>
-              )}
+              <span className="text-sm font-medium">{successMessage}</span>
             </div>
+          )}
 
-            {/* Submit Button */}
-            <div className="pt-stack-md">
+          {/* Error */}
+          {submitError && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 p-4 rounded-2xl flex items-center gap-3 mb-6 animate-scale-in">
+              <div className="w-8 h-8 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <Icon name="error" size={16} />
+              </div>
+              <span className="text-sm font-medium">{submitError}</span>
+            </div>
+          )}
+
+          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/80 border border-slate-100 p-8">
+            <form onSubmit={form.handleSubmit} className="space-y-5">
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-slate-700 block" htmlFor="forgot-email">Email Address</label>
+                <div className="relative">
+                  <Icon name="mail" size={17} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                  <input
+                    type="email" id="forgot-email" name="email" placeholder="you@example.com"
+                    className="w-full input-premium py-3.5 pl-11 pr-4 text-sm rounded-xl placeholder:text-slate-400"
+                    value={form.values.email} onChange={form.handleChange} onBlur={form.handleBlur} required
+                  />
+                </div>
+              </div>
+
               <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full rounded-[16px] bg-primary text-on-primary py-4 font-title-lg text-title-lg shadow-ambient hover:bg-surface-tint active:scale-95 transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                id="forgot-password-submit-btn"
+                type="submit" disabled={isLoading}
+                className="w-full btn-primary-gradient text-white py-4 rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span>{isLoading ? 'Sending...' : 'Send Reset Link'}</span>
-                {!isLoading && <Icon name="arrow_forward" size={20} />}
+                {isLoading ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Sending OTP...
+                  </>
+                ) : (
+                  <>Send Reset OTP <Icon name="send" size={16} /></>
+                )}
               </button>
-            </div>
-          </form>
+            </form>
+          </div>
 
-          {/* Back to Login */}
-          <div className="text-center pt-stack-sm">
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Remember your password?{' '}
-              <Link to="/login" className="font-title-lg text-title-lg text-primary hover:text-surface-tint ml-1 transition-colors">
-                Sign In
-              </Link>
-            </p>
+          <div className="text-center mt-6">
+            <Link to="/login" className="inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-primary transition-colors font-medium">
+              <Icon name="arrow_back" size={16} />
+              Back to Sign In
+            </Link>
           </div>
         </div>
       </div>

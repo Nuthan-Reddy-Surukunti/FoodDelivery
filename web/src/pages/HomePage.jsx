@@ -293,13 +293,34 @@ export const HomePage = () => {
   }
 
   return (
-    <div className="bg-background min-h-screen">
+    <div className="bg-slate-50 min-h-screen">
       {/* ── Hero Search Section ── */}
-      <section className="px-6 pt-8 pb-6 max-w-7xl mx-auto">
-        <h1 className="text-display-xl font-bold text-slate-900 leading-tight max-w-xl mb-3">
-          What are you craving today?
+      <section 
+        className="relative px-6 pt-10 pb-10 bg-slate-900 overflow-hidden"
+        style={{
+          backgroundImage: `url('/images/home_hero.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Smooth gradient overlay so text remains perfectly readable on the left */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-900/70 to-transparent" />
+
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/20 mb-5">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-xs font-semibold text-white/90">
+              {filtered.length > 0
+                ? `${filtered.length} restaurant${filtered.length !== 1 ? 's' : ''} near you`
+                : restaurantsData.length > 0
+                ? `${restaurantsData.length} restaurants available`
+                : 'Discovering restaurants near you...'}
+            </span>
+          </div>
+          <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight max-w-xl mb-3">
+            What are you <span className="text-yellow-400">craving</span> today?
         </h1>
-        <p className="text-body-lg text-slate-600 mb-6">Discover top-rated restaurants and order in minutes.</p>
+          <p className="text-white/70 text-base mb-7">Discover top-rated restaurants and order in minutes.</p>
 
         {/* Search box with live dropdown */}
         <div className="relative w-full max-w-2xl" ref={searchContainerRef}>
@@ -337,40 +358,45 @@ export const HomePage = () => {
           )}
         </div>
 
-        {/* Quick Filters */}
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            onClick={() => setIsVegetarianOnly(!isVegetarianOnly)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 border transition-colors ${
-              isVegetarianOnly 
-                ? 'bg-green-100 border-green-200 text-green-800' 
-                : 'bg-surface-container-low border-slate-200 text-on-surface hover:bg-slate-100'
-            }`}
-          >
-            <span className={`inline-flex h-4 w-4 items-center justify-center rounded-sm border flex-shrink-0 ${isVegetarianOnly ? 'border-green-600' : 'border-slate-400'}`}>
-              <span className={`h-2 w-2 rounded-full ${isVegetarianOnly ? 'bg-green-600' : 'bg-transparent'}`} />
-            </span>
-            Vegetarian Only
-          </button>
+          {/* Quick Filters */}
+          <div className="mt-5 flex flex-wrap gap-3">
+            <button
+              onClick={() => setIsVegetarianOnly(!isVegetarianOnly)}
+              className={`px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2 border transition-all ${
+                isVegetarianOnly
+                  ? 'bg-green-100 border-green-200 text-green-800'
+                  : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+              }`}
+            >
+              <span className={`inline-flex h-4 w-4 items-center justify-center rounded-sm border flex-shrink-0 ${isVegetarianOnly ? 'border-green-600' : 'border-white/60'}`}>
+                <span className={`h-2 w-2 rounded-full ${isVegetarianOnly ? 'bg-green-600' : 'bg-transparent'}`} />
+              </span>
+              Vegetarian Only
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ── Cuisine Carousel ── */}
       {availableCuisines.length > 0 && (
-        <section className="pb-8">
-          <div className="px-6 max-w-7xl mx-auto mb-4">
-            <h2 className="text-xl font-semibold text-on-surface">Categories</h2>
+        <section className="py-8 bg-slate-50">
+          <div className="px-6 max-w-7xl mx-auto mb-5">
+            <h2 className="text-xl font-bold text-slate-900">Browse by Category</h2>
           </div>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar px-6 max-w-7xl mx-auto snap-x">
+          <div className="flex gap-4 overflow-x-auto no-scrollbar px-6 max-w-7xl mx-auto snap-x py-4">
             {/* All button */}
             <button
               onClick={() => setActiveCuisine(null)}
-              className="flex flex-col items-center gap-2 min-w-[90px] snap-start group active:scale-95 transition-transform"
+              className={`flex flex-col items-center gap-3 snap-start group active:scale-95 transition-transform flex-shrink-0`}
             >
-              <div className="w-20 h-20 flex items-center justify-center">
-                <span className={`text-5xl transition-transform duration-300 group-hover:scale-125 ${activeCuisine === null ? 'scale-110' : ''}`}>🍽️</span>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all ${
+                activeCuisine === null
+                  ? 'bg-primary shadow-lg shadow-primary/20 scale-110'
+                  : 'bg-white shadow-sm border border-slate-100 group-hover:shadow-md group-hover:-translate-y-1'
+              }`}>
+                🍽️
               </div>
-              <span className={`text-xs font-semibold ${activeCuisine === null ? 'text-primary' : 'text-on-surface'}`}>All</span>
+              <span className={`text-xs font-bold ${ activeCuisine === null ? 'text-primary' : 'text-slate-600' }`}>All</span>
             </button>
 
             {availableCuisines.map((type) => {
@@ -380,12 +406,16 @@ export const HomePage = () => {
                 <button
                   key={type}
                   onClick={() => setActiveCuisine(isActive ? null : type)}
-                  className="flex flex-col items-center gap-2 min-w-[90px] snap-start group active:scale-95 transition-transform"
+                  className={`flex flex-col items-center gap-3 snap-start group active:scale-95 transition-transform flex-shrink-0`}
                 >
-                  <div className="w-20 h-20 flex items-center justify-center">
-                    <span className={`text-5xl transition-transform duration-300 group-hover:scale-125 ${isActive ? 'scale-110' : ''}`}>{meta.emoji}</span>
+                  <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl transition-all ${
+                    isActive
+                      ? `bg-primary shadow-lg shadow-primary/20 scale-110`
+                      : `bg-white shadow-sm border border-slate-100 group-hover:shadow-md group-hover:-translate-y-1`
+                  }`}>
+                    <span className="group-hover:scale-110 transition-transform">{meta.emoji}</span>
                   </div>
-                  <span className={`text-xs font-semibold ${isActive ? 'text-primary' : 'text-on-surface'}`}>{meta.label}</span>
+                  <span className={`text-xs font-bold ${ isActive ? 'text-primary' : 'text-slate-600' }`}>{meta.label}</span>
                 </button>
               )
             })}
@@ -533,15 +563,18 @@ export const HomePage = () => {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="bg-white border-t border-slate-200 py-12">
-        <div className="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-4 text-sm">
-          <div className="text-lg font-bold text-on-surface">QuickBite</div>
+      <footer className="bg-slate-900 py-12">
+        <div className="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-6 text-sm">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary to-indigo-600 rounded-xl flex items-center justify-center text-base">🍔</div>
+            <span className="text-xl font-extrabold text-white">QuickBite</span>
+          </div>
           <div className="flex gap-6">
             {['Privacy Policy', 'Terms of Service', 'Help Center', 'Contact Us'].map((l) => (
-              <a key={l} href="#" className="text-on-surface-variant hover:text-primary transition-colors">{l}</a>
+              <a key={l} href="#" className="text-slate-400 hover:text-white transition-colors">{l}</a>
             ))}
           </div>
-          <p className="text-on-surface-variant">© 2024 QuickBite. All rights reserved.</p>
+          <p className="text-slate-500">© 2024 QuickBite. All rights reserved.</p>
         </div>
       </footer>
     </div>
