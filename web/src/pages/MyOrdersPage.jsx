@@ -368,7 +368,7 @@ export const MyOrdersPage = () => {
               <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-8 h-8 object-contain" />
               <span className="text-base font-extrabold text-white">QuickBite</span>
             </div>
-            <p className="text-sm text-slate-400">© 2024 QuickBite Food Delivery. All rights reserved.</p>
+            <p className="text-sm text-slate-400">© {new Date().getFullYear()} QuickBite Food Delivery. All rights reserved.</p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 md:justify-end items-center">
             {['About Us', 'Terms of Service', 'Privacy Policy', 'Help Center'].map(l => (

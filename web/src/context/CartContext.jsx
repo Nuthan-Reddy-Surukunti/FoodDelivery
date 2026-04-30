@@ -5,6 +5,7 @@ export const CartContext = createContext()
 export const CartProvider = ({ children }) => {
   const [items, setItems] = useState([])
   const [restaurantId, setRestaurantId] = useState(null)
+  const [isInitialized, setIsInitialized] = useState(false)
 
   // Load cart from localStorage on mount
   useEffect(() => {
@@ -12,23 +13,35 @@ export const CartProvider = ({ children }) => {
     const savedRestaurantId = localStorage.getItem('restaurantId')
     
     if (savedCart) {
-      setItems(JSON.parse(savedCart))
+      try {
+        setItems(JSON.parse(savedCart))
+      } catch (e) {
+        console.error('Failed to parse cart', e)
+      }
     }
     if (savedRestaurantId) {
       setRestaurantId(savedRestaurantId)
     }
+    setIsInitialized(true)
   }, [])
 
-  // Save to localStorage whenever items change
+  // Save to localStorage whenever items or restaurantId change
   useEffect(() => {
+    if (!isInitialized) return
+
     if (items.length > 0) {
       localStorage.setItem('cart', JSON.stringify(items))
+      if (restaurantId) {
+        localStorage.setItem('restaurantId', restaurantId)
+      }
     } else {
       localStorage.removeItem('cart')
       localStorage.removeItem('restaurantId')
-      setRestaurantId(null)
+      if (restaurantId !== null) {
+        setRestaurantId(null)
+      }
     }
-  }, [items])
+  }, [items, restaurantId, isInitialized])
 
   const addItem = useCallback((item, newRestaurantId) => {
     // Only allow items from one restaurant at a time

@@ -143,7 +143,7 @@ export const ProfilePage = () => {
                   <span className="material-symbols-outlined text-slate-400">calendar_today</span>
                   <span className="text-sm text-slate-600 font-medium">Joined</span>
                 </div>
-                <span className="text-sm font-bold text-slate-900">Oct 2024</span>
+                <span className="text-sm font-bold text-slate-900">Oct 2026</span>
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

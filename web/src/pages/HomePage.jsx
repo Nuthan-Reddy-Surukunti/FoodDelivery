@@ -579,7 +579,7 @@ export const HomePage = () => {
               <a key={l} href="#" className="text-slate-400 hover:text-white transition-colors">{l}</a>
             ))}
           </div>
-          <p className="text-slate-500">© 2024 QuickBite. All rights reserved.</p>
+          <p className="text-slate-500">© {new Date().getFullYear()} QuickBite. All rights reserved.</p>
         </div>
       </footer>
     </div>
