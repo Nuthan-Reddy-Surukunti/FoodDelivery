@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+python-multipart
+emoji
+sherpa-onnx
+numpy

@@ -90,7 +90,11 @@ export const AiChatWidget = () => {
   }])
   const [inputText, setInputText] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true)
   const messagesEndRef = useRef(null)
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
   const navigate       = useNavigate()
   const { user }       = useAuth()
   const { addItem }    = useCart()
@@ -112,6 +116,59 @@ export const AiChatWidget = () => {
   useEffect(() => {
     if (isOpen) messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, isOpen])
+
+  const handleMicClick = async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop()
+      setIsRecording(false)
+      return
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream)
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data)
+      }
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        stream.getTracks().forEach(track => track.stop())
+        
+        setIsLoading(true)
+        try {
+          const formData = new FormData()
+          formData.append('file', audioBlob, 'recording.webm')
+          
+          const res = await fetch('http://localhost:8000/transcribe', {
+            method: 'POST',
+            body: formData
+          })
+          if (!res.ok) throw new Error("STT server error")
+          const data = await res.json()
+          
+          if (data.text) {
+             await handleSend(data.text)
+          } else {
+             setIsLoading(false)
+          }
+        } catch (err) {
+          console.error("STT Error:", err)
+          showError("Failed to transcribe audio. Is the local Audio Engine running?")
+          setIsLoading(false)
+        }
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+    } catch (err) {
+      console.error("Mic access denied:", err)
+      showError("Microphone access denied.")
+    }
+  }
 
   const handleSend = async (text) => {
     const trimmed = (text ?? inputText).trim()
@@ -149,6 +206,26 @@ export const AiChatWidget = () => {
           orderStatus:            response.orderStatus ?? null,
         }
       ])
+
+      // Trigger Local TTS
+      if (isVoiceEnabled && response.text) {
+        try {
+          const formData = new FormData()
+          formData.append('text', response.text)
+          const audioRes = await fetch('http://localhost:8000/speak', {
+            method: 'POST',
+            body: formData
+          })
+          if (audioRes.ok) {
+            const blob = await audioRes.blob()
+            const url = URL.createObjectURL(blob)
+            const audio = new Audio(url)
+            audio.play()
+          }
+        } catch (err) {
+          console.error("TTS Error:", err)
+        }
+      }
     } catch (err) {
       console.error('AI Chat error:', err)
       setMessages(prev => [
@@ -207,6 +284,13 @@ export const AiChatWidget = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setIsVoiceEnabled(!isVoiceEnabled)} 
+                className="text-[10px] bg-white/20 hover:bg-white/30 px-2 py-0.5 rounded-full transition-colors flex items-center gap-1"
+                title={isVoiceEnabled ? "Mute Voice" : "Enable Voice"}
+              >
+                <span className="material-symbols-outlined text-[14px]">{isVoiceEnabled ? 'volume_up' : 'volume_off'}</span>
+              </button>
               {aiStatus === 'offline' && (
                 <button
                   onClick={checkStatus}
@@ -342,18 +426,31 @@ export const AiChatWidget = () => {
           {/* Input Area */}
           <div className="p-3 bg-white border-t border-slate-100 flex-shrink-0">
             <form onSubmit={(e) => { e.preventDefault(); handleSend() }} className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleMicClick}
+                disabled={isLoading || aiStatus === 'offline'}
+                className={`w-10 h-10 shrink-0 rounded-full flex items-center justify-center transition-all ${
+                  isRecording 
+                    ? 'bg-red-500 text-white animate-pulse shadow-lg shadow-red-500/30' 
+                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                }`}
+                title="Hold to talk"
+              >
+                <span className="material-symbols-outlined text-[20px]">mic</span>
+              </button>
               <input
                 type="text"
-                value={inputText}
+                value={isRecording ? 'Listening...' : inputText}
                 onChange={e => setInputText(e.target.value)}
-                placeholder={aiStatus === 'offline' ? 'AI offline — tap Retry above' : 'Find dishes, cuisines, or track orders...'}
-                className="flex-1 px-4 py-2.5 bg-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition disabled:opacity-50"
-                disabled={isLoading || aiStatus === 'offline'}
+                placeholder={aiStatus === 'offline' ? 'AI offline — tap Retry above' : 'Type or use voice...'}
+                className="flex-1 px-4 py-2.5 bg-slate-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 transition disabled:opacity-50 min-w-0"
+                disabled={isLoading || aiStatus === 'offline' || isRecording}
               />
               <button
                 type="submit"
-                disabled={!inputText.trim() || isLoading || aiStatus === 'offline'}
-                className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 active:scale-95 transition-all"
+                disabled={!inputText.trim() || isLoading || aiStatus === 'offline' || isRecording}
+                className="w-10 h-10 shrink-0 rounded-full bg-primary text-white flex items-center justify-center disabled:opacity-40 hover:bg-primary/90 active:scale-95 transition-all"
               >
                 <span className="material-symbols-outlined text-sm">send</span>
               </button>

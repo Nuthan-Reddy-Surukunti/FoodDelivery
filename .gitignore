@@ -80,3 +80,9 @@ yarn-error.log*
 
 ## ─── Rider temp ────────────────────────────────────────────────────
 *.sln.iml
+
+## ─── Local Audio Engine ──────────────────────────────────────────────
+LocalAudioEngine/venv/
+LocalAudioEngine/*.wav
+LocalAudioEngine/vits-piper-*/
+LocalAudioEngine/sherpa-onnx-*/
