@@ -36,6 +36,8 @@ export const AdminRestaurantsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
   const [actioning, setActioning] = useState(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [editingRestaurant, setEditingRestaurant] = useState(null)
   const pageSize = 10
 
   const load = useCallback(async () => {
@@ -117,10 +119,24 @@ export const AdminRestaurantsPage = () => {
     } finally { setActioning(null) }
   }
 
-  // Filter restaurants based on selected category
+  // Derived categories from fetched restaurants
+  const dynamicCategories = [
+    { label: 'All Categories', value: 'all' },
+    ...Array.from(new Set(restaurants.map(r => r.cuisine).filter(Boolean))).map(c => ({
+      label: c,
+      value: c.toLowerCase(),
+    })),
+  ]
+
+  // Filter restaurants based on search and selected category
+  const searchedRestaurants = restaurants.filter(r => 
+    r.name?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    r.city?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
   const filteredRestaurants = selectedCategory === 'all' 
-    ? restaurants 
-    : restaurants.filter(r => r.cuisine?.toLowerCase().includes(selectedCategory.toLowerCase()))
+    ? searchedRestaurants 
+    : searchedRestaurants.filter(r => r.cuisine?.toLowerCase() === selectedCategory.toLowerCase())
 
   // Paginate
   const totalItems = filteredRestaurants.length
@@ -129,20 +145,42 @@ export const AdminRestaurantsPage = () => {
     currentPage * pageSize
   )
 
+  const handleSaveEdit = async () => {
+    if (!editingRestaurant.name) return showError('Name is required')
+    setActioning('edit')
+    try {
+      const payload = {
+        id: editingRestaurant.id,
+        name: editingRestaurant.name,
+        cuisineType: editingRestaurant.cuisine,
+        city: editingRestaurant.city,
+      }
+      await adminApi.updateRestaurant(editingRestaurant.id, payload)
+      showSuccess('Restaurant updated successfully')
+      setRestaurants(prev => prev.map(r => r.id === editingRestaurant.id ? { ...r, name: payload.name, cuisine: payload.cuisineType, city: payload.city } : r))
+      setEditingRestaurant(null)
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to update restaurant')
+    } finally {
+      setActioning(null)
+    }
+  }
+
   return (
-    <AdminLayout title="Restaurant Management" searchPlaceholder="Search restaurants...">
+    <AdminLayout 
+      title="Restaurant Management" 
+      searchPlaceholder="Search restaurants by name or city..."
+      searchQuery={searchQuery}
+      onSearchChange={setSearchQuery}
+    >
       {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm mb-6">⚠️ {error}</div>}
 
-      {/* Header with Add Button */}
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
           <h1 className="font-headline-lg text-headline-lg text-on-surface">Restaurants</h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">Manage partner restaurants, menus, and statuses.</p>
         </div>
-        <button className="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-rose-500 transition-colors flex items-center gap-2">
-          <span className="material-symbols-outlined">add</span>
-          Add New Restaurant
-        </button>
       </div>
 
       {/* Tabs */}
@@ -164,7 +202,7 @@ export const AdminRestaurantsPage = () => {
 
       {/* Category Filter */}
       <div className="mb-6">
-        <CategoryFilter selected={selectedCategory} onSelect={setSelectedCategory} />
+        <CategoryFilter categories={dynamicCategories} selected={selectedCategory} onSelect={setSelectedCategory} />
       </div>
 
       {/* Table */}
@@ -175,13 +213,84 @@ export const AdminRestaurantsPage = () => {
         currentPage={currentPage}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
-        onEdit={(restaurant) => console.log('Edit:', restaurant)}
+        onEdit={setEditingRestaurant}
         onDelete={handleDelete}
         onApprove={handleApprove}
         onReject={handleReject}
         onDeactivate={handleDeactivate}
         onActivate={handleActivate}
       />
+
+      {/* Edit Modal */}
+      {editingRestaurant && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center">
+              <h3 className="text-lg font-bold text-slate-900">Edit Restaurant</h3>
+              <button onClick={() => setEditingRestaurant(null)} className="text-slate-400 hover:text-slate-600">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="p-6 space-y-4 flex-1 overflow-y-auto">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editingRestaurant.name}
+                  onChange={(e) => setEditingRestaurant({ ...editingRestaurant, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Category / Cuisine</label>
+                <select
+                  value={editingRestaurant.cuisine}
+                  onChange={(e) => setEditingRestaurant({ ...editingRestaurant, cuisine: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                >
+                  <option value="">Select Cuisine</option>
+                  <option value="Italian">Italian</option>
+                  <option value="Chinese">Chinese</option>
+                  <option value="Indian">Indian</option>
+                  <option value="Mexican">Mexican</option>
+                  <option value="American">American</option>
+                  <option value="Thai">Thai</option>
+                  <option value="Japanese">Japanese</option>
+                  <option value="Continental">Continental</option>
+                  <option value="FastFood">Fast Food</option>
+                  <option value="Vegan">Vegan</option>
+                  <option value="Mediterranean">Mediterranean</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">City</label>
+                <input
+                  type="text"
+                  value={editingRestaurant.city}
+                  onChange={(e) => setEditingRestaurant({ ...editingRestaurant, city: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 bg-slate-50 flex justify-end gap-3">
+              <button
+                onClick={() => setEditingRestaurant(null)}
+                className="px-4 py-2 rounded-lg font-medium text-slate-600 hover:bg-slate-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={actioning === 'edit'}
+                className="px-4 py-2 rounded-lg font-medium bg-primary text-white hover:bg-rose-500 transition-colors disabled:opacity-50"
+              >
+                {actioning === 'edit' ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   )
 }

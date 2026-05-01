@@ -41,6 +41,11 @@ const adminApi = {
     return response.data
   },
 
+  async getOrderDetails(orderId) {
+    const response = await api.get(`/gateway/orders/${orderId}`)
+    return response.data
+  },
+
   async updateOrderStatus(orderId, newStatus, reason = null, refundAmount = null) {
     const response = await api.put(`/gateway/admin/orders/${orderId}/status`, {
       newStatus,
@@ -55,6 +60,11 @@ const adminApi = {
     const response = await api.get('/gateway/admin/restaurants', {
       params: status ? { status } : undefined,
     })
+    return response.data
+  },
+
+  async updateRestaurant(restaurantId, payload) {
+    const response = await api.put(`/gateway/catalog/restaurants/${restaurantId}`, payload)
     return response.data
   },
 

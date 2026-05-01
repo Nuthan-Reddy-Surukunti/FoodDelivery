@@ -5,10 +5,10 @@ import { KpiCard } from '../components/molecules/KpiCard'
 import { OrdersChart } from '../components/molecules/OrdersChart'
 import adminApi from '../services/adminApi'
 
-// Compute percentage change between two values, capped and formatted
 function computeTrend(current, previous) {
   if (!previous || previous === 0) return null
-  const pct = ((current - previous) / previous) * 100
+  let pct = ((current - previous) / previous) * 100
+  if (pct > 999) return '>999%'
   const sign = pct >= 0 ? '+' : ''
   return `${sign}${pct.toFixed(1)}%`
 }

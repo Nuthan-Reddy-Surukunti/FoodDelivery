@@ -14,7 +14,7 @@ const NAV_ITEMS = [
   { to: '/profile', icon: 'person', label: 'Profile', color: 'text-sky-400' },
 ]
 
-export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' }) => {
+export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '', searchQuery = '', onSearchChange = null }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
@@ -137,6 +137,8 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
                 <input
                   type="text"
                   placeholder={searchPlaceholder}
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
                   className="pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm w-56 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                 />
               </div>
@@ -166,9 +168,7 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
                   onMarkRead={markRead}
                 />
               </div>
-              <button className="p-2 rounded-xl text-slate-500 hover:text-primary hover:bg-slate-50 transition-all" aria-label="Settings">
-                <span className="material-symbols-outlined text-xl">settings</span>
-              </button>
+
               <Link
                 to="/profile"
                 className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-rose-400 text-white text-xs font-bold flex items-center justify-center ml-1 hover:shadow-md transition-all"
@@ -195,4 +195,6 @@ AdminLayout.propTypes = {
   children: PropTypes.node,
   title: PropTypes.string,
   searchPlaceholder: PropTypes.string,
+  searchQuery: PropTypes.string,
+  onSearchChange: PropTypes.func,
 }

@@ -1,20 +1,9 @@
 import PropTypes from 'prop-types'
 
-const CATEGORIES = [
-  { label: 'All Categories', value: 'all' },
-  { label: 'Italian', value: 'italian' },
-  { label: 'Asian', value: 'asian' },
-  { label: 'American', value: 'american' },
-  { label: 'Healthy', value: 'healthy' },
-  { label: 'Mexican', value: 'mexican' },
-  { label: 'Thai', value: 'thai' },
-  { label: 'Japanese', value: 'japanese' },
-]
-
-export const CategoryFilter = ({ selected = 'all', onSelect = () => {} }) => {
+export const CategoryFilter = ({ categories = [], selected = 'all', onSelect = () => {} }) => {
   return (
     <div className="flex flex-wrap gap-2">
-      {CATEGORIES.map(({ label, value }) => (
+      {categories.map(({ label, value }) => (
         <button
           key={value}
           onClick={() => onSelect(value)}
@@ -32,6 +21,10 @@ export const CategoryFilter = ({ selected = 'all', onSelect = () => {} }) => {
 }
 
 CategoryFilter.propTypes = {
+  categories: PropTypes.arrayOf(PropTypes.shape({
+    label: PropTypes.string,
+    value: PropTypes.string
+  })),
   selected: PropTypes.string,
   onSelect: PropTypes.func,
 }
