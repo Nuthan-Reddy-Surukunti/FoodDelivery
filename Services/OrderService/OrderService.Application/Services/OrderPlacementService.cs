@@ -80,7 +80,8 @@ public class OrderPlacementService : IOrderPlacementService
         await _orderRepository.AddAsync(order, cancellationToken);
 
         // Only process COD automatically and clear cart
-        if ((PaymentMethod)request.PaymentMethod == PaymentMethod.CashOnDelivery)
+        // Only process COD automatically and clear cart
+        if (request.PaymentMethod == (int)PaymentMethod.CashOnDelivery)
         {
             try
             {
@@ -102,27 +103,8 @@ public class OrderPlacementService : IOrderPlacementService
             cart.UpdatedAt = DateTime.UtcNow;
             await _cartRepository.UpdateAsync(cart, cancellationToken);
             
-            // Publish order placed event only for COD here. 
-            // For online payments, it will be published after Razorpay verification.
-            await _publishEndpoint.Publish(new OrderPlacedEvent
-            {
-                EventId = Guid.NewGuid(),
-                OccurredAt = DateTime.UtcNow,
-                EventVersion = 1,
-                OrderId = order.Id,
-                UserId = order.UserId,
-                RestaurantId = order.RestaurantId,
-                RestaurantName = "",
-                TotalAmount = order.TotalAmount,
-                DeliveryAddress = "",
-                Items = order.OrderItems.Select(oi => new OrderItemSnapshot
-                {
-                    MenuItemId = oi.MenuItemId,
-                    MenuItemName = "",
-                    Quantity = oi.Quantity,
-                    PriceAtPurchase = oi.UnitPrice
-                }).ToList()
-            }, cancellationToken);
+            // Note: OrderPlacedEvent is now published inside DeliveryService.ProcessPaymentAsync
+            // to avoid duplication and ensure consistency across all payment paths.
         }
 
         return OrderMappings.MapToDto(order);

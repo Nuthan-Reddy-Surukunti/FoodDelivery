@@ -12,6 +12,8 @@ public interface IDeliveryService
     Task<AgentEarningsSummaryDto> GetEarningsSummaryAsync(string authUserId, CancellationToken cancellationToken = default);
 
     Task<PaymentResponseDto> ProcessPaymentAsync(Guid orderId, ProcessPaymentRequestDto request, CancellationToken cancellationToken = default);
+    
+    Task<DeliveryAssignmentDto> AssignDeliveryAgentAsync(Guid orderId, CancellationToken cancellationToken = default);
 
     Task<IReadOnlyList<OrderTimelineEntryDto>> GetDeliveryTimelineAsync(Guid deliveryAssignmentId, CancellationToken cancellationToken = default);
 }

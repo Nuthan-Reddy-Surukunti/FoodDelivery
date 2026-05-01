@@ -59,3 +59,17 @@ public class UserDeletedEvent
     public string Email { get; set; } = string.Empty;
     public string Role { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// Published when a user updates their profile
+/// </summary>
+public class UserUpdatedEvent
+{
+    public Guid EventId { get; set; } = Guid.NewGuid();
+    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
+    public int EventVersion { get; set; } = 1;
+
+    public Guid UserId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string PhoneNumber { get; set; } = string.Empty;
+}

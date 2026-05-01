@@ -25,7 +25,7 @@ const getItemDisplayName = (item) => {
 const PAYMENT_METHODS = [
   {
     id: 'CashOnDelivery',
-    value: 3,
+    value: 2,
     label: 'Cash on Delivery',
     icon: 'payments',
     description: 'Pay in cash when your order arrives',
@@ -34,24 +34,24 @@ const PAYMENT_METHODS = [
     activeBg: 'bg-amber-50 border-amber-500 ring-2 ring-amber-200',
   },
   {
-    id: 'Card',
-    value: 2,
-    label: 'Credit / Debit Card',
-    icon: 'credit_card',
-    description: 'Visa, Mastercard, RuPay accepted',
+    id: 'Online',
+    value: 1,
+    label: 'Online Payment',
+    icon: 'account_balance_wallet',
+    description: 'Pay securely via Razorpay (UPI, Cards, Wallets)',
     color: 'text-blue-700',
     bg: 'bg-blue-50 border-blue-300',
     activeBg: 'bg-blue-50 border-blue-500 ring-2 ring-blue-200',
-  },
-  {
-    id: 'Wallet',
-    value: 1,
-    label: 'Digital Wallet',
-    icon: 'account_balance_wallet',
-    description: 'Paytm, PhonePe, Google Pay',
-    color: 'text-violet-700',
-    bg: 'bg-violet-50 border-violet-300',
-    activeBg: 'bg-violet-50 border-violet-500 ring-2 ring-violet-200',
+    branding: (
+      <div className="mt-3 pt-3 border-t border-blue-100 flex items-center gap-2">
+        <span className="text-[10px] uppercase tracking-wider text-blue-400 font-bold">Securely processed by</span>
+        <img 
+          src="https://upload.wikimedia.org/wikipedia/commons/8/89/Razorpay_logo.svg" 
+          alt="Razorpay" 
+          className="h-3 opacity-70"
+        />
+      </div>
+    )
   },
 ]
 
@@ -247,13 +247,16 @@ export const CheckoutPage = () => {
                       {method.icon}
                     </span>
                     <div className="flex-1">
-                      <p className={`font-semibold text-sm ${selectedMethod === method.id ? 'text-on-surface' : 'text-on-surface-variant'}`}>
-                        {method.label}
-                      </p>
-                      <p className="text-xs text-on-surface-variant">{method.description}</p>
-                    </div>
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedMethod === method.id ? 'border-primary bg-primary' : 'border-slate-300'}`}>
-                      {selectedMethod === method.id && <span className="w-2 h-2 rounded-full bg-white" />}
+                      <div className="flex items-center justify-between">
+                        <p className={`font-semibold text-sm ${selectedMethod === method.id ? 'text-on-surface' : 'text-on-surface-variant'}`}>
+                          {method.label}
+                        </p>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${selectedMethod === method.id ? 'border-primary bg-primary' : 'border-slate-300'}`}>
+                          {selectedMethod === method.id && <span className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                      <p className="text-xs text-on-surface-variant mt-0.5">{method.description}</p>
+                      {method.branding}
                     </div>
                   </button>
                 ))}

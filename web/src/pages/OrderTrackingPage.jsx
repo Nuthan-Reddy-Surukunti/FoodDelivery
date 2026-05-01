@@ -42,14 +42,12 @@ const STATUS_LABEL = {
 }
 
 const PAYMENT_METHOD_LABEL = { 
-  1: 'Digital Wallet', Wallet: 'Digital Wallet',
-  2: 'Credit / Debit Card', Card: 'Credit / Debit Card',
-  3: 'Cash on Delivery', CashOnDelivery: 'Cash on Delivery' 
+  1: 'Online Payment (Razorpay)', Online: 'Online Payment (Razorpay)',
+  2: 'Cash on Delivery', CashOnDelivery: 'Cash on Delivery' 
 }
 const PAYMENT_METHOD_ICON  = { 
-  1: 'account_balance_wallet', Wallet: 'account_balance_wallet',
-  2: 'credit_card', Card: 'credit_card',
-  3: 'payments', CashOnDelivery: 'payments' 
+  1: 'account_balance_wallet', Online: 'account_balance_wallet',
+  2: 'payments', CashOnDelivery: 'payments' 
 }
 
 const fmtTime = (iso) =>

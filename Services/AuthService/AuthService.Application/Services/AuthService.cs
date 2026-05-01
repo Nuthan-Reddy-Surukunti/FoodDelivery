@@ -932,6 +932,17 @@ public class AuthService : IAuthService
         if (!result)
             return new AuthRequestDto { Success = false, Message = "Failed to update profile." };
 
+        // Publish UserUpdatedEvent to notify other services
+        await _publishEndpoint.Publish(new UserUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            UserId = user.Id,
+            FullName = user.FullName,
+            PhoneNumber = user.MobileNumber
+        });
+
         return new AuthRequestDto
         {
             Success = true,

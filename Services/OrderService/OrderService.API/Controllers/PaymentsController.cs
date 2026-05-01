@@ -143,7 +143,7 @@ public class PaymentsController : ControllerBase
                 {
                     OrderId = order.Id,
                     Amount = order.TotalAmount,
-                    PaymentMethod = PaymentMethod.Card, // Or whatever online method
+                    PaymentMethod = PaymentMethod.Online, 
                     PaymentStatus = PaymentStatus.Success,
                     ProcessedAt = DateTime.UtcNow,
                     RazorpayOrderId = request.RazorpayOrderId,
@@ -153,6 +153,7 @@ public class PaymentsController : ControllerBase
             }
             else
             {
+                order.Payment.PaymentMethod = PaymentMethod.Online;
                 order.Payment.PaymentStatus = PaymentStatus.Success;
                 order.Payment.ProcessedAt = DateTime.UtcNow;
                 order.Payment.RazorpayOrderId = request.RazorpayOrderId;
@@ -161,6 +162,9 @@ public class PaymentsController : ControllerBase
             }
 
             await _orderRepository.UpdateAsync(order, cancellationToken);
+
+            // ASSIGN DELIVERY AGENT for this online order
+            await _deliveryService.AssignDeliveryAgentAsync(orderId, cancellationToken);
 
             // Clear the cart
             var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(order.UserId, order.RestaurantId, cancellationToken);
@@ -180,16 +184,29 @@ public class PaymentsController : ControllerBase
                 OrderId = order.Id,
                 UserId = order.UserId,
                 RestaurantId = order.RestaurantId,
-                RestaurantName = "",
+                RestaurantName = "Restaurant",
                 TotalAmount = order.TotalAmount,
-                DeliveryAddress = "",
+                DeliveryAddress = $"{order.DeliveryAddressLine1}, {order.DeliveryCity}",
                 Items = order.OrderItems.Select(oi => new OrderItemSnapshot
                 {
                     MenuItemId = oi.MenuItemId,
-                    MenuItemName = "",
+                    MenuItemName = "Menu Item",
                     Quantity = oi.Quantity,
                     PriceAtPurchase = oi.UnitPrice
                 }).ToList()
+            }, cancellationToken);
+
+            // Publish OrderStatusChangedEvent for tracking consistency
+            await _publishEndpoint.Publish(new OrderStatusChangedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                EventVersion = 1,
+                OrderId = order.Id,
+                UserId = order.UserId,
+                RestaurantId = order.RestaurantId,
+                OldStatus = OrderStatus.CheckoutStarted.ToString(),
+                NewStatus = OrderStatus.Paid.ToString()
             }, cancellationToken);
         }
 
