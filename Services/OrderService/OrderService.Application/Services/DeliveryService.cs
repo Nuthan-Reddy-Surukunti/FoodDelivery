@@ -151,13 +151,7 @@ public class DeliveryService : IDeliveryService
         payment.UpdatedAt = DateTime.UtcNow;
         payment.TransactionId ??= Guid.NewGuid().ToString();
 
-        // Online payment handling — Razorpay details would be here if not CashOnDelivery
-        if (request.PaymentMethod == PaymentMethod.Online)
-        {
-            payment.RazorpayOrderId = request.RazorpayOrderId;
-            payment.RazorpayPaymentId = request.RazorpayPaymentId;
-            payment.RazorpaySignature = request.RazorpaySignature;
-        }
+
 
         // Add or update based on whether it's new
         if (isNewPayment)
@@ -174,11 +168,6 @@ public class DeliveryService : IDeliveryService
         order.PaymentCompletedAt = DateTime.UtcNow;
         order.OrderStatus = OrderStatus.Paid;
         order.UpdatedAt = DateTime.UtcNow;
-        
-        // ASSIGN DELIVERY AGENT (Now consolidated into a reusable method)
-        var assignmentDto = await AssignDeliveryAgentAsync(orderId, cancellationToken);
-        
-        await _orderRepository.UpdateAsync(order, cancellationToken);
         
         // Publish OrderPlacedEvent - this notifies restaurants and other services
         await _publishEndpoint.Publish(new OrderPlacedEvent
@@ -223,7 +212,7 @@ public class DeliveryService : IDeliveryService
             Currency = "INR",
             PaymentMethod = payment.PaymentMethod,
             ProcessedAt = payment.ProcessedAt ?? DateTime.UtcNow,
-            DeliveryAssignment = assignmentDto
+            DeliveryAssignment = null
         };
     }
 
@@ -352,9 +341,7 @@ public class DeliveryService : IDeliveryService
 
         if (selected is null)
         {
-            _logger.LogWarning(
-                "No available delivery agents with capacity below {MaxCapacity}",
-                MaxActiveAssignmentsPerAgent);
+            _logger.LogWarning("No available delivery agents found.");
         }
 
         return selected;

@@ -17,6 +17,7 @@ public class OrderStatusService : IOrderStatusService
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IPaymentRepository _paymentRepository;
     private readonly IDeliveryAssignmentRepository _deliveryAssignmentRepository;
+    private readonly IDeliveryService _deliveryService;
 
     // Define allowed order status transitions
     private static readonly Dictionary<OrderStatus, HashSet<OrderStatus>> AllowedTransitions = new()
@@ -80,12 +81,13 @@ public class OrderStatusService : IOrderStatusService
         { OrderStatus.Refunded, new HashSet<OrderStatus>() }
     };
 
-    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IDeliveryAssignmentRepository deliveryAssignmentRepository, IPublishEndpoint publishEndpoint)
+    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IDeliveryAssignmentRepository deliveryAssignmentRepository, IPublishEndpoint publishEndpoint, IDeliveryService deliveryService)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _paymentRepository = paymentRepository ?? throw new ArgumentNullException(nameof(paymentRepository));
         _deliveryAssignmentRepository = deliveryAssignmentRepository ?? throw new ArgumentNullException(nameof(deliveryAssignmentRepository));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _deliveryService = deliveryService ?? throw new ArgumentNullException(nameof(deliveryService));
     }
 
     public async Task<OrderDetailDto> UpdateOrderStatusAsync(UpdateOrderStatusRequestDto request, CancellationToken cancellationToken = default)
@@ -112,7 +114,16 @@ public class OrderStatusService : IOrderStatusService
         if (request.TargetStatus == OrderStatus.RestaurantAccepted) 
             order.PreparationStartTime = DateTime.UtcNow;
         else if (request.TargetStatus == OrderStatus.ReadyForPickup) 
+        {
             order.PickupTime = DateTime.UtcNow;
+
+            // Option B implementation: Assign agent right before moving to ReadyForPickup.
+            // If no agent is available, this throws a ValidationException and blocks the change.
+            if (!order.DeliveryAssignmentId.HasValue)
+            {
+                await _deliveryService.AssignDeliveryAgentAsync(order.Id, cancellationToken);
+            }
+        }
         else if (request.TargetStatus == OrderStatus.Delivered) 
             order.DeliveryTime = DateTime.UtcNow;
         
