@@ -1,19 +1,25 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { AdminLayout } from '../components/organisms/AdminLayout'
 import { KpiCard } from '../components/molecules/KpiCard'
 import { OrdersChart } from '../components/molecules/OrdersChart'
 import adminApi from '../services/adminApi'
 
-const KPI_CONFIG = [
-  { key: 'totalRevenue', fallbackKeys: ['totalGmv', 'gmv'], label: 'Total Revenue', icon: 'payments', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trend: '+12.5%', prefix: '₹' },
-  { key: 'totalOrdersToday', fallbackKeys: ['ordersToday', 'totalOrders'], label: 'Total Orders', icon: 'shopping_bag', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trend: '+8.2%' },
-  { key: 'totalActiveRestaurants', fallbackKeys: ['activePartners', 'totalRestaurants'], label: 'Active Restaurants', icon: 'storefront', iconBg: 'bg-orange-50', iconColor: 'text-orange-600', trend: '0%', trendDirection: 'down' },
-  { key: 'pendingApprovals', fallbackKeys: ['pendingRestaurants'], label: 'Total Users', icon: 'group', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', trend: '+5.1%' },
-]
+// Compute percentage change between two values, capped and formatted
+function computeTrend(current, previous) {
+  if (!previous || previous === 0) return null
+  const pct = ((current - previous) / previous) * 100
+  const sign = pct >= 0 ? '+' : ''
+  return `${sign}${pct.toFixed(1)}%`
+}
 
-function getKpiValue(kpis, cfg) {
-  const keys = [cfg.key, ...(cfg.fallbackKeys || [])]
+function computeTrendDirection(current, previous) {
+  if (!previous || previous === 0) return 'up'
+  return current >= previous ? 'up' : 'down'
+}
+
+function getKpiValue(kpis, key, fallbackKeys = []) {
+  const keys = [key, ...fallbackKeys]
   for (const k of keys) {
     if (kpis?.[k] !== undefined && kpis?.[k] !== null) {
       const val = Number(kpis[k])
@@ -66,6 +72,65 @@ export const AdminOverviewPage = () => {
     return () => { active = false }
   }, [])
 
+  // Build real KPI card configs from live data
+  const kpiCards = useMemo(() => {
+    if (!kpis) return []
+    return [
+      {
+        key: 'totalRevenue',
+        label: 'Total Revenue',
+        icon: 'payments',
+        iconBg: 'bg-blue-50',
+        iconColor: 'text-blue-600',
+        value: loading ? '—' : `₹${Number(kpis.totalRevenue || 0).toLocaleString('en-IN')}`,
+        trend: computeTrend(kpis.revenueToday, kpis.revenueYesterday),
+        trendDirection: computeTrendDirection(kpis.revenueToday, kpis.revenueYesterday),
+      },
+      {
+        key: 'ordersToday',
+        label: "Today's Orders",
+        icon: 'shopping_bag',
+        iconBg: 'bg-blue-50',
+        iconColor: 'text-blue-600',
+        value: loading ? '—' : String(kpis.ordersToday ?? 0),
+        trend: computeTrend(kpis.ordersToday, kpis.ordersYesterday),
+        trendDirection: computeTrendDirection(kpis.ordersToday, kpis.ordersYesterday),
+      },
+      {
+        key: 'activeRestaurants',
+        label: 'Active Restaurants',
+        icon: 'storefront',
+        iconBg: 'bg-orange-50',
+        iconColor: 'text-orange-600',
+        value: loading ? '—' : String(kpis.activePartners ?? 0),
+        trend: null,
+        trendDirection: 'up',
+      },
+      {
+        key: 'totalUsers',
+        label: 'Total Users',
+        icon: 'group',
+        iconBg: 'bg-purple-50',
+        iconColor: 'text-purple-600',
+        value: loading ? '—' : String(kpis.totalUsers ?? kpis.pendingApprovals ?? 0),
+        trend: null,
+        trendDirection: 'up',
+      },
+    ]
+  }, [kpis, loading])
+
+  // Build chart data from backend daily order counts
+  const chartData = useMemo(() => {
+    if (!kpis?.dailyOrderCounts) return []
+    return Object.entries(kpis.dailyOrderCounts).map(([dateStr, count]) => {
+      const d = new Date(dateStr)
+      return {
+        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        orders: Number(count || 0),
+      }
+    })
+  }, [kpis])
+
   return (
     <AdminLayout title="Dashboard" searchPlaceholder="Search...">
       {error && (
@@ -80,26 +145,29 @@ export const AdminOverviewPage = () => {
 
       {/* KPI Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter mb-lg">
-        {KPI_CONFIG.map(cfg => (
-          <KpiCard
-            key={cfg.key}
-            icon={cfg.icon}
-            label={cfg.label}
-            value={loading ? '—' : getKpiValue(kpis, cfg)}
-            trend={cfg.trend}
-            trendDirection={cfg.trendDirection || 'up'}
-            iconBg={cfg.iconBg}
-            iconColor={cfg.iconColor}
-            prefix={cfg.prefix}
-          />
-        ))}
+        {loading
+          ? [1, 2, 3, 4].map(i => <div key={i} className="h-28 bg-slate-200 animate-pulse rounded-2xl" />)
+          : kpiCards.map(cfg => (
+            <KpiCard
+              key={cfg.key}
+              icon={cfg.icon}
+              label={cfg.label}
+              value={cfg.value}
+              trend={cfg.trend}
+              trendDirection={cfg.trendDirection}
+              iconBg={cfg.iconBg}
+              iconColor={cfg.iconColor}
+            />
+          ))
+        }
       </div>
+
 
       {/* Chart and Recent Orders Row */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-gutter mb-lg">
         {/* Orders Chart */}
         <div className="lg:col-span-2">
-          <OrdersChart />
+          <OrdersChart data={chartData} title="Orders Over Time" />
         </div>
 
         {/* Recent Orders */}

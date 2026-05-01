@@ -19,6 +19,7 @@ public class OrderPlacementService : IOrderPlacementService
     private readonly IDeliveryService _deliveryService;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IRestaurantValidationService _restaurantValidationService;
+    private readonly IMenuItemValidationService _menuItemValidationService;
 
     public OrderPlacementService(
         ICartRepository cartRepository,
@@ -26,7 +27,8 @@ public class OrderPlacementService : IOrderPlacementService
         IUserAddressRepository userAddressRepository,
         IDeliveryService deliveryService,
         IPublishEndpoint publishEndpoint,
-        IRestaurantValidationService restaurantValidationService)
+        IRestaurantValidationService restaurantValidationService,
+        IMenuItemValidationService menuItemValidationService)
     {
         _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
@@ -34,6 +36,7 @@ public class OrderPlacementService : IOrderPlacementService
         _deliveryService = deliveryService ?? throw new ArgumentNullException(nameof(deliveryService));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _restaurantValidationService = restaurantValidationService ?? throw new ArgumentNullException(nameof(restaurantValidationService));
+        _menuItemValidationService = menuItemValidationService ?? throw new ArgumentNullException(nameof(menuItemValidationService));
     }
 
     public async Task<OrderDetailDto> PlaceOrderAsync(PlaceOrderRequestDto request, CancellationToken cancellationToken = default)
@@ -180,6 +183,49 @@ public class OrderPlacementService : IOrderPlacementService
                 g => g.Sum(o => o.TotalAmount)
             );
 
+        // --- Top Selling Item: most frequently ordered menu item by total quantity ---
+        string? topSellingItem = null;
+        var allOrderItems = orders
+            .Where(o => o.OrderItems != null)
+            .SelectMany(o => o.OrderItems)
+            .ToList();
+
+        if (allOrderItems.Any())
+        {
+            var topGroup = allOrderItems
+                .GroupBy(i => i.MenuItemId)
+                .OrderByDescending(g => g.Sum(i => i.Quantity))
+                .FirstOrDefault();
+
+            if (topGroup != null)
+            {
+                try
+                {
+                    // Call catalog service to get the real name
+                    var result = await _menuItemValidationService.ValidateMenuItemAsync(restaurantId, topGroup.Key, cancellationToken);
+                    topSellingItem = result.IsValid ? result.ItemName : $"Item #{topGroup.Key.ToString().ToUpperInvariant()[..8]}";
+                }
+                catch
+                {
+                    topSellingItem = $"Item #{topGroup.Key.ToString().ToUpperInvariant()[..8]}";
+                }
+            }
+        }
+
+        // --- Avg Prep Time: average minutes from PaymentCompletedAt to PreparationStartTime ---
+        double? avgPrepTimeMinutes = null;
+        var ordersWithPrepTime = orders
+            .Where(o => o.PreparationStartTime.HasValue && o.PaymentCompletedAt.HasValue)
+            .ToList();
+
+        if (ordersWithPrepTime.Any())
+        {
+            var actualAvg = ordersWithPrepTime.Average(o => (o.PreparationStartTime!.Value - o.PaymentCompletedAt!.Value).TotalMinutes);
+            // User requested to cap this at 15 minutes
+            avgPrepTimeMinutes = Math.Round(Math.Min(actualAvg, 15.0), 1);
+        }
+
+
         return new PartnerStatsDto
         {
             TotalOrders = orders.Count,
@@ -190,7 +236,9 @@ public class OrderPlacementService : IOrderPlacementService
             TotalRevenue = totalRevenue,
             TodayRevenue = todayRevenue,
             TodayOrders = todayOrders.Count,
-            DailyRevenue = dailyRevenue
+            DailyRevenue = dailyRevenue,
+            TopSellingItem = topSellingItem,
+            AvgPrepTimeMinutes = avgPrepTimeMinutes,
         };
     }
 }

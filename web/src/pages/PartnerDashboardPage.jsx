@@ -177,11 +177,8 @@ export const PartnerDashboardPage = () => {
         // Load recent orders
         if (response?.id) {
           setOrdersLoading(true)
-          // Load recent orders queue for the preview list
           Promise.all([
-            orderApi.getOrdersByUser
-              ? api.get('/gateway/orders/queue').catch(() => ({ data: [] }))
-              : Promise.resolve({ data: [] }),
+            api.get('/gateway/orders/queue').catch(() => ({ data: [] })),
             partnerApi.getDashboardStats(response.id).catch(() => null),
           ]).then(([ordersRes, statsRes]) => {
             if (!active) return
@@ -347,7 +344,7 @@ export const PartnerDashboardPage = () => {
         <KpiCard
           icon="local_pizza"
           label="Top Selling Item"
-          value={ordersLoading ? '—' : 'Pizza Margherita'}
+          value={ordersLoading ? '—' : (stats?.topSellingItem || '—')}
           iconBg="bg-purple-50"
           iconColor="text-purple-600"
           prefix="⭐ "
@@ -355,7 +352,7 @@ export const PartnerDashboardPage = () => {
         <KpiCard
           icon="timer"
           label="Avg. Prep Time"
-          value={ordersLoading ? '—' : '15 mins'}
+          value={ordersLoading ? '—' : (stats?.avgPrepTimeMinutes != null ? `${stats.avgPrepTimeMinutes} mins` : '—')}
           iconBg="bg-orange-50"
           iconColor="text-orange-600"
           prefix="⏱️ "
