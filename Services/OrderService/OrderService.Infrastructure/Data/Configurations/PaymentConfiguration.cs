@@ -36,6 +36,15 @@ public class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(payment => payment.FailureReason)
             .HasMaxLength(500);
 
+        builder.Property(payment => payment.RazorpayOrderId)
+            .HasMaxLength(150);
+
+        builder.Property(payment => payment.RazorpayPaymentId)
+            .HasMaxLength(150);
+
+        builder.Property(payment => payment.RazorpaySignature)
+            .HasMaxLength(255);
+
         builder.Property(payment => payment.ProcessedAt);
 
         builder.Property(payment => payment.CreatedAt)

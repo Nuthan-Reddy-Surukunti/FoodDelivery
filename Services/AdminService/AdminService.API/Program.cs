@@ -101,7 +101,12 @@ builder.Services.AddValidatorsFromAssemblyContaining<RejectRestaurantRequestVali
 builder.Services.AddHttpContextAccessor();
 
 // Add Controllers
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
 
 // Add HTTP Context Accessor for getting current user info
 builder.Services.AddHttpContextAccessor();

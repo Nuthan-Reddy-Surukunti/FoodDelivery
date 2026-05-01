@@ -28,5 +28,10 @@ public class Payment : BaseEntity
     // Wallet payment details (null for non-wallet methods)
     public string? WalletId { get; set; }
 
+    // Razorpay details
+    public string? RazorpayOrderId { get; set; }
+    public string? RazorpayPaymentId { get; set; }
+    public string? RazorpaySignature { get; set; }
+
     public Order? Order { get; set; }
 }

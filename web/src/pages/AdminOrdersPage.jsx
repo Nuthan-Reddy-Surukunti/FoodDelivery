@@ -3,34 +3,47 @@ import { AdminLayout } from '../components/organisms/AdminLayout'
 import { useNotification } from '../hooks/useNotification'
 import adminApi from '../services/adminApi'
 
-const STATUS_FILTERS = ['All', 'Paid', 'Preparing', 'ReadyForPickup', 'OutForDelivery', 'Delivered', 'Cancelled']
+const STATUS_FILTERS = ['All', 'Pending', 'Confirmed', 'Preparing', 'Ready', 'OutForDelivery', 'Delivered', 'Cancelled']
 
 const STATUS_BADGE = {
-  Paid: 'bg-sky-100 text-sky-800',
-  RestaurantAccepted: 'bg-teal-100 text-teal-800',
+  Pending: 'bg-sky-100 text-sky-800',
+  Confirmed: 'bg-teal-100 text-teal-800',
   Preparing: 'bg-amber-100 text-amber-800',
-  ReadyForPickup: 'bg-orange-100 text-orange-800',
-  PickedUp: 'bg-indigo-100 text-indigo-800',
+  Ready: 'bg-orange-100 text-orange-800',
   OutForDelivery: 'bg-purple-100 text-purple-800',
   Delivered: 'bg-emerald-100 text-emerald-800',
   Cancelled: 'bg-red-100 text-red-800',
   RestaurantRejected: 'bg-red-100 text-red-800',
-  CancelRequestedByCustomer: 'bg-rose-100 text-rose-800',
-  CheckoutStarted: 'bg-slate-100 text-slate-700',
+}
+
+// Map backend enum values (ints) to strings if needed
+const STATUS_MAP = {
+  1: 'Pending',
+  2: 'Confirmed',
+  3: 'Preparing',
+  4: 'Ready',
+  5: 'OutForDelivery',
+  6: 'Delivered',
+  7: 'Cancelled'
 }
 
 const normalize = (payload) => {
   const raw = Array.isArray(payload) ? payload : (payload?.items || payload?.data || [])
-  return raw.map(item => ({
-    id: item.orderId || item.id,
-    restaurant: item.restaurantName || item.restaurant?.name || 'Restaurant',
-    userId: item.userId,
-    customerEmail: item.customerEmail || item.userId || '',
-    status: item.orderStatus || item.status || 'Unknown',
-    total: Number(item.total || item.totalAmount || 0),
-    createdAt: item.createdAt,
-    itemCount: item.items?.length ?? item.itemCount ?? 0,
-  }))
+  return raw.map(item => {
+    let status = item.orderStatus || item.status || 'Unknown'
+    if (STATUS_MAP[status]) status = STATUS_MAP[status]
+    
+    return {
+      id: item.orderId || item.id,
+      restaurant: item.restaurantName || item.restaurant?.name || 'Restaurant',
+      userId: item.userId,
+      customerEmail: item.customerEmail || item.userId || '',
+      status: status,
+      total: Number(item.total || item.totalAmount || 0),
+      createdAt: item.createdAt,
+      itemCount: item.items?.length ?? item.itemCount ?? 0,
+    }
+  })
 }
 
 const fmtDate = (iso) => iso ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' }) : ''

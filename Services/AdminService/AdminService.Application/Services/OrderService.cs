@@ -5,6 +5,8 @@ using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
+using MassTransit;
+using QuickBite.Shared.Events.Order;
 
 namespace AdminService.Application.Services;
 
@@ -25,13 +27,20 @@ public class OrderService : IOrderService
     private readonly IMapper _mapper;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAuditService _auditService;
+    private readonly IPublishEndpoint _publishEndpoint;
 
-    public OrderService(IOrderRepository orderRepository, IMapper mapper, IHttpContextAccessor httpContextAccessor, IAuditService auditService)
+    public OrderService(
+        IOrderRepository orderRepository, 
+        IMapper mapper, 
+        IHttpContextAccessor httpContextAccessor, 
+        IAuditService auditService,
+        IPublishEndpoint publishEndpoint)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
         _httpContextAccessor = httpContextAccessor;
         _auditService = auditService;
+        _publishEndpoint = publishEndpoint;
     }
 
     public async Task<OrderDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -104,6 +113,19 @@ public class OrderService : IOrderService
             await _auditService.LogStatusChangeAsync(orderId, oldStatus.ToString(), newStatus.ToString(), 
                 reason, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
         }
+
+        // 🚀 Publish event to notify other services (OrderService, CatalogService, etc.)
+        await _publishEndpoint.Publish(new OrderStatusChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            OrderId = orderId,
+            UserId = order.CustomerId,
+            RestaurantId = order.RestaurantId,
+            OldStatus = oldStatus.ToString(),
+            NewStatus = newStatus.ToString(),
+            StatusReason = reason
+        }, cancellationToken);
 
         return _mapper.Map<OrderDto>(order);
     }

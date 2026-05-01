@@ -110,7 +110,7 @@ const NotificationViewport = ({ notifications, onDismiss }) => {
   if (!notifications.length) return null
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex w-full max-w-sm flex-col gap-2 px-4">
+    <div className="fixed top-4 right-4 z-[9999] flex w-full max-w-sm flex-col gap-2 px-4">
       {notifications.map((item) => (
         <NotificationToast key={item.id} notification={item} onDismiss={onDismiss} />
       ))}

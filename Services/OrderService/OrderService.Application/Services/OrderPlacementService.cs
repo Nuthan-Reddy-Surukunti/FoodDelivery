@@ -79,48 +79,51 @@ public class OrderPlacementService : IOrderPlacementService
 
         await _orderRepository.AddAsync(order, cancellationToken);
 
-        // Process payment immediately (COD - Cash on Delivery)
-        try
+        // Only process COD automatically and clear cart
+        if ((PaymentMethod)request.PaymentMethod == PaymentMethod.CashOnDelivery)
         {
-            var paymentRequest = new ProcessPaymentRequestDto
+            try
             {
-                PaymentMethod = PaymentMethod.CashOnDelivery,
-                Amount = order.TotalAmount
-            };
-            var paymentResponse = await _deliveryService.ProcessPaymentAsync(order.Id, paymentRequest, cancellationToken);
-            order.PaymentId = paymentResponse.PaymentId;
-            await _orderRepository.UpdateAsync(order, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            // Log payment failure but continue - customer can retry payment later
-            System.Diagnostics.Debug.WriteLine($"Payment processing failed for order {order.Id}: {ex.Message}");
-        }
-
-        cart.Status = CartStatus.Abandoned;
-        cart.UpdatedAt = DateTime.UtcNow;
-        await _cartRepository.UpdateAsync(cart, cancellationToken);
-
-        // Publish order placed event
-        await _publishEndpoint.Publish(new OrderPlacedEvent
-        {
-            EventId = Guid.NewGuid(),
-            OccurredAt = DateTime.UtcNow,
-            EventVersion = 1,
-            OrderId = order.Id,
-            UserId = order.UserId,
-            RestaurantId = order.RestaurantId,
-            RestaurantName = "", // Will be populated by handler if needed
-            TotalAmount = order.TotalAmount,
-            DeliveryAddress = "", // From request if available
-            Items = order.OrderItems.Select(oi => new OrderItemSnapshot
+                var paymentRequest = new ProcessPaymentRequestDto
+                {
+                    PaymentMethod = PaymentMethod.CashOnDelivery,
+                    Amount = order.TotalAmount
+                };
+                var paymentResponse = await _deliveryService.ProcessPaymentAsync(order.Id, paymentRequest, cancellationToken);
+                order.PaymentId = paymentResponse.PaymentId;
+                await _orderRepository.UpdateAsync(order, cancellationToken);
+            }
+            catch (Exception ex)
             {
-                MenuItemId = oi.MenuItemId,
-                MenuItemName = "",
-                Quantity = oi.Quantity,
-                PriceAtPurchase = oi.UnitPrice
-            }).ToList()
-        }, cancellationToken);
+                System.Diagnostics.Debug.WriteLine($"Payment processing failed for order {order.Id}: {ex.Message}");
+            }
+
+            cart.Status = CartStatus.Abandoned;
+            cart.UpdatedAt = DateTime.UtcNow;
+            await _cartRepository.UpdateAsync(cart, cancellationToken);
+            
+            // Publish order placed event only for COD here. 
+            // For online payments, it will be published after Razorpay verification.
+            await _publishEndpoint.Publish(new OrderPlacedEvent
+            {
+                EventId = Guid.NewGuid(),
+                OccurredAt = DateTime.UtcNow,
+                EventVersion = 1,
+                OrderId = order.Id,
+                UserId = order.UserId,
+                RestaurantId = order.RestaurantId,
+                RestaurantName = "",
+                TotalAmount = order.TotalAmount,
+                DeliveryAddress = "",
+                Items = order.OrderItems.Select(oi => new OrderItemSnapshot
+                {
+                    MenuItemId = oi.MenuItemId,
+                    MenuItemName = "",
+                    Quantity = oi.Quantity,
+                    PriceAtPurchase = oi.UnitPrice
+                }).ToList()
+            }, cancellationToken);
+        }
 
         return OrderMappings.MapToDto(order);
     }

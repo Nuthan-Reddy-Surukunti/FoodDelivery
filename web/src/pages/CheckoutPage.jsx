@@ -63,18 +63,16 @@ export const CheckoutPage = () => {
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
   const [selectedMethod, setSelectedMethod] = useState('CashOnDelivery')
 
-  // Card fields
-  const [cardNumber, setCardNumber] = useState('')
-  const [cardExpiry, setCardExpiry] = useState('')
-  const [cardCvv, setCardCvv] = useState('')
-  const [cardHolder, setCardHolder] = useState('')
-
-  // Wallet field
-  const [walletId, setWalletId] = useState('')
   const [checkoutData, setCheckoutData] = useState({ addressId: null, deliveryOption: 'standard' })
   const [restaurantInfo, setRestaurantInfo] = useState({ name: 'QuickBite Restaurant', branch: 'Selected Branch' })
 
   useEffect(() => {
+    // Dynamically load Razorpay SDK
+    const script = document.createElement('script')
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js'
+    script.async = true
+    document.body.appendChild(script)
+
     const loadRestaurant = async () => {
       if (!restaurantId) return
       try {
@@ -88,32 +86,13 @@ export const CheckoutPage = () => {
       }
     }
     loadRestaurant()
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script)
+      }
+    }
   }, [restaurantId])
-
-  const formatCardNumber = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 16)
-    return digits.replace(/(.{4})/g, '$1 ').trim()
-  }
-
-  const formatExpiry = (val) => {
-    const digits = val.replace(/\D/g, '').slice(0, 4)
-    if (digits.length >= 3) return `${digits.slice(0, 2)}/${digits.slice(2)}`
-    return digits
-  }
-
-  const validatePayment = () => {
-    if (selectedMethod === 'Card') {
-      const digits = cardNumber.replace(/\D/g, '')
-      if (digits.length < 12) return 'Please enter a valid card number'
-      if (!cardExpiry.match(/^\d{2}\/\d{2}$/)) return 'Please enter a valid expiry (MM/YY)'
-      if (cardCvv.length < 3) return 'Please enter a valid CVV'
-      if (!cardHolder.trim()) return 'Please enter the card holder name'
-    }
-    if (selectedMethod === 'Wallet') {
-      if (!walletId.trim()) return 'Please enter your wallet ID or UPI ID'
-    }
-    return null
-  }
 
   const handlePlaceOrder = async (orderData = checkoutData) => {
     if (!user || !restaurantId || items.length === 0) {
@@ -123,12 +102,6 @@ export const CheckoutPage = () => {
 
     if (!orderData?.addressId) {
       showError('Please select a delivery address')
-      return
-    }
-
-    const validationError = validatePayment()
-    if (validationError) {
-      showError(validationError)
       return
     }
 
@@ -146,6 +119,7 @@ export const CheckoutPage = () => {
 
       // Place order
       const priorityDeliveryFee = orderData?.deliveryOption === 'priority' ? 49 : 0
+      const method = PAYMENT_METHODS.find(m => m.id === selectedMethod)
 
       const orderRes = await orderApi.createOrder({
         userId: user.id, restaurantId,
@@ -153,31 +127,79 @@ export const CheckoutPage = () => {
         specialInstructions: orderData.specialInstructions || '',
         deliveryInstructions: orderData.deliveryOption === 'priority' ? 'Priority Delivery' : 'Standard Delivery',
         deliveryFee: priorityDeliveryFee,
+        paymentMethod: method.value // Pass actual payment method
       })
 
-      // If the order's payment needs to be finalized with card/wallet details,
-      // send them separately. COD is handled automatically during order creation.
-      if (selectedMethod !== 'CashOnDelivery' && orderRes?.orderId) {
-        const method = PAYMENT_METHODS.find(m => m.id === selectedMethod)
-        await api.post(`/gateway/payments/${orderRes.orderId}/process`, {
-          paymentMethod: method.value,
-          amount: totalPrice,
-          ...(selectedMethod === 'Card' && {
-            cardNumber: cardNumber.replace(/\s/g, ''),
-            cardExpiry,
-            cardCvv,
-            cardHolderName: cardHolder,
-          }),
-          ...(selectedMethod === 'Wallet' && { walletId }),
-        })
+      // If COD, we are done
+      if (selectedMethod === 'CashOnDelivery') {
+        clearCart()
+        showSuccess('Order placed successfully via Cash on Delivery!')
+        navigate('/orders')
+        return;
       }
 
-      clearCart()
-      showSuccess('Order placed successfully!')
-      navigate('/orders')
+      // --- RAZORPAY ONLINE PAYMENT FLOW ---
+      if (orderRes?.orderId && window.Razorpay) {
+        try {
+          // 1. Get Razorpay Order ID from backend
+          const rzpOrderRes = await api.post(`/gateway/payments/${orderRes.orderId}/create-razorpay-order`)
+          const razorpayOrderId = rzpOrderRes.data.razorpayOrderId
+          
+          const options = {
+              key: "rzp_test_Sk6FOwIhYGomaX", // Replace with your test key id if you haven't
+              amount: Math.round(grandTotal * 100), // Ensures amount is a strict integer
+              currency: "INR",
+              name: "QuickBite",
+              description: `Payment for Order ${orderRes.orderId.substring(0, 8)}`,
+              order_id: razorpayOrderId,
+              handler: async function (response) {
+                  try {
+                      // 2. Verify payment signature on backend
+                      await api.post(`/gateway/payments/${orderRes.orderId}/verify`, {
+                          razorpayOrderId: response.razorpay_order_id,
+                          razorpayPaymentId: response.razorpay_payment_id,
+                          razorpaySignature: response.razorpay_signature
+                      })
+                      
+                      clearCart()
+                      showSuccess('Payment successful and order placed!')
+                      navigate('/orders')
+                  } catch (err) {
+                      console.error("Verification error:", err)
+                      showError(err.response?.data?.message || 'Payment verification failed, please contact support.')
+                      navigate('/orders')
+                  }
+              },
+              prefill: {
+                  name: user.name || "",
+                  email: user.email || "",
+                  contact: user.phone || ""
+              },
+              theme: {
+                  color: "#1978e5" // Primary brand color
+              }
+          };
+
+          const rzp = new window.Razorpay(options);
+          
+          rzp.on('payment.failed', function (response){
+              showError(`Payment failed: ${response.error.description}`);
+              // We do not clear cart here, so user can try again!
+              navigate('/orders'); // Redirect to orders so they can see pending order, or stay on page.
+          });
+          
+          rzp.open();
+        } catch (paymentInitError) {
+           console.error("Razorpay Init Error:", paymentInitError);
+           showError('Failed to initialize payment gateway.');
+           setIsPlacingOrder(false);
+        }
+      } else {
+         showError('Payment gateway is not available right now.')
+         setIsPlacingOrder(false);
+      }
     } catch (error) {
       showError(error.response?.data?.message || error.message || 'Failed to place order')
-    } finally {
       setIsPlacingOrder(false)
     }
   }
@@ -235,77 +257,6 @@ export const CheckoutPage = () => {
                     </div>
                   </button>
                 ))}
-
-                {/* Card details */}
-                {selectedMethod === 'Card' && (
-                  <div className="mt-4 p-4 bg-blue-50 rounded-xl border border-blue-100 space-y-3">
-                    <div>
-                      <label className="text-xs font-semibold text-slate-600 block mb-1">Card Number</label>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        placeholder="1234 5678 9012 3456"
-                        value={cardNumber}
-                        onChange={e => setCardNumber(formatCardNumber(e.target.value))}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                        maxLength={19}
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <label className="text-xs font-semibold text-slate-600 block mb-1">Expiry (MM/YY)</label>
-                        <input
-                          type="text"
-                          inputMode="numeric"
-                          placeholder="12/27"
-                          value={cardExpiry}
-                          onChange={e => setCardExpiry(formatExpiry(e.target.value))}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                          maxLength={5}
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs font-semibold text-slate-600 block mb-1">CVV</label>
-                        <input
-                          type="password"
-                          inputMode="numeric"
-                          placeholder="•••"
-                          value={cardCvv}
-                          onChange={e => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                          className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                          maxLength={4}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-slate-600 block mb-1">Card Holder Name</label>
-                      <input
-                        type="text"
-                        placeholder="As printed on card"
-                        value={cardHolder}
-                        onChange={e => setCardHolder(e.target.value)}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Wallet details */}
-                {selectedMethod === 'Wallet' && (
-                  <div className="mt-4 p-4 bg-violet-50 rounded-xl border border-violet-100">
-                    <label className="text-xs font-semibold text-slate-600 block mb-1">UPI ID / Wallet ID</label>
-                    <input
-                      type="text"
-                      placeholder="yourname@upi or phone number"
-                      value={walletId}
-                      onChange={e => setWalletId(e.target.value)}
-                      className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-white"
-                    />
-                    <p className="text-xs text-on-surface-variant mt-2">
-                      Supports Paytm, PhonePe, Google Pay, and any UPI-enabled wallet.
-                    </p>
-                  </div>
-                )}
               </div>
             </div>
         </div>

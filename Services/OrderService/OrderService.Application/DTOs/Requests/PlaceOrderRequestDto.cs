@@ -9,4 +9,6 @@ public class PlaceOrderRequestDto
     public Guid SelectedAddressId { get; set; }
     
     public string? SpecialInstructions { get; set; }
+
+    public int PaymentMethod { get; set; } = 3; // Default to CashOnDelivery (3)
 }
