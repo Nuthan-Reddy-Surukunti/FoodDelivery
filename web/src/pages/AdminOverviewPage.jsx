@@ -6,7 +6,7 @@ import { OrdersChart } from '../components/molecules/OrdersChart'
 import adminApi from '../services/adminApi'
 
 const KPI_CONFIG = [
-  { key: 'totalRevenue', fallbackKeys: ['totalGmv', 'gmv'], label: 'Total Revenue', icon: 'payments', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trend: '+12.5%', prefix: '$' },
+  { key: 'totalRevenue', fallbackKeys: ['totalGmv', 'gmv'], label: 'Total Revenue', icon: 'payments', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trend: '+12.5%', prefix: '₹' },
   { key: 'totalOrdersToday', fallbackKeys: ['ordersToday', 'totalOrders'], label: 'Total Orders', icon: 'shopping_bag', iconBg: 'bg-blue-50', iconColor: 'text-blue-600', trend: '+8.2%' },
   { key: 'totalActiveRestaurants', fallbackKeys: ['activePartners', 'totalRestaurants'], label: 'Active Restaurants', icon: 'storefront', iconBg: 'bg-orange-50', iconColor: 'text-orange-600', trend: '0%', trendDirection: 'down' },
   { key: 'pendingApprovals', fallbackKeys: ['pendingRestaurants'], label: 'Total Users', icon: 'group', iconBg: 'bg-purple-50', iconColor: 'text-purple-600', trend: '+5.1%' },
@@ -132,7 +132,7 @@ export const AdminOverviewPage = () => {
                       </div>
                       <span className={`${badgeClass} text-xs font-semibold px-2 py-1 rounded-full whitespace-nowrap`}>{status}</span>
                     </div>
-                    <div className="mt-2 text-sm font-semibold text-on-surface">${Number(order.total || order.totalAmount || 0).toFixed(2)}</div>
+                    <div className="mt-2 text-sm font-semibold text-on-surface">₹{Number(order.total || order.totalAmount || 0).toFixed(2)}</div>
                   </div>
                 )
               })}

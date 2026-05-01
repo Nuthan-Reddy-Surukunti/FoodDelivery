@@ -35,6 +35,7 @@ const AdminUsersPage = lazy(() => import('./pages/AdminUsersPage').then((m) => (
 const AgentActivePage = lazy(() => import('./pages/AgentActivePage').then((m) => ({ default: m.AgentActivePage })))
 const AgentEarningsPage = lazy(() => import('./pages/AgentEarningsPage').then((m) => ({ default: m.AgentEarningsPage })))
 const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage').then((m) => ({ default: m.SearchResultsPage })))
+const HelpSupportPage = lazy(() => import('./pages/HelpSupportPage').then((m) => ({ default: m.HelpSupportPage })))
 
 export default function App() {
   return (
@@ -53,6 +54,7 @@ export default function App() {
                 <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
                 <Route path="/verify-email" element={<VerifyEmailPage />} />
                 <Route path="/verify-2fa" element={<VerifyTwoFactorPage />} />
+                <Route path="/help" element={<HelpSupportPage />} />
                 
                 {/* Customer Routes - Protected */}
                 <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />

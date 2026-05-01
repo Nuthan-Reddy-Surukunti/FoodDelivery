@@ -33,9 +33,11 @@ export const Layout = ({ children }) => {
   const isCustomer = user?.role === 'Customer' || user?.role === 'customer' || (!user?.role && isAuthenticated)
   const path = location.pathname
 
-  const isHome    = path === '/'
+  const isHome = path === '/'
   const isExplore = path === '/explore' || path.startsWith('/restaurant') || path.startsWith('/search')
-  const isOrders  = path === '/orders' || path.startsWith('/track')
+  const isOrders = path === '/orders' || path.startsWith('/track')
+  const isAddresses = path === '/addresses'
+  const isHelp = path === '/help'
 
   const navLinkClass = (active) =>
     `relative font-semibold text-sm transition-all duration-200 pb-0.5 ${
@@ -66,9 +68,13 @@ export const Layout = ({ children }) => {
 
           {/* Center Nav Links */}
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/"        className={navLinkClass(isHome)}>Home</Link>
+            <Link to="/" className={navLinkClass(isHome)}>Home</Link>
             <Link to="/explore" className={navLinkClass(isExplore)}>Explore</Link>
-            <Link to="/orders"  className={navLinkClass(isOrders)}>Orders</Link>
+            <Link to="/orders" className={navLinkClass(isOrders)}>Orders</Link>
+            {isCustomer && (
+              <Link to="/addresses" className={navLinkClass(isAddresses)}>Addresses</Link>
+            )}
+            <Link to="/help" className={navLinkClass(isHelp)}>Help</Link>
           </div>
 
           {/* Right Actions */}

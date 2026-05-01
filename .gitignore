@@ -86,3 +86,4 @@ LocalAudioEngine/venv/
 LocalAudioEngine/*.wav
 LocalAudioEngine/vits-piper-*/
 LocalAudioEngine/sherpa-onnx-*/
+imports-report.txt
