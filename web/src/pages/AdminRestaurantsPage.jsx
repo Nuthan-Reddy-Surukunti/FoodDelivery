@@ -139,7 +139,7 @@ export const AdminRestaurantsPage = () => {
           <h1 className="font-headline-lg text-headline-lg text-on-surface">Restaurants</h1>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">Manage partner restaurants, menus, and statuses.</p>
         </div>
-        <button className="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary-container transition-colors flex items-center gap-2">
+        <button className="bg-primary text-on-primary px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-rose-500 transition-colors flex items-center gap-2">
           <span className="material-symbols-outlined">add</span>
           Add New Restaurant
         </button>

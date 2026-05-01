@@ -112,7 +112,7 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
             <button
               type="submit"
               disabled={submitting}
-              className="flex-1 bg-primary text-on-primary text-sm font-semibold py-2.5 rounded-xl hover:bg-primary-container transition-colors disabled:opacity-60"
+              className="flex-1 bg-primary text-on-primary text-sm font-semibold py-2.5 rounded-xl hover:bg-rose-500 transition-colors disabled:opacity-60"
             >
               {submitting ? 'Creating...' : 'Create Admin'}
             </button>
@@ -187,7 +187,7 @@ export const AdminUsersPage = () => {
         <button
           id="create-admin-btn"
           onClick={() => setShowCreateAdmin(true)}
-          className="bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-primary-container transition-colors"
+          className="bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-rose-500 transition-colors"
         >
           <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
           Create Admin

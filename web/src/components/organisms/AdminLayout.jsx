@@ -92,7 +92,7 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
 
         {/* Bottom section */}
         <div className="px-3 py-4 border-t border-white/5 relative z-10 space-y-2">
-          <button className="w-full bg-gradient-to-r from-primary to-indigo-600 text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95">
+          <button className="w-full bg-gradient-to-r from-primary to-amber-400 text-white py-2.5 px-4 rounded-xl text-sm font-semibold hover:shadow-lg hover:shadow-primary/25 transition-all active:scale-95">
             Generate Reports
           </button>
           <div className="flex items-center gap-3 px-3 py-2.5">
@@ -171,7 +171,7 @@ export const AdminLayout = ({ children, title = 'Admin', searchPlaceholder = '' 
               </button>
               <Link
                 to="/profile"
-                className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white text-xs font-bold flex items-center justify-center ml-1 hover:shadow-md transition-all"
+                className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-amber-400 text-white text-xs font-bold flex items-center justify-center ml-1 hover:shadow-md transition-all"
                 aria-label="Profile"
               >
                 {(user?.email?.[0] || 'A').toUpperCase()}

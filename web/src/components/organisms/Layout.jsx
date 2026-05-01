@@ -81,7 +81,7 @@ export const Layout = ({ children }) => {
 
           {/* Brand */}
           <Link to="/" className="flex items-center gap-2 group">
-            <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-9 h-9 object-contain group-hover:scale-105 transition-transform" />
+            <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-11 h-11 object-contain group-hover:scale-105 transition-transform" />
             <span className="text-xl font-extrabold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent tracking-tight">
               QuickBite
             </span>
@@ -143,7 +143,7 @@ export const Layout = ({ children }) => {
                 </div>
                 <Link
                   to="/profile"
-                  className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white text-sm font-bold flex items-center justify-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
+                  className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-amber-400 text-white text-sm font-bold flex items-center justify-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
                   aria-label="Profile"
                 >
                   {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
@@ -161,7 +161,7 @@ export const Layout = ({ children }) => {
                 <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-primary transition-colors px-3 py-2 rounded-lg hover:bg-slate-50/80">
                   Login
                 </Link>
-                <Link to="/register" className="bg-gradient-to-r from-primary to-indigo-600 text-white rounded-xl px-5 py-2 text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
+                <Link to="/register" className="bg-gradient-to-r from-primary to-amber-400 text-white rounded-xl px-5 py-2 text-sm font-bold hover:shadow-lg hover:shadow-primary/20 transition-all active:scale-95">
                   Sign Up
                 </Link>
               </>

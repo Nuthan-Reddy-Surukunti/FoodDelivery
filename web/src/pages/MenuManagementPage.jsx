@@ -322,7 +322,7 @@ export const MenuManagementPage = () => {
       <div className="flex justify-end">
         <button
           onClick={() => setItemModal({ open: true, item: null })}
-          className="bg-primary text-on-primary px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors flex items-center gap-2"
+          className="bg-primary text-on-primary px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-500 transition-colors flex items-center gap-2"
         >
           <span className="material-symbols-outlined text-sm">add</span> Add Item
         </button>

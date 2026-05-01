@@ -15,5 +15,6 @@ public class RestaurantValidationResult
     public bool IsActive { get; set; }
     public Guid RestaurantId { get; set; }
     public string RestaurantName { get; set; } = string.Empty;
+    public string RestaurantAddress { get; set; } = string.Empty;
     public string? ErrorMessage { get; set; }
 }

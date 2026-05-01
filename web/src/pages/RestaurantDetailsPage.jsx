@@ -248,7 +248,7 @@ export const RestaurantDetailsPage = () => {
                           <button
                             onClick={() => handleAddToCart(item)}
                             aria-label={`Add ${item.name} to cart`}
-                            className="absolute -bottom-3 -right-3 w-10 h-10 rounded-full bg-primary text-white shadow-md flex items-center justify-center hover:bg-primary-container active:scale-95 transition-all"
+                            className="absolute -bottom-3 -right-3 w-10 h-10 rounded-full bg-primary text-white shadow-md flex items-center justify-center hover:bg-rose-500 active:scale-95 transition-all"
                           >
                             <span className="material-symbols-outlined text-sm">add</span>
                           </button>
@@ -268,7 +268,7 @@ export const RestaurantDetailsPage = () => {
         <div className="fixed bottom-6 left-0 right-0 px-5 z-50 pointer-events-none flex justify-center">
           <button
             onClick={() => navigate('/cart')}
-            className="pointer-events-auto bg-primary text-white rounded-2xl px-6 py-4 flex items-center gap-3 shadow-lg hover:shadow-xl hover:bg-primary-container active:scale-95 transition-all max-w-sm w-full justify-between"
+            className="pointer-events-auto bg-primary text-white rounded-2xl px-6 py-4 flex items-center gap-3 shadow-lg hover:shadow-xl hover:bg-rose-500 active:scale-95 transition-all max-w-sm w-full justify-between"
           >
             <div className="flex items-center gap-3">
               <div className="bg-white text-primary w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm shadow-sm">

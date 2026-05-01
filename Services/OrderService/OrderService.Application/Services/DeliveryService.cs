@@ -31,6 +31,7 @@ public class DeliveryService : IDeliveryService
     private readonly ILogger<DeliveryService> _logger;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IEmailService _emailService;
+    private readonly IRestaurantValidationService _restaurantValidationService;
 
     public DeliveryService(
         IOrderRepository orderRepository,
@@ -40,7 +41,8 @@ public class DeliveryService : IDeliveryService
         IOptions<DeliveryEmailOptions> emailOptions,
         ILogger<DeliveryService> logger,
         IPublishEndpoint publishEndpoint,
-        IEmailService emailService)
+        IEmailService emailService,
+        IRestaurantValidationService restaurantValidationService)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _deliveryAssignmentRepository = deliveryAssignmentRepository ?? throw new ArgumentNullException(nameof(deliveryAssignmentRepository));
@@ -50,6 +52,7 @@ public class DeliveryService : IDeliveryService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _restaurantValidationService = restaurantValidationService ?? throw new ArgumentNullException(nameof(restaurantValidationService));
     }
 
     public async Task<IReadOnlyList<DeliveryAssignmentDto>> GetAssignedDeliveriesAsync(string authUserId, CancellationToken cancellationToken = default)
@@ -374,10 +377,14 @@ public class DeliveryService : IDeliveryService
                 new[] { order.DeliveryAddressLine1, order.DeliveryAddressLine2, order.DeliveryCity, order.DeliveryPostalCode }
                     .Where(value => !string.IsNullOrWhiteSpace(value)));
 
+            // Fetch real restaurant details from CatalogService
+            var restaurant = await _restaurantValidationService.ValidateRestaurantAsync(order.RestaurantId, cancellationToken);
+            var restaurantAddress = restaurant.RestaurantAddress ?? "Restaurant Address";
+
             var body = EmailTemplateBuilder.GetDeliveryAgentAssignedTemplate(
                 agent.FullName ?? "Agent",
                 order.Id.ToString(),
-                "Restaurant Address", // In a real app, we'd fetch restaurant address
+                restaurantAddress,
                 address);
 
             await _emailService.SendEmailAsync(agent.Email, "New Delivery Assignment 🛵", body);

@@ -13,13 +13,14 @@ export default {
     extend: {
       colors: {
         // Horizon UI Color Palette
-        primary: '#e11d48', // rose-600 (Zomato-inspired red)
-        'primary-container': '#be123c', // rose-700
+        // Soft Premium Rose Palette (Restored & Lightened)
+        primary: '#fb7185', // rose-400 (Soft, premium version of the original red)
+        'primary-container': '#fff1f2', // rose-50 (Very light & airy)
         'on-primary': '#ffffff',
-        'on-primary-container': '#ffffff',
+        'on-primary-container': '#be123c', // rose-700 for text contrast
         'inverse-primary': '#fda4af', // rose-300
         'primary-fixed': '#ffe4e6', // rose-100
-        'primary-fixed-dim': '#fecdd3', // rose-200
+        'primary-fixed-dim': '#fff1f2', // rose-50
         'on-primary-fixed': '#881337', // rose-900
         'on-primary-fixed-variant': '#9f1239', // rose-800
 
@@ -46,8 +47,8 @@ export default {
         'error-container': '#ffdad6',
         'on-error-container': '#93000a',
 
-        background: '#f8fafc',
-        'on-background': '#0f172a',
+        background: '#ffffff', // pure white for airiness
+        'on-background': '#1e293b', // slate-800
         surface: '#ffffff',
         'surface-dim': '#e2e8f0',
         'surface-bright': '#ffffff',
@@ -62,7 +63,7 @@ export default {
         'inverse-on-surface': '#f1f5f9',
         outline: '#94a3b8',
         'outline-variant': '#cbd5e1',
-        'surface-tint': '#e11d48', // rose-600
+        'surface-tint': '#fb7185',
         'surface-variant': '#f1f5f9',
       },
       borderRadius: {

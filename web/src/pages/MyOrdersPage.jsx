@@ -227,7 +227,7 @@ export const MyOrdersPage = () => {
             </p>
             <button
               onClick={() => navigate('/')}
-              className="bg-primary text-on-primary px-6 py-3 rounded-lg text-sm font-semibold hover:bg-primary-container transition-colors"
+              className="bg-primary text-on-primary px-6 py-3 rounded-lg text-sm font-semibold hover:bg-rose-500 transition-colors"
             >
               Browse Restaurants
             </button>
@@ -310,7 +310,7 @@ export const MyOrdersPage = () => {
                   {isActive(order.status) ? (
                     <Link
                       to={`/track/${order.id}`}
-                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+                      className="bg-primary hover:bg-rose-500 text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                     >
                       <span className="material-symbols-outlined text-sm">local_shipping</span>
                       Track Order
@@ -329,7 +329,7 @@ export const MyOrdersPage = () => {
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                       <Link
                         to={`/track/${order.id}`}
-                        className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+                        className="bg-primary hover:bg-rose-500 text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                       >
                         <span className="material-symbols-outlined text-sm">receipt_long</span>
                         View Status
@@ -346,7 +346,7 @@ export const MyOrdersPage = () => {
                   ) : (
                     <Link
                       to={`/track/${order.id}`}
-                      className="bg-primary hover:bg-primary-container text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
+                      className="bg-primary hover:bg-rose-500 text-on-primary text-sm font-semibold px-5 py-2 rounded-lg transition-colors flex items-center gap-2 w-full sm:w-auto justify-center"
                     >
                       <span className="material-symbols-outlined text-sm">refresh</span>
                       View Details

@@ -138,7 +138,7 @@ const RestaurantForm = ({ form, onChange, onSubmit, submitting, submitLabel, onC
       )}
     <div className="flex gap-3 pt-2">
       <button type="submit" disabled={submitting}
-        className="bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors disabled:opacity-50"
+        className="bg-primary text-on-primary px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-rose-500 transition-colors disabled:opacity-50"
       >
         {submitting ? 'Saving...' : submitLabel}
       </button>
@@ -451,7 +451,7 @@ export const PartnerDashboardPage = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-bold text-on-surface">₹{Number(order.total || order.totalAmount || 0).toFixed(2)}</span>
                     {isNew && (
-                      <Link to="/partner/queue" className="bg-primary text-on-primary text-xs font-semibold px-4 py-2 rounded-lg hover:bg-primary-container transition-colors">
+                      <Link to="/partner/queue" className="bg-primary text-on-primary text-xs font-semibold px-4 py-2 rounded-lg hover:bg-rose-500 transition-colors">
                         Accept Order
                       </Link>
                     )}

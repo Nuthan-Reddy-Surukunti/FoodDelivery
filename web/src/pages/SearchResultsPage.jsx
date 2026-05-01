@@ -163,7 +163,7 @@ export const SearchResultsPage = () => {
             />
             <button
               type="submit"
-              className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-on-primary px-5 py-1.5 rounded-full text-sm font-semibold hover:bg-primary-container transition-colors"
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-on-primary px-5 py-1.5 rounded-full text-sm font-semibold hover:bg-rose-500 transition-colors"
             >
               Search
             </button>

@@ -227,7 +227,7 @@ export const OrderQueuePage = () => {
                       <button
                         disabled={isActioning}
                         onClick={() => handleAction(order, flow.nextStatus)}
-                        className="bg-primary text-on-primary text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-primary-container transition-colors disabled:opacity-50"
+                        className="bg-primary text-on-primary text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-rose-500 transition-colors disabled:opacity-50"
                       >
                         {isActioning ? 'Updating...' : flow.actionLabel}
                       </button>

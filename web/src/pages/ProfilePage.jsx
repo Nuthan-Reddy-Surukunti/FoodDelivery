@@ -78,7 +78,7 @@ export const ProfilePage = () => {
       {/* ── Profile Hero Header ── */}
       <div className="mb-10 flex flex-col sm:flex-row items-center sm:items-end gap-5 p-6 bg-white/70 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm relative z-10">
         {/* Avatar */}
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-indigo-600 flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-primary/25 flex-shrink-0">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-amber-400 flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-primary/25 flex-shrink-0">
           {user?.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="flex-1 text-center sm:text-left">
@@ -136,7 +136,7 @@ export const ProfilePage = () => {
 
             <button
               onClick={() => setIsEditing(!isEditing)}
-              className="w-full py-3 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm hover:bg-primary-container active:scale-95 transition-all flex items-center justify-center gap-2"
+              className="w-full py-3 rounded-xl bg-primary text-white text-sm font-semibold shadow-sm hover:bg-rose-500 active:scale-95 transition-all flex items-center justify-center gap-2"
             >
               <span className="material-symbols-outlined text-lg">{isEditing ? 'close' : 'edit_square'}</span>
               {isEditing ? 'Cancel Editing' : 'Edit Profile'}
@@ -222,7 +222,7 @@ export const ProfilePage = () => {
                   <button
                     onClick={handleSaveProfile}
                     disabled={isSaving}
-                    className="flex-1 py-4 rounded-xl bg-primary text-white font-semibold shadow-sm hover:bg-primary-container transition-all disabled:opacity-50"
+                    className="flex-1 py-4 rounded-xl bg-primary text-white font-semibold shadow-sm hover:bg-rose-500 transition-all disabled:opacity-50"
                   >
                     {isSaving ? 'Saving Changes...' : 'Save Profile'}
                   </button>

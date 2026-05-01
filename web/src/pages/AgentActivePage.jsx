@@ -379,7 +379,7 @@ export const AgentActivePage = () => {
                     <button
                       disabled={isActioning}
                       onClick={() => handleAdvance(orderId, flow.next, flow.action)}
-                      className="w-full bg-primary text-on-primary py-3 rounded-xl text-sm font-semibold hover:bg-primary-container transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                      className="w-full bg-primary text-on-primary py-3 rounded-xl text-sm font-semibold hover:bg-rose-500 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                     >
                       <span className="material-symbols-outlined text-base">check_circle</span>
                       {isActioning ? 'Updating...' : flow.action}

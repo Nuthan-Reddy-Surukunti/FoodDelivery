@@ -16,7 +16,7 @@ export const Button = ({
   const baseStyles = 'font-medium rounded-2xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2'
   
   const variants = {
-    primary: 'bg-primary text-on-primary hover:bg-primary-container disabled:bg-surface-dim disabled:text-on-background',
+    primary: 'bg-primary text-white hover:bg-rose-500 disabled:bg-surface-dim disabled:text-on-background',
     secondary: 'bg-secondary-container text-on-secondary-container hover:bg-secondary disabled:bg-surface-dim disabled:text-on-background',
     error: 'bg-error text-on-error hover:bg-error disabled:bg-surface-dim disabled:text-on-background',
     tertiary: 'bg-transparent border-2 border-primary text-primary hover:bg-primary-fixed disabled:border-surface-dim disabled:text-on-background'

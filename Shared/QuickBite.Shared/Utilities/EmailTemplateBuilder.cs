@@ -5,11 +5,11 @@ namespace QuickBite.Shared.Utilities;
 public static class EmailTemplateBuilder
 {
     private const string SupportEmail = "surkuntinuthanreddy@gmail.com";
-    private const string PrimaryColor = "#1978e5"; // QuickBite Blue
-    private const string BackgroundColor = "#f8fafc";
-    private const string CardColor = "#ffffff";
-    private const string TextColor = "#1e293b";
-    private const string MutedTextColor = "#64748b";
+    private const string PrimaryColor = "#fb7185"; // Soft Rose
+    private const string BackgroundColor = "#ffffff";
+    private const string CardColor = "#fef2f2";
+    private const string TextColor = "#450a0a";
+    private const string MutedTextColor = "#991b1b";
 
     public static string GetOtpEmailTemplate(string name, string otp)
     {
@@ -134,7 +134,7 @@ public static class EmailTemplateBuilder
                 <table border='0' cellpadding='0' cellspacing='0' width='600' style='background-color: {CardColor}; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);'>
                     <!-- Header/Logo -->
                     <tr>
-                        <td align='center' style='padding: 30px 40px 20px; background: linear-gradient(135deg, {PrimaryColor} 0%, #4f46e5 100%);'>
+                        <td align='center' style='padding: 30px 40px 20px; background: linear-gradient(135deg, {PrimaryColor} 0%, #e11d48 100%);'>
                             <span style='color: white; font-size: 32px; font-weight: 800; letter-spacing: -1px;'>QuickBite</span>
                         </td>
                     </tr>

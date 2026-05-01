@@ -372,7 +372,7 @@ export const HomePage = () => {
             />
             <button
               type="submit"
-              className="absolute inset-y-2 right-2 px-6 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary-container active:scale-95 transition-all"
+              className="absolute inset-y-2 right-2 px-6 bg-primary text-white rounded-full text-sm font-bold hover:bg-rose-500 hover:shadow-lg active:scale-95 transition-all"
             >
               Find Food
             </button>
@@ -571,7 +571,7 @@ export const HomePage = () => {
       <footer className="bg-slate-900 py-12">
         <div className="flex flex-col md:flex-row justify-between items-center px-8 max-w-7xl mx-auto gap-6 text-sm">
           <div className="flex items-center gap-2.5">
-            <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-9 h-9 object-contain" />
+            <img src="/quickbite-logo.png" alt="QuickBite Logo" className="w-11 h-11 object-contain" />
             <span className="text-xl font-extrabold text-white">QuickBite</span>
           </div>
           <div className="flex gap-6">

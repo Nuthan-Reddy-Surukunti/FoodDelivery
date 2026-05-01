@@ -413,7 +413,7 @@ export const OrderTrackingPage = () => {
 
                       <a
                         href={agentPhone ? `tel:${agentPhone}` : undefined}
-                        className={`w-full sm:w-auto py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${agentPhone ? 'bg-primary text-on-primary hover:bg-primary-container' : 'bg-slate-200 text-slate-500 pointer-events-none'}`}
+                        className={`w-full sm:w-auto py-2 px-4 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-1.5 ${agentPhone ? 'bg-primary text-on-primary hover:bg-rose-500' : 'bg-slate-200 text-slate-500 pointer-events-none'}`}
                       >
                         <span className="material-symbols-outlined text-[18px]">call</span>
                         Call

@@ -209,7 +209,7 @@ export const CheckoutPage = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6 py-24 text-center">
         <p className="text-6xl mb-6">🛒</p>
         <h1 className="text-2xl font-bold text-on-surface mb-2">Your cart is empty</h1>
-        <Link to="/" className="bg-primary text-on-primary px-8 py-3 rounded-xl font-semibold hover:bg-primary-container transition-colors mt-6">
+        <Link to="/" className="bg-primary text-on-primary px-8 py-3 rounded-xl font-semibold hover:bg-rose-500 transition-colors mt-6">
           Browse Restaurants
         </Link>
       </div>
@@ -320,7 +320,7 @@ export const CheckoutPage = () => {
               type="button"
               onClick={() => handlePlaceOrder()}
               disabled={isPlacingOrder || !checkoutData.addressId}
-              className="w-full py-4 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-primary-container transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_16px_rgba(25,120,229,0.12)]"
+              className="w-full py-4 bg-primary text-on-primary rounded-full text-sm font-semibold hover:bg-rose-500 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_16px_rgba(25,120,229,0.12)]"
             >
               {isPlacingOrder ? 'Placing Order...' : `Place Order (${selectedPaymentMethod?.id === 'CashOnDelivery' ? 'COD' : selectedPaymentMethod?.label})`}
             </button>
