@@ -275,6 +275,21 @@ export const MenuManagementPage = () => {
     }
   }
 
+  const handleToggleAvailability = async (item) => {
+    // Current is Available (1) or missing (assumed available). If so, change to OutOfStock (2). Else, to Available (1).
+    const isCurrentlyAvailable = item.availabilityStatus === 1 || item.availabilityStatus === 'Available' || item.availabilityStatus == null
+    const newStatus = isCurrentlyAvailable ? 2 : 1
+    try {
+      await catalogApi.toggleMenuItemAvailability(item.id, newStatus)
+      showSuccess(`Item marked as ${isCurrentlyAvailable ? 'Out of Stock' : 'Available'}`)
+      
+      // Update local state without full reload
+      setItems(prev => prev.map(i => i.id === item.id ? { ...i, availabilityStatus: newStatus } : i))
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to update availability')
+    }
+  }
+
   const openEditItem = (item) => {
     const isAvailable = item.availabilityStatus === 1 || item.availabilityStatus === 'Available' || item.availabilityStatus == null;
     setItemModal({
@@ -372,15 +387,29 @@ export const MenuManagementPage = () => {
                       </div>
                     </div>
 
-                    <div className="flex gap-2 flex-shrink-0">
-                      <Button size="sm" variant="secondary" onClick={() => openEditItem(item)}>Edit</Button>
-                      <Button
-                        size="sm" variant="tertiary"
-                        disabled={deletingId === item.id}
-                        onClick={() => handleDeleteItem(item.id)}
+                    <div className="flex flex-col gap-2 flex-shrink-0 min-w-[120px]">
+                      <button
+                        onClick={() => handleToggleAvailability(item)}
+                        className={`text-xs font-semibold py-1.5 px-3 rounded-md transition-colors ${
+                          (item.availabilityStatus === 1 || item.availabilityStatus === 'Available' || item.availabilityStatus == null)
+                            ? 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                            : 'bg-green-50 text-green-600 hover:bg-green-100 border border-green-200'
+                        }`}
                       >
-                        {deletingId === item.id ? '...' : 'Delete'}
-                      </Button>
+                        {(item.availabilityStatus === 1 || item.availabilityStatus === 'Available' || item.availabilityStatus == null) 
+                          ? 'Mark Out of Stock' 
+                          : 'Mark Available'}
+                      </button>
+                      <div className="flex gap-2">
+                        <Button className="flex-1" size="sm" variant="secondary" onClick={() => openEditItem(item)}>Edit</Button>
+                        <Button
+                          className="flex-1" size="sm" variant="tertiary"
+                          disabled={deletingId === item.id}
+                          onClick={() => handleDeleteItem(item.id)}
+                        >
+                          {deletingId === item.id ? '...' : 'Del'}
+                        </Button>
+                      </div>
                     </div>
                   </Card>
                 )

@@ -163,6 +163,110 @@ public class RestaurantService : IRestaurantService
         return _mapper.Map<RestaurantDto>(restaurant);
     }
 
+    public async Task<RestaurantDto> DeactivateAsync(Guid id, DeactivateRestaurantRequest request, CancellationToken cancellationToken = default)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+
+        var restaurant = await _restaurantRepository.GetByIdAsync(id, cancellationToken);
+        if (restaurant == null)
+            throw new KeyNotFoundException($"Restaurant with ID {id} not found");
+
+        if (restaurant.Status != RestaurantStatus.Active)
+            throw new InvalidOperationException($"Cannot deactivate restaurant with status: {restaurant.Status}");
+
+        if (string.IsNullOrWhiteSpace(request.Reason))
+            throw new ArgumentException("Deactivation reason is required", nameof(request.Reason));
+
+        // Get admin user info from HTTP context
+        var httpContext = _httpContextAccessor.HttpContext;
+        var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                              httpContext?.User?.FindFirst("sub")?.Value;
+        var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
+                           httpContext?.User?.FindFirst("name")?.Value ??
+                           httpContext?.User?.Identity?.Name ??
+                           "Unknown Admin";
+
+        restaurant.Status = RestaurantStatus.Inactive;
+        restaurant.UpdatedAt = DateTime.UtcNow;
+        // Re-using RejectionReason field for now, or you could add DeactivationReason to the entity
+        restaurant.RejectionReason = request.Reason; 
+
+        await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
+
+        // Publish restaurant deactivated event
+        await _publishEndpoint.Publish(new RestaurantDeactivatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            RestaurantId = restaurant.Id,
+            Name = restaurant.Name,
+            Reason = request.Reason,
+            DeactivatedBy = adminUserName
+        }, cancellationToken);
+
+        // Log audit trail
+        if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
+        {
+            var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+
+            await _auditService.LogApprovalActionAsync("Restaurant", id, "Deactivated", 
+                request.Reason, adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
+        }
+
+        return _mapper.Map<RestaurantDto>(restaurant);
+    }
+
+    public async Task<RestaurantDto> ActivateAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var restaurant = await _restaurantRepository.GetByIdAsync(id, cancellationToken);
+        if (restaurant == null)
+            throw new KeyNotFoundException($"Restaurant with ID {id} not found");
+
+        if (restaurant.Status != RestaurantStatus.Inactive)
+            throw new InvalidOperationException($"Only inactive restaurants can be reactivated. Current status: {restaurant.Status}");
+
+        // Get admin user info from HTTP context
+        var httpContext = _httpContextAccessor.HttpContext;
+        var adminUserIdClaim = httpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                              httpContext?.User?.FindFirst("sub")?.Value;
+        var adminUserName = httpContext?.User?.FindFirst(ClaimTypes.Name)?.Value ??
+                           httpContext?.User?.FindFirst("name")?.Value ??
+                           httpContext?.User?.Identity?.Name ??
+                           "Unknown Admin";
+
+        restaurant.Status = RestaurantStatus.Active;
+        restaurant.UpdatedAt = DateTime.UtcNow;
+        restaurant.RejectionReason = null; // Clear reason on reactivation
+
+        await _restaurantRepository.UpdateAsync(restaurant, cancellationToken);
+
+        // Publish restaurant approved/activated event
+        await _publishEndpoint.Publish(new RestaurantApprovedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            RestaurantId = restaurant.Id,
+            Name = restaurant.Name,
+            ApprovedBy = adminUserName
+        }, cancellationToken);
+
+        // Log audit trail
+        if (Guid.TryParse(adminUserIdClaim, out var adminUserId))
+        {
+            var ipAddress = httpContext?.Connection.RemoteIpAddress?.ToString();
+            var userAgent = httpContext?.Request.Headers["User-Agent"].ToString();
+
+            await _auditService.LogApprovalActionAsync("Restaurant", id, "Reactivated", 
+                "Restaurant restored to active status", adminUserId, adminUserName, ipAddress, userAgent, cancellationToken);
+        }
+
+        return _mapper.Map<RestaurantDto>(restaurant);
+    }
+
     public async Task<IEnumerable<RestaurantDto>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default)
     {
         var restaurants = await _restaurantRepository.GetByOwnerIdAsync(ownerId, cancellationToken);

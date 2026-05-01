@@ -67,6 +67,11 @@ const catalogApi = {
     return response.data
   },
 
+  async toggleMenuItemAvailability(id, status) {
+    const response = await api.patch(`/gateway/catalog/menuitems/${id}/availability`, { status })
+    return response.data
+  },
+
   async deleteMenuItem(id) {
     const response = await api.delete(`/gateway/catalog/menuitems/${id}`)
     return response.data

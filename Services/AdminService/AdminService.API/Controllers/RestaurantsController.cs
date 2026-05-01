@@ -81,6 +81,42 @@ public class RestaurantsController : ControllerBase
         }
     }
 
+    [HttpPost("{id}/deactivate")]
+    public async Task<IActionResult> DeactivateRestaurant(Guid id, [FromBody] DeactivateRestaurantRequest request)
+    {
+        try
+        {
+            var restaurant = await _restaurantService.DeactivateAsync(id, request);
+            return Ok(restaurant);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPost("{id}/activate")]
+    public async Task<IActionResult> ActivateRestaurant(Guid id)
+    {
+        try
+        {
+            var restaurant = await _restaurantService.ActivateAsync(id);
+            return Ok(restaurant);
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpDelete("{restaurantId}")]
     public async Task<IActionResult> DeleteRestaurant(Guid restaurantId)
     {

@@ -139,6 +139,52 @@ public class RestaurantApprovedEventHandler : IConsumer<CatalogEvents.Restaurant
 }
 
 /// <summary>
+/// Handles RestaurantDeactivatedEvent from AdminService to set restaurant status to Inactive
+/// </summary>
+public class RestaurantDeactivatedEventHandler : IConsumer<CatalogEvents.RestaurantDeactivatedEvent>
+{
+    private readonly ILogger<RestaurantDeactivatedEventHandler> _logger;
+    private readonly IRestaurantRepository _restaurantRepository;
+
+    public RestaurantDeactivatedEventHandler(
+        ILogger<RestaurantDeactivatedEventHandler> logger,
+        IRestaurantRepository restaurantRepository)
+    {
+        _logger = logger;
+        _restaurantRepository = restaurantRepository ?? throw new ArgumentNullException(nameof(restaurantRepository));
+    }
+
+    public async Task Consume(ConsumeContext<CatalogEvents.RestaurantDeactivatedEvent> context)
+    {
+        var @event = context.Message;
+        _logger.LogInformation("Processing RestaurantDeactivatedEvent: RestaurantId={RestaurantId}, Reason={Reason}", 
+            @event.RestaurantId, @event.Reason);
+
+        try
+        {
+            var restaurant = await _restaurantRepository.GetByIdAsync(@event.RestaurantId);
+            if (restaurant == null)
+            {
+                _logger.LogWarning("Restaurant not found for deactivation: RestaurantId={RestaurantId}", @event.RestaurantId);
+                return;
+            }
+
+            // Update restaurant status to Inactive
+            restaurant.Status = RestaurantStatus.Inactive;
+            restaurant.UpdatedAt = DateTime.UtcNow;
+
+            await _restaurantRepository.UpdateAsync(restaurant);
+            _logger.LogInformation("Restaurant status updated to Inactive due to deactivation: RestaurantId={RestaurantId}", @event.RestaurantId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing RestaurantDeactivatedEvent: RestaurantId={RestaurantId}", @event.RestaurantId);
+            throw;
+        }
+    }
+}
+
+/// <summary>
 /// Handles RestaurantRejectedEvent from AdminService to sync restaurant status
 /// </summary>
 public class RestaurantRejectedEventHandler : IConsumer<CatalogEvents.RestaurantRejectedEvent>

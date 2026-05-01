@@ -6,6 +6,10 @@ export const RestaurantTable = ({
   loading = false, 
   onDelete = () => {},
   onEdit = () => {},
+  onApprove = () => {},
+  onReject = () => {},
+  onDeactivate = () => {},
+  onActivate = () => {},
   currentPage = 1,
   pageSize = 10,
   totalItems = 0,
@@ -83,10 +87,51 @@ export const RestaurantTable = ({
                       >
                         <span className="material-symbols-outlined text-[20px]">edit</span>
                       </button>
+                      {restaurant.status === 'Active' && (
+                        <button
+                          onClick={() => onDeactivate(restaurant.id, restaurant.name)}
+                          className="p-2 hover:bg-orange-50 text-orange-600 rounded-lg transition-colors group relative"
+                          aria-label="Deactivate"
+                          title="Deactivate Restaurant"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">pause_circle</span>
+                        </button>
+                      )}
+                      {restaurant.status === 'Inactive' && (
+                        <button
+                          onClick={() => onActivate(restaurant.id, restaurant.name)}
+                          className="p-2 hover:bg-green-50 text-green-600 rounded-lg transition-colors group relative"
+                          aria-label="Activate"
+                          title="Activate Restaurant"
+                        >
+                          <span className="material-symbols-outlined text-[20px]">play_circle</span>
+                        </button>
+                      )}
+                      {(restaurant.status === 'Pending' || restaurant.status === 'PendingApproval') && (
+                        <>
+                          <button
+                            onClick={() => onApprove(restaurant.id)}
+                            className="p-2 hover:bg-emerald-50 text-emerald-600 rounded-lg transition-colors group relative"
+                            aria-label="Approve"
+                            title="Approve Restaurant"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                          </button>
+                          <button
+                            onClick={() => onReject(restaurant.id)}
+                            className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors group relative"
+                            aria-label="Reject"
+                            title="Reject Restaurant"
+                          >
+                            <span className="material-symbols-outlined text-[20px]">cancel</span>
+                          </button>
+                        </>
+                      )}
                       <button
                         onClick={() => onDelete(restaurant.id, restaurant.name)}
-                        className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
+                        className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors group relative"
                         aria-label="Delete"
+                        title="Delete Restaurant"
                       >
                         <span className="material-symbols-outlined text-[20px]">delete</span>
                       </button>
@@ -145,6 +190,10 @@ RestaurantTable.propTypes = {
   loading: PropTypes.bool,
   onDelete: PropTypes.func,
   onEdit: PropTypes.func,
+  onApprove: PropTypes.func,
+  onReject: PropTypes.func,
+  onDeactivate: PropTypes.func,
+  onActivate: PropTypes.func,
   currentPage: PropTypes.number,
   pageSize: PropTypes.number,
   totalItems: PropTypes.number,

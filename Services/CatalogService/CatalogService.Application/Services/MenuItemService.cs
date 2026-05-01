@@ -158,6 +158,45 @@ public class MenuItemService : IMenuItemService
         return _mapper.Map<MenuItemDto>(updatedItem);
     }
 
+    public async Task<MenuItemDto> ToggleAvailabilityAsync(Guid id, ItemAvailabilityStatus status, Guid userId, string userRole)
+    {
+        var menuItem = await _repository.GetByIdAsync(id);
+        if (menuItem == null)
+            throw new MenuItemNotFoundException(id);
+        
+        // Get parent restaurant to validate ownership
+        var restaurant = await _restaurantRepository.GetByIdAsync(menuItem.RestaurantId);
+        if (restaurant == null)
+            throw new RestaurantNotFoundException(menuItem.RestaurantId);
+        
+        // RestaurantPartner can only update items in their own restaurant
+        if (userRole == "RestaurantPartner" && restaurant.OwnerId != userId)
+            throw new UnauthorizedAccessException("You can only update items in your own restaurant.");
+
+        menuItem.AvailabilityStatus = status;
+        menuItem.UpdatedAt = DateTime.UtcNow;
+
+        var updatedItem = await _repository.UpdateAsync(menuItem);
+        
+        var menuItemUpdatedEvent = new MenuItemUpdatedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            EventVersion = 1,
+            MenuItemId = updatedItem.Id,
+            RestaurantId = updatedItem.RestaurantId,
+            Name = updatedItem.Name,
+            Description = updatedItem.Description ?? string.Empty,
+            Price = updatedItem.Price,
+            IsVeg = updatedItem.IsVeg,
+            AvailabilityStatus = updatedItem.AvailabilityStatus.ToString(),
+            CategoryName = updatedItem.Category?.Name ?? string.Empty
+        };
+        await _publishEndpoint.Publish(menuItemUpdatedEvent);
+        
+        return _mapper.Map<MenuItemDto>(updatedItem);
+    }
+
     public async Task<bool> DeleteMenuItemAsync(Guid id, Guid userId, string userRole)
     {
         var menuItem = await _repository.GetByIdAsync(id);

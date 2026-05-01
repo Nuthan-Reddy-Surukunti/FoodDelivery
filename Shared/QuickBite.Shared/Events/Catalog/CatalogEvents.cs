@@ -45,6 +45,21 @@ public class RestaurantRejectedEvent
 }
 
 /// <summary>
+/// Published when a restaurant is deactivated by an admin
+/// </summary>
+public class RestaurantDeactivatedEvent
+{
+    public Guid EventId { get; set; }
+    public DateTime OccurredAt { get; set; }
+    public int EventVersion { get; set; } = 1;
+
+    public Guid RestaurantId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Reason { get; set; } = string.Empty;
+    public string DeactivatedBy { get; set; } = string.Empty;
+}
+
+/// <summary>
 /// Published when a restaurant is deleted by admin
 /// </summary>
 public class RestaurantDeletedEvent

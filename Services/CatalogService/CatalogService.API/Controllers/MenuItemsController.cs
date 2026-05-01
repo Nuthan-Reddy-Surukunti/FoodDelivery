@@ -162,6 +162,32 @@ public class MenuItemsController : ControllerBase
             return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
         }
     }
+
+    /// <summary>
+    /// Toggle menu item availability (Admin or RestaurantPartner - own restaurant only)
+    /// </summary>
+    [HttpPatch("{id}/availability")]
+    [Authorize(Roles = "Admin,RestaurantPartner")]
+    public async Task<ActionResult<MenuItemDto>> UpdateAvailability(
+        [FromRoute] Guid id,
+        [FromBody] AvailabilityUpdateDto dto)
+    {
+        try
+        {
+            var userId = this.GetCurrentUserId();
+            var userRole = this.GetCurrentUserRole();
+            var result = await _menuItemService.ToggleAvailabilityAsync(id, dto.Status, userId, userRole);
+            return Ok(result);
+        }
+        catch (MenuItemNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+        }
+    }
 }
 
 public class AvailabilityUpdateDto

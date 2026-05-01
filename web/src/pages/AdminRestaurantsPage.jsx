@@ -92,6 +92,31 @@ export const AdminRestaurantsPage = () => {
     } finally { setActioning(null) }
   }
 
+  const handleDeactivate = async (id, name) => {
+    const reason = window.prompt(`Enter reason for deactivating "${name}":`)
+    if (!reason) return
+    setActioning(id + '-deactivate')
+    try {
+      await adminApi.deactivateRestaurant(id, reason)
+      showSuccess('Restaurant deactivated ⏸️')
+      setRestaurants(prev => prev.map(r => r.id === id ? { ...r, status: 'Inactive' } : r))
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to deactivate')
+    } finally { setActioning(null) }
+  }
+
+  const handleActivate = async (id, name) => {
+    if (!window.confirm(`Reactivate "${name}"?`)) return
+    setActioning(id + '-activate')
+    try {
+      await adminApi.activateRestaurant(id)
+      showSuccess('Restaurant reactivated 🔋')
+      setRestaurants(prev => prev.map(r => r.id === id ? { ...r, status: 'Active' } : r))
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to reactivate')
+    } finally { setActioning(null) }
+  }
+
   // Filter restaurants based on selected category
   const filteredRestaurants = selectedCategory === 'all' 
     ? restaurants 
@@ -152,6 +177,10 @@ export const AdminRestaurantsPage = () => {
         onPageChange={setCurrentPage}
         onEdit={(restaurant) => console.log('Edit:', restaurant)}
         onDelete={handleDelete}
+        onApprove={handleApprove}
+        onReject={handleReject}
+        onDeactivate={handleDeactivate}
+        onActivate={handleActivate}
       />
     </AdminLayout>
   )

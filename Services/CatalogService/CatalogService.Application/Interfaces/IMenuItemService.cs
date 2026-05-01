@@ -13,5 +13,7 @@ public interface IMenuItemService
 
     Task<MenuItemDto> UpdateMenuItemAsync(UpdateMenuItemDto dto, Guid userId, string userRole);
 
+    Task<MenuItemDto> ToggleAvailabilityAsync(Guid id, ItemAvailabilityStatus status, Guid userId, string userRole);
+
     Task<bool> DeleteMenuItemAsync(Guid id, Guid userId, string userRole);
 }

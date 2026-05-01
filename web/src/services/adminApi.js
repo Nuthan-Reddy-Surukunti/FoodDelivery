@@ -73,6 +73,16 @@ const adminApi = {
     return response.data
   },
 
+  async deactivateRestaurant(restaurantId, reason) {
+    const response = await api.post(`/gateway/admin/restaurants/${restaurantId}/deactivate`, { reason })
+    return response.data
+  },
+
+  async activateRestaurant(restaurantId) {
+    const response = await api.post(`/gateway/admin/restaurants/${restaurantId}/activate`)
+    return response.data
+  },
+
   async deleteRestaurant(restaurantId) {
     const response = await api.delete(`/gateway/admin/restaurants/${restaurantId}`)
     return response.data
