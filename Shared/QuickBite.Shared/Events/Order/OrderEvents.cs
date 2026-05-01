@@ -27,6 +27,12 @@ public class OrderPlacedEvent
     public decimal TotalAmount { get; set; }
     public string DeliveryAddress { get; set; } = string.Empty;
     public List<OrderItemSnapshot> Items { get; set; } = new();
+
+    /// <summary>Payment method used: "CashOnDelivery" or "Online" (Razorpay)</summary>
+    public string PaymentMethod { get; set; } = "CashOnDelivery";
+
+    /// <summary>Internal Payment record ID — used by the Saga to trigger refunds</summary>
+    public Guid? PaymentId { get; set; }
 }
 
 /// <summary>

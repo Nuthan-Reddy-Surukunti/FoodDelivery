@@ -43,8 +43,15 @@ public class CartsController : ControllerBase
             return Forbid();
         }
 
-        var cart = await _cartService.AddCartItemAsync(request, cancellationToken);
-        return Ok(cart);
+        try
+        {
+            var cart = await _cartService.AddCartItemAsync(request, cancellationToken);
+            return Ok(cart);
+        }
+        catch (OrderService.Application.Exceptions.ValidationException ex)
+        {
+            return BadRequest(new { statusCode = 400, message = ex.Message, timestamp = DateTime.UtcNow });
+        }
     }
 
     [HttpPut("items/{cartItemId:guid}")]

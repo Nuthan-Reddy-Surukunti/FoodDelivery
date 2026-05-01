@@ -181,6 +181,8 @@ public class DeliveryService : IDeliveryService
             RestaurantName = "Restaurant", // Can be updated if needed
             TotalAmount = order.TotalAmount,
             DeliveryAddress = $"{order.DeliveryAddressLine1}, {order.DeliveryCity}",
+            PaymentMethod = payment.PaymentMethod.ToString(), // "CashOnDelivery" or "Online" — for Saga refund decisions
+            PaymentId = payment.Id,                          // Internal ID for Saga to locate Razorpay details
             Items = order.OrderItems.Select(oi => new OrderItemSnapshot
             {
                 MenuItemId = oi.MenuItemId,

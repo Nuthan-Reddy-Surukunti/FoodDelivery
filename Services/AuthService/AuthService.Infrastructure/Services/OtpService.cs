@@ -3,6 +3,8 @@ using AuthService.Domain.Enums;
 using AuthService.Domain.Entities;
 using AuthService.Domain.Interfaces;
 using System.Linq;
+using QuickBite.Shared.Utilities;
+
 
 namespace AuthService.Infrastructure.Services;
 
@@ -44,7 +46,7 @@ public class OtpService : IOtpService
                     await _emailService.SendEmailAsync(
                         user.Email,
                         "Your Login OTP",
-                        $"Your OTP is: {existingOtp.OTP}. It will expire in about {remainingMinutes} minute(s).");
+                        EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, existingOtp.OTP));
 
                     return true;
                 }
@@ -76,7 +78,7 @@ public class OtpService : IOtpService
             await _emailService.SendEmailAsync(
                 user.Email,
                 "Your Login OTP",
-                $"Your OTP is: {otp}. It will expire in 10 minutes. If you requested multiple OTP emails, use the latest OTP.");
+                EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
             return true;
         }

@@ -18,19 +18,22 @@ public class OrderPlacementService : IOrderPlacementService
     private readonly IUserAddressRepository _userAddressRepository;
     private readonly IDeliveryService _deliveryService;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IRestaurantValidationService _restaurantValidationService;
 
     public OrderPlacementService(
         ICartRepository cartRepository,
         IOrderRepository orderRepository,
         IUserAddressRepository userAddressRepository,
         IDeliveryService deliveryService,
-        IPublishEndpoint publishEndpoint)
+        IPublishEndpoint publishEndpoint,
+        IRestaurantValidationService restaurantValidationService)
     {
         _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _userAddressRepository = userAddressRepository ?? throw new ArgumentNullException(nameof(userAddressRepository));
         _deliveryService = deliveryService ?? throw new ArgumentNullException(nameof(deliveryService));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _restaurantValidationService = restaurantValidationService ?? throw new ArgumentNullException(nameof(restaurantValidationService));
     }
 
     public async Task<OrderDetailDto> PlaceOrderAsync(PlaceOrderRequestDto request, CancellationToken cancellationToken = default)
@@ -45,6 +48,13 @@ public class OrderPlacementService : IOrderPlacementService
         if (selectedAddress.UserId != request.UserId)
         {
             throw new ValidationException("Selected delivery address does not belong to the user");
+        }
+
+        // Validate restaurant is active before proceeding
+        var restaurantValidation = await _restaurantValidationService.ValidateRestaurantAsync(request.RestaurantId, cancellationToken);
+        if (!restaurantValidation.IsActive)
+        {
+            throw new ValidationException(restaurantValidation.ErrorMessage ?? "The selected restaurant is currently inactive and cannot accept orders.");
         }
 
         var cart = await _cartRepository.GetCartByUserAndRestaurantAsync(request.UserId, request.RestaurantId, cancellationToken)

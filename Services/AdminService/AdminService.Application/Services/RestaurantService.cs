@@ -8,6 +8,7 @@ using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 namespace AdminService.Application.Services;
@@ -19,14 +20,22 @@ public class RestaurantService : IRestaurantService
     private readonly IAuditService _auditService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ILogger<RestaurantService> _logger;
 
-    public RestaurantService(IRestaurantRepository restaurantRepository, IMapper mapper, IAuditService auditService, IHttpContextAccessor httpContextAccessor, IPublishEndpoint publishEndpoint)
+    public RestaurantService(
+        IRestaurantRepository restaurantRepository, 
+        IMapper mapper, 
+        IAuditService auditService, 
+        IHttpContextAccessor httpContextAccessor, 
+        IPublishEndpoint publishEndpoint,
+        ILogger<RestaurantService> logger)
     {
         _restaurantRepository = restaurantRepository;
         _mapper = mapper;
         _auditService = auditService ?? throw new ArgumentNullException(nameof(auditService));
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
-            _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<RestaurantDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -173,7 +182,10 @@ public class RestaurantService : IRestaurantService
             throw new KeyNotFoundException($"Restaurant with ID {id} not found");
 
         if (restaurant.Status != RestaurantStatus.Active)
-            throw new InvalidOperationException($"Cannot deactivate restaurant with status: {restaurant.Status}");
+        {
+            _logger.LogWarning("Deactivation failed for restaurant {Id}. Current status is {Status} (Expected: Active)", id, restaurant.Status);
+            throw new InvalidOperationException($"Cannot deactivate restaurant because its current status is '{restaurant.Status}'. Only 'Active' restaurants can be deactivated.");
+        }
 
         if (string.IsNullOrWhiteSpace(request.Reason))
             throw new ArgumentException("Deactivation reason is required", nameof(request.Reason));

@@ -24,8 +24,16 @@ public static class ServiceRegistration
         services.AddScoped<IUserAddressRepository, UserAddressRepository>();
         services.AddScoped<IDeliveryAgentRepository, DeliveryAgentRepository>();
 
-        // Add HttpClient for CatalogService validation
+        // Add HttpClient for CatalogService validation (menu items)
         services.AddHttpClient<IMenuItemValidationService, MenuItemValidationService>((sp, client) =>
+        {
+            var catalogServiceUrl = configuration["Services:CatalogService:Url"] ?? "http://localhost:5002";
+            client.BaseAddress = new Uri(catalogServiceUrl);
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
+
+        // Add HttpClient for CatalogService validation (restaurant status)
+        services.AddHttpClient<IRestaurantValidationService, RestaurantValidationService>((sp, client) =>
         {
             var catalogServiceUrl = configuration["Services:CatalogService:Url"] ?? "http://localhost:5002";
             client.BaseAddress = new Uri(catalogServiceUrl);

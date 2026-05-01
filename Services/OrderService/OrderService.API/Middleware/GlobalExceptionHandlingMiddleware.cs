@@ -51,11 +51,11 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
 
         context.Response.StatusCode = statusCode;
 
-        return context.Response.WriteAsJsonAsync(new ErrorResponse
+        return context.Response.WriteAsJsonAsync(new
         {
-            StatusCode = statusCode,
-            Message = message,
-            Timestamp = DateTime.UtcNow
+            statusCode = statusCode,
+            message = message,
+            timestamp = DateTime.UtcNow
         });
     }
 }

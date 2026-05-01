@@ -187,6 +187,8 @@ public class PaymentsController : ControllerBase
                 RestaurantName = "Restaurant",
                 TotalAmount = order.TotalAmount,
                 DeliveryAddress = $"{order.DeliveryAddressLine1}, {order.DeliveryCity}",
+                PaymentMethod = "Online",           // Razorpay path — Saga uses this to trigger refund on failure
+                PaymentId = order.Payment?.Id,     // Internal Payment ID for the Saga to look up RazorpayPaymentId
                 Items = order.OrderItems.Select(oi => new OrderItemSnapshot
                 {
                     MenuItemId = oi.MenuItemId,

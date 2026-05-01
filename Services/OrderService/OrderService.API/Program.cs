@@ -1,12 +1,18 @@
 using System.Text.Json.Serialization;
 using MassTransit;
+using MassTransit.EntityFrameworkCoreIntegration;
+using Microsoft.EntityFrameworkCore;
 using OrderService.API.Middleware;
 using OrderService.Application;
 using OrderService.Application.Interfaces;
 using OrderService.Application.Options;
 using OrderService.Application.EventHandlers;
 using OrderService.Application.Services;
+using OrderService.Application.Consumers;
+using OrderService.Application.Saga;
+using OrderService.Domain.Entities;
 using OrderService.Infrastructure;
+using OrderService.Infrastructure.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -27,7 +33,23 @@ builder.Services.AddHttpClient<IDeliveryAgentSyncService, DeliveryAgentSyncServi
 });
 builder.Services.AddMassTransit(x =>
 {
+    // ── Consumers ────────────────────────────────────────────────────────
     x.AddConsumer<DeliveryAgentRegisteredEventHandler>();
+    x.AddConsumer<ValidateOrderConsumer>();
+    x.AddConsumer<CompensateOrderConsumer>();
+
+    // ── Saga State Machine with EF persistence ───────────────────────────
+    x.AddSagaStateMachine<OrderFulfillmentSaga, OrderFulfillmentSagaState>()
+        .EntityFrameworkRepository(r =>
+        {
+            r.ConcurrencyMode = ConcurrencyMode.Pessimistic;
+            r.AddDbContext<DbContext, OrderDbContext>((provider, optBuilder) =>
+            {
+                optBuilder.UseSqlServer(
+                    builder.Configuration.GetConnectionString("OrderDb"));
+            });
+        });
+
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",

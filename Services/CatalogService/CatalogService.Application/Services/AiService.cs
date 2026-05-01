@@ -347,8 +347,17 @@ Formatting: Use markdown (bold names, bullet points). Keep replies concise but h
         string restaurantName = "the restaurant";
         if (FindProp(orderData, "restaurantId") is JsonElement rid && Guid.TryParse(rid.GetString(), out var restaurantId))
         {
-            var restaurant = await _restaurantService.GetRestaurantByIdAsync(restaurantId);
-            if (restaurant != null) restaurantName = restaurant.Name;
+            try 
+            {
+                var restaurant = await _restaurantService.GetRestaurantByIdAsync(restaurantId);
+                if (restaurant != null) restaurantName = restaurant.Name;
+            }
+            catch (Exception ex)
+            {
+                // If restaurant is deactivated, GetRestaurantByIdAsync throws RestaurantNotFoundException.
+                // We should just use the default "the restaurant" string instead of crashing the order tracking.
+                _logger.LogWarning(ex, "Could not fetch restaurant details for AI order tracking for restaurant ID {RestaurantId}. Proceeding with default name.", restaurantId);
+            }
         }
 
         var itemNames = new List<string>();

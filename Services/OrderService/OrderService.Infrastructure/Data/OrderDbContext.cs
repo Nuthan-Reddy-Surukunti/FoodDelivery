@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OrderService.Domain.Entities;
+using OrderService.Application.Saga;
 
 namespace OrderService.Infrastructure.Data;
 
@@ -25,6 +26,9 @@ public class OrderDbContext : DbContext
     public DbSet<UserAddress> UserAddresses => Set<UserAddress>();
 
     public DbSet<DeliveryAgent> DeliveryAgents => Set<DeliveryAgent>();
+
+    /// <summary>Persists the MassTransit Saga state for each order.</summary>
+    public DbSet<OrderFulfillmentSagaState> OrderFulfillmentSagaStates => Set<OrderFulfillmentSagaState>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

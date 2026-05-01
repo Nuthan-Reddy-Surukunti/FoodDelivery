@@ -279,11 +279,37 @@ export const OrderTrackingPage = () => {
 
               {/* Cancelled banner */}
               {isCancelled && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-center gap-3">
-                  <span className="material-symbols-outlined text-red-500 text-2xl">cancel</span>
-                  <div>
-                    <p className="font-semibold text-red-800">{statusLabel}</p>
-                    <p className="text-sm text-red-600/80">This order has been cancelled or rejected.</p>
+                <div className="bg-red-50 border border-red-200 rounded-2xl p-5 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-red-500 text-2xl mt-0.5">cancel</span>
+                  <div className="flex-1">
+                    <p className="font-semibold text-red-800 text-base">{statusLabel}</p>
+                    {orderData?.orderStatus === 'RestaurantRejected' ? (
+                      <p className="text-sm text-red-700/90 mt-1 leading-relaxed">
+                        We apologize, but the restaurant is currently unable to fulfill your order.
+                      </p>
+                    ) : orderData?.orderStatus === 'CancelRequestedByCustomer' ? (
+                      <p className="text-sm text-red-700/90 mt-1 leading-relaxed">
+                        You requested to cancel this order.
+                      </p>
+                    ) : (
+                      <p className="text-sm text-red-700/90 mt-1 leading-relaxed">
+                        This order has been cancelled.
+                      </p>
+                    )}
+                    
+                    {/* Refund Information */}
+                    {(paymentMethodInt === 1 || paymentMethodInt === 'Online') ? (
+                       <div className="mt-3 bg-white/60 border border-red-100 rounded-lg p-3 flex items-start gap-2">
+                         <span className="material-symbols-outlined text-red-500 text-sm mt-0.5">account_balance</span>
+                         <p className="text-sm text-red-800">
+                           <span className="font-semibold">Refund Initiated:</span> Your secure online payment of ₹{total.toFixed(2)} is being refunded. It will reflect in your original payment method within 3-5 business days.
+                         </p>
+                       </div>
+                    ) : (
+                       <p className="text-sm text-red-700/80 mt-2 italic">
+                         * Since this was a Cash on Delivery order, no payment was deducted.
+                       </p>
+                    )}
                   </div>
                 </div>
               )}
