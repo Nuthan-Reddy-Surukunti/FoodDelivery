@@ -127,7 +127,24 @@ public class OrderPlacementService : IOrderPlacementService
     {
         var order = await _orderRepository.GetOrderByIdWithItemsAsync(orderId, cancellationToken)
             ?? throw new ValidationException("Order not found");
-        return OrderMappings.MapToDto(order);
+            
+        var dto = OrderMappings.MapToDto(order);
+        
+        // Resolve menu item names for the UI
+        foreach (var item in dto.Items)
+        {
+            try
+            {
+                var result = await _menuItemValidationService.ValidateMenuItemAsync(order.RestaurantId, item.MenuItemId, cancellationToken);
+                item.MenuItemName = result.IsValid ? result.ItemName : $"Item #{item.MenuItemId.ToString().Split('-')[0]}";
+            }
+            catch
+            {
+                item.MenuItemName = $"Item #{item.MenuItemId.ToString().Split('-')[0]}";
+            }
+        }
+        
+        return dto;
     }
 
     public async Task<IReadOnlyList<OrderDetailDto>> GetOrdersByUserAsync(Guid userId, bool activeOnly = false, CancellationToken cancellationToken = default)

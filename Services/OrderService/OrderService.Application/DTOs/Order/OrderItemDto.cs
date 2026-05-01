@@ -13,4 +13,6 @@ public class OrderItemDto
     public string? CustomizationNotes { get; set; }
 
     public decimal Subtotal { get; set; }
+
+    public string? MenuItemName { get; set; }
 }

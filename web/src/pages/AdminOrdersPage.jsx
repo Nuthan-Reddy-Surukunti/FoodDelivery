@@ -215,6 +215,14 @@ export const AdminOrdersPage = () => {
                         {orderDetails.order.orderStatus}
                       </span>
                     </div>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 col-span-2 md:col-span-1">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Restaurant</p>
+                      <p className="text-sm font-semibold text-slate-800">{orders.find(o => o.id === selectedOrderId)?.restaurant || '—'}</p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 col-span-2 md:col-span-1">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Customer</p>
+                      <p className="text-sm font-semibold text-slate-800">{orders.find(o => o.id === selectedOrderId)?.customerEmail || '—'}</p>
+                    </div>
                   </div>
 
                   {/* Order Items */}
