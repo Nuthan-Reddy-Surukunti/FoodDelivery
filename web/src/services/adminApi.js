@@ -23,6 +23,21 @@ const adminApi = {
     return response.data
   },
 
+  async toggleUserStatus(userId) {
+    const response = await api.put(`/gateway/auth/admin/users/${userId}/toggle-status`)
+    return response.data
+  },
+
+  async deleteUser(userId) {
+    const response = await api.delete(`/gateway/auth/admin/users/${userId}`)
+    return response.data
+  },
+
+  async getUserAddresses(userId) {
+    const response = await api.get(`/gateway/user/addresses/admin/${userId}`)
+    return response.data
+  },
+
   async getRestaurantsReport() {
     const response = await api.get('/gateway/admin/reports/all-restaurants')
     return response.data
@@ -60,6 +75,11 @@ const adminApi = {
     const response = await api.get('/gateway/admin/restaurants', {
       params: status ? { status } : undefined,
     })
+    return response.data
+  },
+
+  async getRestaurantDetails(restaurantId) {
+    const response = await api.get(`/gateway/catalog/restaurants/${restaurantId}`)
     return response.data
   },
 

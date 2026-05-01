@@ -21,5 +21,6 @@ public interface IAuthService
     Task<AuthRequestDto> DeleteUserAsync(DeleteUserRequestDto request);
     Task<AuthRequestDto> CreateAdminAsync(CreateAdminDto request);
     Task<List<DeliveryAgentDto>> GetDeliveryAgentsAsync();
+    Task<AuthRequestDto> ToggleUserStatusAsync(string userId);
+    Task<AuthRequestDto> AdminDeleteUserAsync(string userId);
 }
-

@@ -115,6 +115,8 @@ public class UserRepository : IUserRepository
         
         appUser.FullName = user.FullName;
         appUser.MobileNumber = user.MobileNumber;
+        appUser.IsActive = user.IsActive;
+        appUser.AccountStatus = (int)user.AccountStatus;
         
         var result = await _userManager.UpdateAsync(appUser);
         if (result.Succeeded)

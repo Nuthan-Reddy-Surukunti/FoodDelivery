@@ -1104,4 +1104,69 @@ public class AuthService : IAuthService
             .ToList();
         return agents;
     }
+
+    public async Task<AuthRequestDto> ToggleUserStatusAsync(string userId)
+    {
+        if (!Guid.TryParse(userId, out var userGuid))
+            return new AuthRequestDto { Success = false, Message = "Invalid user ID." };
+
+        var user = await _userRepository.FindByIdAsync(userGuid);
+        if (user == null)
+            return new AuthRequestDto { Success = false, Message = "User not found." };
+
+        user.IsActive = !user.IsActive;
+        var updated = await _userRepository.UpdateUserAsync(user);
+
+        if (!updated)
+            return new AuthRequestDto { Success = false, Message = "Failed to update user status." };
+
+        // Publish event
+        await _publishEndpoint.Publish(new UserStatusChangedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            UserId = user.Id,
+            IsActive = user.IsActive,
+            Role = user.Role.ToString()
+        });
+
+        return new AuthRequestDto 
+        { 
+            Success = true, 
+            Message = user.IsActive ? "User activated successfully." : "User suspended successfully." 
+        };
+    }
+
+    public async Task<AuthRequestDto> AdminDeleteUserAsync(string userId)
+    {
+        if (!Guid.TryParse(userId, out var userGuid))
+            return new AuthRequestDto { Success = false, Message = "Invalid user ID." };
+
+        var user = await _userRepository.FindByIdAsync(userGuid);
+        if (user == null)
+            return new AuthRequestDto { Success = false, Message = "User not found." };
+
+        // We can use the existing DeleteUserAsync flow, but that one verifies the password in DeleteUserRequestDto.
+        // For Admin delete, we bypass password verification.
+        var deleted = await _userRepository.DeleteUserAsync(userGuid);
+
+        if (!deleted)
+            return new AuthRequestDto { Success = false, Message = "Failed to delete user." };
+
+        // Publish event
+        await _publishEndpoint.Publish(new UserDeletedEvent
+        {
+            EventId = Guid.NewGuid(),
+            OccurredAt = DateTime.UtcNow,
+            UserId = user.Id,
+            Email = user.Email,
+            Role = user.Role.ToString()
+        });
+
+        return new AuthRequestDto 
+        { 
+            Success = true, 
+            Message = "User deleted successfully." 
+        };
+    }
 }

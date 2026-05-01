@@ -23,6 +23,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.Configure<DeliveryEmailOptions>(builder.Configuration.GetSection(DeliveryEmailOptions.SectionName));
+builder.Services.Configure<DeliverySettings>(builder.Configuration.GetSection("DeliverySettings"));
 
 // Register HttpClient for inter-service calls (AuthService)
 builder.Services.AddHttpClient<IDeliveryAgentSyncService, DeliveryAgentSyncService>(client =>

@@ -340,5 +340,31 @@ namespace AuthService.API.Controllers
 
             return Ok(new { Success = true, Message = "Restaurant rejected successfully." });
         }
+
+        /// <summary>
+        /// Suspend or Activate a user account (Admin only)
+        /// </summary>
+        [HttpPut("admin/users/{userId}/toggle-status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleUserStatus([FromRoute] string userId)
+        {
+            var result = await _authService.ToggleUserStatusAsync(userId);
+            if (!result.Success)
+                return BadRequest(result);
+            return Ok(result);
+        }
+
+        /// <summary>
+        /// Permanently delete a user account (Admin only)
+        /// </summary>
+        [HttpDelete("admin/users/{userId}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> AdminDeleteUser([FromRoute] string userId)
+        {
+            var result = await _authService.AdminDeleteUserAsync(userId);
+            if (!result.Success)
+                return BadRequest(result);
+            return Ok(result);
+        }
     }
 }

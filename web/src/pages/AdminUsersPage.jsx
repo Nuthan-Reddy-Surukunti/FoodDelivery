@@ -4,7 +4,6 @@ import { UserTable } from '../components/molecules/UserTable'
 import { useNotification } from '../hooks/useNotification'
 import adminApi from '../services/adminApi'
 import api from '../services/api'
-import authApi from '../services/authApi'
 
 const ROLE_CONFIG = {
   Admin: { icon: 'shield', color: 'bg-red-50 text-red-600' },
@@ -123,14 +122,134 @@ const CreateAdminModal = ({ onClose, onCreated }) => {
   )
 }
 
+// ── User Details Modal ──────────────────────────────────────────────────────
+const UserDetailsModal = ({ user, onClose }) => {
+  const [activeTab, setActiveTab] = useState('orders')
+  const [orders, setOrders] = useState(null)
+  const [addresses, setAddresses] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchDetails = async () => {
+      setLoading(true)
+      try {
+        const [ordersRes, addressesRes] = await Promise.all([
+          api.get(`/gateway/orders?userId=${user.id}`),
+          adminApi.getUserAddresses(user.id).catch(() => [])
+        ])
+        setOrders(ordersRes.data || ordersRes)
+        setAddresses(addressesRes)
+      } catch (err) {
+        console.error('Failed to fetch user details', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDetails()
+  }, [user.id])
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col relative overflow-hidden">
+        <div className="p-6 border-b border-surface-variant flex justify-between items-start bg-surface-container-lowest">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
+              {(user.name || user.email || 'U')[0].toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-on-surface">{user.name || 'Unknown User'}</h2>
+              <div className="flex gap-3 text-sm text-on-surface-variant mt-1">
+                <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">mail</span>{user.email}</span>
+                {user.phone && <span className="flex items-center gap-1"><span className="material-symbols-outlined text-[16px]">call</span>{user.phone}</span>}
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-surface-container rounded-full transition-colors text-on-surface-variant">
+            <span className="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        <div className="flex border-b border-surface-variant bg-surface-container-lowest px-6 gap-6">
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`py-3 font-medium text-sm transition-colors border-b-2 ${
+              activeTab === 'orders' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            Order History
+          </button>
+          <button
+            onClick={() => setActiveTab('addresses')}
+            className={`py-3 font-medium text-sm transition-colors border-b-2 ${
+              activeTab === 'addresses' ? 'border-primary text-primary' : 'border-transparent text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            Saved Addresses
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 bg-surface-container-lowest">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            </div>
+          ) : (
+            <>
+              {activeTab === 'orders' && (
+                <div className="space-y-4">
+                  {orders?.length === 0 ? (
+                    <p className="text-on-surface-variant text-center py-8">No orders found for this user.</p>
+                  ) : (
+                    orders?.map(order => (
+                      <div key={order.orderId} className="p-4 border border-surface-variant rounded-xl flex justify-between items-center hover:bg-surface-container-low transition-colors">
+                        <div>
+                          <p className="font-semibold text-on-surface">Order #{order.orderId.substring(0,8)}</p>
+                          <p className="text-sm text-on-surface-variant">{new Date(order.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-on-surface">₹{order.totalAmount}</p>
+                          <span className="text-xs px-2 py-1 bg-surface-variant text-on-surface rounded-full">{order.status}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {activeTab === 'addresses' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {addresses?.length === 0 ? (
+                    <p className="text-on-surface-variant text-center py-8 col-span-full">No addresses found.</p>
+                  ) : (
+                    addresses?.map(addr => (
+                      <div key={addr.addressId} className="p-4 border border-surface-variant rounded-xl bg-surface-container-lowest shadow-sm">
+                        <div className="flex justify-between items-start mb-2">
+                          <span className="text-xs font-semibold px-2 py-1 bg-blue-50 text-blue-600 rounded-full">{addr.addressType}</span>
+                          {addr.isDefault && <span className="text-xs font-semibold px-2 py-1 bg-emerald-50 text-emerald-600 rounded-full">Default</span>}
+                        </div>
+                        <p className="font-medium text-on-surface">{addr.street}</p>
+                        <p className="text-sm text-on-surface-variant">{addr.city}, {addr.state} {addr.zipCode}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export const AdminUsersPage = () => {
   const { showSuccess, showError } = useNotification()
   const [users, setUsers] = useState(null)
   const [userList, setUserList] = useState([])
-  const [partners, setPartners] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateAdmin, setShowCreateAdmin] = useState(false)
+  const [selectedUser, setSelectedUser] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
 
   const loadData = async () => {
@@ -138,18 +257,16 @@ export const AdminUsersPage = () => {
     setLoading(true)
     setError('')
     try {
-      const [usersRes, partnersRes, listRes] = await Promise.all([
+      const [usersRes, listRes] = await Promise.all([
         adminApi.getUserAnalytics(),
-        adminApi.getPartnersReport().catch(() => null),
         adminApi.getUsersList().catch(() => []),
       ])
       if (!active) return
       setUsers(usersRes)
-      setPartners(partnersRes)
       setUserList(listRes)
     } catch (err) {
       if (!active) return
-      setError(err.response?.data?.message || err.message || 'Failed to load analytics')
+      setError(err.response?.data?.message || err.message || 'Failed to load data')
     } finally {
       if (active) setLoading(false)
     }
@@ -158,22 +275,47 @@ export const AdminUsersPage = () => {
 
   useEffect(() => { loadData() }, [])
 
-  const filteredUsers = userList.filter(u => 
-    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.role.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredUsers = userList.filter(u => {
+    const term = searchTerm.toLowerCase()
+    return (u.fullName?.toLowerCase() || '').includes(term) || 
+           (u.email?.toLowerCase() || '').includes(term) ||
+           (u.role?.toLowerCase() || '').includes(term) ||
+           (u.phone?.toLowerCase() || '').includes(term)
+  })
+
+  const handleToggleStatus = async (user) => {
+    const action = user.status === 'Active' ? 'suspend' : 'activate'
+    if (!window.confirm(`Are you sure you want to ${action} user ${user.name}?`)) return
+    
+    try {
+      await adminApi.toggleUserStatus(user.id)
+      showSuccess(`User ${user.name} has been ${action}d.`)
+      setUserList(prev => prev.map(u => 
+        u.id === user.id ? { ...u, isActive: !u.isActive } : u
+      ))
+    } catch (err) {
+      showError(err.response?.data?.message || `Failed to ${action} user`)
+    }
+  }
+
+  const handleDeleteUser = async (user) => {
+    if (!window.confirm(`WARNING: Are you sure you want to PERMANENTLY delete user ${user.name}? This cannot be undone.`)) return
+    
+    try {
+      await adminApi.deleteUser(user.id)
+      showSuccess(`User ${user.name} has been deleted.`)
+      setUserList(prev => prev.filter(u => u.id !== user.id))
+    } catch (err) {
+      showError(err.response?.data?.message || 'Failed to delete user')
+    }
+  }
 
   const usersByRole = users?.usersByRole
     ? Object.entries(users.usersByRole).map(([role, count]) => ({ role, count }))
     : []
 
   return (
-    <AdminLayout 
-      title="Users & Analytics" 
-      searchPlaceholder="Search users by name, email or role..."
-      onSearch={setSearchTerm}
-    >
+    <AdminLayout>
       {showCreateAdmin && (
         <CreateAdminModal
           onClose={() => setShowCreateAdmin(false)}
@@ -181,98 +323,84 @@ export const AdminUsersPage = () => {
         />
       )}
 
-      {/* Header row with action */}
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-sm text-on-surface-variant">Manage portal access and view user metrics</p>
-        <button
-          id="create-admin-btn"
-          onClick={() => setShowCreateAdmin(true)}
-          className="bg-primary text-on-primary text-sm font-semibold px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-rose-500 transition-colors"
-        >
-          <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
-          Create Admin
-        </button>
-      </div>
-
-      {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm mb-6">{error}</div>}
-
-      {loading && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {[1,2,3].map(i => <div key={i} className="h-28 bg-slate-200 animate-pulse rounded-xl" />)}
-          </div>
-          <div className="h-96 bg-slate-200 animate-pulse rounded-xl" />
-        </div>
+      {selectedUser && (
+        <UserDetailsModal
+          user={selectedUser}
+          onClose={() => setSelectedUser(null)}
+        />
       )}
 
-      {users && (
-        <div className="space-y-8">
-          {/* Summary stat cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { label: 'Total Registered Users', value: users.totalUsersRegistered ?? users.totalUsers, icon: 'group', color: 'bg-blue-50 text-blue-600' },
-              { label: 'Active Users', value: users.activeUsers, icon: 'verified_user', color: 'bg-emerald-50 text-emerald-600' },
-              { label: 'New This Month', value: users.newUsersThisMonth, icon: 'person_add', color: 'bg-violet-50 text-violet-600' },
-            ].map(({ label, value, icon, color }) => (
-              <div key={label} className="bg-white rounded-xl p-6 border border-slate-100 shadow-sm flex items-start gap-4">
-                <div className={`w-12 h-12 rounded-xl ${color} flex items-center justify-center flex-shrink-0`}>
-                  <span className="material-symbols-outlined text-xl">{icon}</span>
-                </div>
-                <div>
-                  <p className="text-sm text-on-surface-variant mb-1">{label}</p>
-                  <p className="text-3xl font-bold text-on-surface">{value ?? '—'}</p>
-                </div>
-              </div>
-            ))}
+      {/* Premium Integrated Header */}
+      <div className="flex items-end justify-between mb-10 pb-6 border-b border-slate-100">
+        <div>
+          <div className="flex items-center gap-3 mb-2 text-primary font-bold text-xs uppercase tracking-[0.2em]">
+            <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
+            Administrative Portal
           </div>
+          <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight mb-3">User Management</h1>
+          
+          {users && (
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(251,113,133,0.6)]" />
+                <span className="text-sm font-semibold text-slate-600">
+                  <span className="text-slate-900 font-bold">{users.totalUsersRegistered ?? users.totalUsers ?? '0'}</span> Total Registered
+                </span>
+              </div>
+              <div className="w-px h-4 bg-slate-200" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]" />
+                <span className="text-sm font-semibold text-slate-600">
+                  <span className="text-slate-900 font-bold">{users.activeUsers ?? '0'}</span> Active Now
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Users by role */}
-            <div className="lg:col-span-1">
-              {usersByRole.length > 0 && (
-                <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden h-full">
-                  <div className="p-5 border-b border-slate-100">
-                    <h3 className="text-lg font-semibold text-on-surface flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary">analytics</span>
-                      Distribution
-                    </h3>
-                  </div>
-                  <div className="divide-y divide-slate-50">
-                    {usersByRole.map(({ role, count }) => {
-                      const cfg = ROLE_CONFIG[role] || { icon: 'person', color: 'bg-slate-50 text-slate-600' }
-                      const total = usersByRole.reduce((s, r) => s + Number(r.count || 0), 0)
-                      const pct = total > 0 ? Math.round((Number(count) / total) * 100) : 0
-                      return (
-                        <div key={role} className="p-5 flex items-center gap-4 hover:bg-slate-50 transition-colors">
-                          <div className={`w-10 h-10 rounded-xl ${cfg.color} flex items-center justify-center flex-shrink-0`}>
-                            <span className="material-symbols-outlined text-lg">{cfg.icon}</span>
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex justify-between items-center mb-1.5">
-                              <span className="text-sm font-semibold text-on-surface">{role}</span>
-                              <span className="text-sm font-bold text-on-surface">{count}</span>
-                            </div>
-                            <div className="w-full bg-slate-100 rounded-full h-1.5">
-                              <div className="bg-primary h-1.5 rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
-                            </div>
-                            <p className="text-xs text-on-surface-variant mt-1">{pct}% of total users</p>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+        <div className="flex items-center gap-3">
+          <button className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all active:scale-95">
+            <span className="material-symbols-outlined text-[20px]">filter_list</span>
+            Filter
+          </button>
+          <button
+            onClick={() => setShowCreateAdmin(true)}
+            className="flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-bold hover:bg-rose-600 shadow-lg shadow-primary/20 transition-all active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[20px]">add</span>
+            Add New User
+          </button>
+        </div>
+      </div>
+
+      {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm mb-6 animate-fade-in">{error}</div>}
+
+
+      {/* Main Table Container (Full Width) */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+            {/* Box Header with Search and Columns */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+              <div className="relative w-full max-w-md">
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-[20px]">search</span>
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or phone..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-[#f8f9fa] border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-slate-500"
+                />
+              </div>
             </div>
 
-    {/* Detailed User Table */}
-            <div className="lg:col-span-2">
-              <div>
-                <h3 className="text-lg font-semibold text-on-surface mb-4 flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary">list_alt</span>
-                  Registered Users
-                </h3>
+            {/* Table Area */}
+            {loading ? (
+              <div className="p-8 flex items-center justify-center min-h-[400px]">
+                <div className="text-center">
+                <div className="w-10 h-10 mx-auto mb-4 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                  <p className="text-slate-500">Loading users...</p>
+                </div>
               </div>
+            ) : (
               <UserTable
                 users={filteredUsers.map(u => ({
                   id: u.id,
@@ -287,33 +415,12 @@ export const AdminUsersPage = () => {
                 currentPage={1}
                 pageSize={10}
                 onPageChange={() => {}}
+                onView={(user) => setSelectedUser(user)}
+                onToggleStatus={handleToggleStatus}
+                onDelete={handleDeleteUser}
               />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Partners analytics */}
-      {partners && (
-        <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-on-surface mb-5 flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary">storefront</span>
-            Partner Analytics
-          </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              { label: 'Total Partners', value: partners.totalPartners ?? partners.total },
-              { label: 'Active Partners', value: partners.activePartners ?? partners.active },
-              { label: 'Pending Approval', value: partners.pendingPartners ?? partners.pending },
-            ].map(({ label, value }) => (
-              <div key={label} className="border border-slate-100 rounded-xl p-4">
-                <p className="text-xs font-medium text-on-surface-variant mb-2">{label}</p>
-                <p className="text-3xl font-bold text-on-surface">{value ?? '—'}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+            )}
+      </div>
     </AdminLayout>
   )
 }

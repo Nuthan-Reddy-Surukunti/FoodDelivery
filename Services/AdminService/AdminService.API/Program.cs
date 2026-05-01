@@ -65,7 +65,7 @@ builder.Services.AddMassTransit(x =>
     x.AddConsumer<MenuItemDeletedEventHandler>();
     x.AddConsumer<UserDeletedEventHandler>();
     x.AddConsumer<UserRegisteredEventHandler>();
-    
+    x.AddConsumer<UserStatusChangedEventHandler>();
     x.UsingRabbitMq((context, cfg) =>
     {
         cfg.Host(builder.Configuration["RabbitMq:Host"] ?? "localhost",

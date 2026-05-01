@@ -6,6 +6,7 @@ export const RestaurantTable = ({
   loading = false, 
   onDelete = () => {},
   onEdit = () => {},
+  onView = () => {},
   onApprove = () => {},
   onReject = () => {},
   onDeactivate = () => {},
@@ -81,9 +82,18 @@ export const RestaurantTable = ({
                   <td className="px-6 py-4 text-sm text-center">
                     <div className="flex items-center justify-center gap-2">
                       <button
+                        onClick={() => onView(restaurant)}
+                        className="p-2 hover:bg-slate-100 text-slate-600 rounded-lg transition-colors group relative"
+                        aria-label="View Details"
+                        title="View Details"
+                      >
+                        <span className="material-symbols-outlined text-[20px]">visibility</span>
+                      </button>
+                      <button
                         onClick={() => onEdit(restaurant)}
-                        className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
+                        className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors group relative"
                         aria-label="Edit"
+                        title="Edit Restaurant"
                       >
                         <span className="material-symbols-outlined text-[20px]">edit</span>
                       </button>
@@ -190,6 +200,7 @@ RestaurantTable.propTypes = {
   loading: PropTypes.bool,
   onDelete: PropTypes.func,
   onEdit: PropTypes.func,
+  onView: PropTypes.func,
   onApprove: PropTypes.func,
   onReject: PropTypes.func,
   onDeactivate: PropTypes.func,

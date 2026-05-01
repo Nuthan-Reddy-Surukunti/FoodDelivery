@@ -8,7 +8,7 @@ namespace OrderService.API.Controllers;
 
 [ApiController]
 [Route("gateway/user/addresses")]
-[Authorize(Roles = "Customer")]
+[Authorize(Roles = "Customer,Admin")]
 public class UserAddressesController : ControllerBase
 {
     private readonly IUserAddressService _userAddressService;
@@ -84,5 +84,13 @@ public class UserAddressesController : ControllerBase
 
         await _userAddressService.DeleteUserAddressAsync(currentUserId, addressId, cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet("admin/{userId:guid}")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> GetUserAddressesByAdmin([FromRoute] Guid userId, CancellationToken cancellationToken)
+    {
+        var addresses = await _userAddressService.GetUserAddressesAsync(userId, cancellationToken);
+        return Ok(addresses);
     }
 }

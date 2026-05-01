@@ -268,6 +268,47 @@ public class UserRegisteredEventHandler : IConsumer<UserRegisteredEvent>
     }
 }
 
+// UserStatusChangedEventHandler - Syncs user status updates from AuthService to AdminService User table
+public class UserStatusChangedEventHandler : IConsumer<UserStatusChangedEvent>
+{
+    private readonly ILogger<UserStatusChangedEventHandler> _logger;
+    private readonly IUserRepository _userRepository;
+
+    public UserStatusChangedEventHandler(ILogger<UserStatusChangedEventHandler> logger, IUserRepository userRepository)
+    {
+        _logger = logger;
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+    }
+
+    public async Task Consume(ConsumeContext<UserStatusChangedEvent> context)
+    {
+        var @event = context.Message;
+        _logger.LogInformation("Processing UserStatusChangedEvent: UserId={UserId}, IsActive={IsActive}", 
+            @event.UserId, @event.IsActive);
+
+        try
+        {
+            var user = await _userRepository.GetByIdAsync(@event.UserId, context.CancellationToken);
+            if (user != null)
+            {
+                user.IsActive = @event.IsActive;
+                user.AccountStatus = @event.IsActive ? "Active" : "Suspended";
+                await _userRepository.UpdateAsync(user, context.CancellationToken);
+                _logger.LogInformation("Successfully updated user status: UserId={UserId}, IsActive={IsActive}", @event.UserId, @event.IsActive);
+            }
+            else
+            {
+                _logger.LogWarning("User not found in AdminService for status update: UserId={UserId}", @event.UserId);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing UserStatusChangedEvent: UserId={UserId}", @event.UserId);
+            throw;
+        }
+    }
+}
+
 // UserDeletedEventHandler - Handles cascading restaurant deletion and user cleanup when a partner deletes their account
 public class UserDeletedEventHandler : IConsumer<UserDeletedEvent>
 {

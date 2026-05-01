@@ -35,10 +35,30 @@ export const AdminRestaurantsPage = () => {
   const [tab, setTab] = useState('all')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [currentPage, setCurrentPage] = useState(1)
-  const [actioning, setActioning] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingRestaurant, setEditingRestaurant] = useState(null)
+  const [viewingRestaurantId, setViewingRestaurantId] = useState(null)
+  const [restaurantDetails, setRestaurantDetails] = useState(null)
+  const [loadingDetails, setLoadingDetails] = useState(false)
   const pageSize = 10
+
+  const handleViewDetails = async (restaurant) => {
+    setViewingRestaurantId(restaurant.id)
+    setLoadingDetails(true)
+    try {
+      const data = await adminApi.getRestaurantDetails(restaurant.id)
+      setRestaurantDetails(data)
+    } catch (err) {
+      showError('Failed to load restaurant details')
+    } finally {
+      setLoadingDetails(false)
+    }
+  }
+
+  const closeDetails = () => {
+    setViewingRestaurantId(null)
+    setRestaurantDetails(null)
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -213,6 +233,7 @@ export const AdminRestaurantsPage = () => {
         currentPage={currentPage}
         pageSize={pageSize}
         onPageChange={setCurrentPage}
+        onView={handleViewDetails}
         onEdit={setEditingRestaurant}
         onDelete={handleDelete}
         onApprove={handleApprove}
@@ -287,6 +308,94 @@ export const AdminRestaurantsPage = () => {
               >
                 {actioning === 'edit' ? 'Saving...' : 'Save Changes'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Details Modal */}
+      {viewingRestaurantId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary">storefront</span>
+                Restaurant Profile
+              </h3>
+              <button onClick={closeDetails} className="text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-200">
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6">
+              {loadingDetails ? (
+                <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                  <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                  <p className="text-sm text-slate-500 font-medium">Loading details...</p>
+                </div>
+              ) : restaurantDetails ? (
+                <div className="space-y-6">
+                  {/* Meta */}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="text-2xl font-bold text-slate-900">{restaurantDetails.name}</h4>
+                      <p className="text-slate-500 mt-1">{restaurantDetails.description || 'No description provided.'}</p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold ${STATUS_BADGE[restaurantDetails.status] || 'bg-slate-100 text-slate-600'}`}>
+                      {restaurantDetails.status}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Cuisine</p>
+                      <p className="text-sm font-semibold text-slate-800">{restaurantDetails.cuisineType || '—'}</p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Rating</p>
+                      <p className="text-sm font-semibold text-slate-800">⭐ {restaurantDetails.rating || 'N/A'}</p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Min Order Value</p>
+                      <p className="text-sm font-semibold text-slate-800">₹{restaurantDetails.minOrderValue || '0'}</p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                      <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1">Avg Delivery Time</p>
+                      <p className="text-sm font-semibold text-slate-800">{restaurantDetails.deliveryTime || '0'} mins</p>
+                    </div>
+                  </div>
+
+                  {/* Contact & Location */}
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800 mb-3 uppercase tracking-wider flex items-center gap-2 border-b border-slate-100 pb-2">
+                      <span className="material-symbols-outlined text-base text-slate-400">contact_mail</span>
+                      Contact & Location
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-slate-400">email</span>
+                        <p className="text-sm text-slate-700">{restaurantDetails.contactEmail || '—'}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-slate-400">call</span>
+                        <p className="text-sm text-slate-700">{restaurantDetails.contactPhone || '—'}</p>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <span className="material-symbols-outlined text-slate-400 mt-0.5">location_on</span>
+                        <div>
+                          <p className="text-sm text-slate-700">{restaurantDetails.address || '—'}</p>
+                          <p className="text-sm text-slate-500">{restaurantDetails.city || '—'}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-12 text-center">
+                  <span className="material-symbols-outlined text-4xl text-slate-300 mb-2">error</span>
+                  <p className="text-slate-500">Could not load restaurant details.</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

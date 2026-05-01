@@ -73,3 +73,17 @@ public class UserUpdatedEvent
     public string FullName { get; set; } = string.Empty;
     public string PhoneNumber { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// Published when a user's active status is toggled by an admin
+/// </summary>
+public class UserStatusChangedEvent
+{
+    public Guid EventId { get; set; } = Guid.NewGuid();
+    public DateTime OccurredAt { get; set; } = DateTime.UtcNow;
+    public int EventVersion { get; set; } = 1;
+
+    public Guid UserId { get; set; }
+    public bool IsActive { get; set; }
+    public string Role { get; set; } = string.Empty;
+}

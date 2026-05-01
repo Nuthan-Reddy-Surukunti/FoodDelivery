@@ -28,6 +28,7 @@ public class DeliveryService : IDeliveryService
     private readonly IPaymentRepository _paymentRepository;
     private readonly IDeliveryAgentRepository _deliveryAgentRepository;
     private readonly DeliveryEmailOptions _emailOptions;
+    private readonly DeliverySettings _deliverySettings;
     private readonly ILogger<DeliveryService> _logger;
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IEmailService _emailService;
@@ -39,6 +40,7 @@ public class DeliveryService : IDeliveryService
         IPaymentRepository paymentRepository,
         IDeliveryAgentRepository deliveryAgentRepository,
         IOptions<DeliveryEmailOptions> emailOptions,
+        IOptions<DeliverySettings> deliverySettings,
         ILogger<DeliveryService> logger,
         IPublishEndpoint publishEndpoint,
         IEmailService emailService,
@@ -49,6 +51,7 @@ public class DeliveryService : IDeliveryService
         _paymentRepository = paymentRepository ?? throw new ArgumentNullException(nameof(paymentRepository));
         _deliveryAgentRepository = deliveryAgentRepository ?? throw new ArgumentNullException(nameof(deliveryAgentRepository));
         _emailOptions = emailOptions?.Value ?? throw new ArgumentNullException(nameof(emailOptions));
+        _deliverySettings = deliverySettings?.Value ?? throw new ArgumentNullException(nameof(deliverySettings));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
@@ -98,8 +101,9 @@ public class DeliveryService : IDeliveryService
 
         var today = DateTime.UtcNow.Date;
         var history = new List<AgentDeliveryRecordDto>();
-        decimal totalValue = 0;
-        decimal todayValue = 0;
+        decimal totalEarnings = 0;
+        decimal todayEarnings = 0;
+        decimal totalRemittance = 0;
         int todayCount = 0;
 
         foreach (var assignment in delivered)
@@ -107,23 +111,41 @@ public class DeliveryService : IDeliveryService
             var order = await _orderRepository.GetOrderByIdWithItemsAsync(assignment.OrderId, cancellationToken);
             if (order is null) continue;
 
-            var orderTotal = order.TotalAmount;
-            totalValue += orderTotal;
+            // Fetch the payment to determine payment method
+            var payment = await _paymentRepository.GetByOrderIdAsync(order.Id, cancellationToken);
+            var isCod = payment?.PaymentMethod == PaymentMethod.CashOnDelivery;
+            var paymentMethodLabel = isCod ? "CashOnDelivery" : "Online";
+
+            // ── Earnings formula: % of order total, capped ─────────────────
+            var rawFee = order.TotalAmount * (_deliverySettings.EarningsPercentage / 100m);
+            var deliveryFee = Math.Min(rawFee, _deliverySettings.MaxEarningsCapINR);
+            // Round to 2 dp for display clarity
+            deliveryFee = Math.Round(deliveryFee, 2);
+
+            totalEarnings += deliveryFee;
+            if (isCod)
+            {
+                totalRemittance += (order.TotalAmount - deliveryFee);
+            }
 
             var deliveredDate = assignment.DeliveredAt?.Date ?? assignment.AssignedAt.Date;
             if (deliveredDate == today)
             {
-                todayValue += orderTotal;
+                todayEarnings += deliveryFee;
                 todayCount++;
             }
 
             history.Add(new AgentDeliveryRecordDto
             {
-                OrderId = order.Id,
-                RestaurantId = order.RestaurantId.ToString(),
-                OrderTotal = orderTotal,
-                ItemCount = order.OrderItems.Count,
-                DeliveredAt = assignment.DeliveredAt,
+                OrderId       = order.Id,
+                RestaurantId  = order.RestaurantId.ToString(),
+                OrderTotal    = order.TotalAmount,
+                DeliveryFee   = deliveryFee,
+                PaymentMethod = paymentMethodLabel,
+                // For COD: agent collected the full order amount in cash → must remit it
+                CodCashCollected = isCod ? order.TotalAmount : null,
+                ItemCount    = order.OrderItems.Count,
+                DeliveredAt  = assignment.DeliveredAt,
             });
         }
 
@@ -131,9 +153,10 @@ public class DeliveryService : IDeliveryService
         {
             TotalDeliveries = delivered.Count,
             TodayDeliveries = todayCount,
-            TotalOrderValue = totalValue,
-            TodayOrderValue = todayValue,
-            History = history,
+            TotalEarnings   = totalEarnings,
+            TodayEarnings   = todayEarnings,
+            TotalRemittance = totalRemittance,
+            History         = history,
         };
     }
 
