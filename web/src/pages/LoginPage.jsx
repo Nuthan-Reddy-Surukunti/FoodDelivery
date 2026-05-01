@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { GoogleLogin } from '@react-oauth/google'
 import { Icon } from '../components/atoms/Icon'
 import { useAuth } from '../context/AuthContext'
 import { useFormValidation } from '../hooks/useFormValidation'
@@ -7,9 +8,23 @@ import { getRoleHomePath } from '../utils/authRoutes'
 
 export const LoginPage = () => {
   const navigate = useNavigate()
-  const { login, isLoading: authLoading, error: authError } = useAuth()
+  const { login, googleLogin, isLoading: authLoading, error: authError } = useAuth()
   const [submitError, setSubmitError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setSubmitError(null)
+    try {
+      const result = await googleLogin(credentialResponse.credential)
+      if (result.status === 'SUCCESS') {
+        navigate(getRoleHomePath(result.user?.role), { replace: true })
+      } else if (result.status === 'VERIFY_2FA') {
+        navigate('/verify-2fa', { state: { tempToken: result.tempToken, userId: result.userId, role: result.role } })
+      }
+    } catch (error) {
+      setSubmitError(error.message || 'Google Login failed. Please try again.')
+    }
+  }
 
   const form = useFormValidation(
     { email: '', password: '' },
@@ -196,21 +211,38 @@ export const LoginPage = () => {
               </button>
             </form>
 
-            {/* Divider */}
+            {/* OR Divider */}
             <div className="flex items-center gap-3 my-6">
               <div className="flex-1 h-px bg-slate-100" />
-              <span className="text-xs text-slate-400 font-medium">New here?</span>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Or continue with</span>
               <div className="flex-1 h-px bg-slate-100" />
             </div>
 
-            <Link
-              to="/register"
-              id="go-to-register-link"
-              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-slate-200 text-slate-700 text-sm font-semibold hover:border-primary hover:text-primary transition-all"
-            >
-              Create an account
-              <Icon name="person_add" size={16} />
-            </Link>
+            {/* Google Login */}
+            <div className="flex justify-center mb-2">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setSubmitError('Google Login Failed')}
+                theme="outline"
+                shape="pill"
+                size="large"
+                width="340"
+                text="signin_with"
+              />
+            </div>
+
+            {/* Bottom Link */}
+            <div className="mt-8 pt-6 border-t border-slate-50 flex flex-col items-center gap-4">
+              <p className="text-xs text-slate-400 font-medium">New here?</p>
+              <Link
+                to="/register"
+                id="go-to-register-link"
+                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 border-slate-200 text-slate-700 text-sm font-bold hover:border-primary hover:text-primary transition-all bg-white"
+              >
+                Create an account
+                <Icon name="person_add" size={16} />
+              </Link>
+            </div>
           </div>
 
           <p className="text-center text-xs text-slate-400 mt-6">

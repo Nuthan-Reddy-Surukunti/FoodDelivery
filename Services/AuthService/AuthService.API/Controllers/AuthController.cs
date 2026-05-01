@@ -81,6 +81,21 @@ namespace AuthService.API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
+        {
+            var result = await _authService.GoogleLoginAsync(dto);
+            if (!result.Success)
+                return BadRequest(result);
+            
+            if (!string.IsNullOrEmpty(result.Token))
+            {
+                SetTokenCookie(result.Token);
+            }
+            
+            return Ok(result);
+        }
+
         [HttpPost("verify-2fa")]
         public async Task<IActionResult> VerifyTwoFactor([FromBody] VerifyTwoFactorOtpRequestDto dto)
         {

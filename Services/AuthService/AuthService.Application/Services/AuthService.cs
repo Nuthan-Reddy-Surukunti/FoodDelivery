@@ -403,7 +403,114 @@ public class AuthService : IAuthService
         };
     }
 
-    
+    public async Task<AuthRequestDto> GoogleLoginAsync(GoogleLoginDto dto)
+    {
+        try
+        {
+            var payload = await Google.Apis.Auth.GoogleJsonWebSignature.ValidateAsync(dto.IdToken);
+            var user = await _userRepository.FindByEmailAsync(payload.Email);
+
+            if (user == null)
+            {
+                // Create a new Customer user
+                user = new User()
+                {
+                    FullName = payload.Name ?? "Google User",
+                    Email = payload.Email,
+                    MobileNumber = string.Empty,
+                    Role = UserRole.Customer,
+                    IsActive = true,
+                    IsEmailVerified = payload.EmailVerified,
+                    AccountStatus = AccountStatus.Verified,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                // Generate a secure random password
+                string securePassword = GenerateSecurePassword();
+                var created = await _userRepository.CreateUserAsync(user, securePassword);
+                if (!created) return new AuthRequestDto { Success = false, Message = "Failed to create Google user account." };
+                user = await _userRepository.FindByEmailAsync(payload.Email);
+            }
+            else
+            {
+                // Account exists, check status
+                if (!user.IsActive) return new AuthRequestDto { Success = false, Message = "Your account is deactivated." };
+                if (user.AccountStatus == AccountStatus.Pending) return new AuthRequestDto { Success = false, Message = "Your account is pending admin approval." };
+                if (user.AccountStatus == AccountStatus.Rejected) return new AuthRequestDto { Success = false, Message = "Your account has been rejected. Please contact support." };
+            }
+
+            // At this point we have a valid User
+            // If they have 2FA enabled, trigger 2FA flow
+            if (user.IsTwoFactorVerified)
+            {
+                var otp = GenerateOtp();
+                var tempToken = GenerateSecureToken();
+                var twoFactorToken = new TwoFactorToken()
+                {
+                    UserId = user!.Id,
+                    OTP = otp,
+                    TempToken = tempToken,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(5),
+                    IsUsed = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                await _twoFactorTokenRepository.AddAsync(twoFactorToken);
+                await _emailService.SendEmailAsync(user.Email, "Two Factor Email", $"Your OTP is {otp}");
+
+                return new AuthRequestDto()
+                {
+                    Success = true,
+                    Message = "OTP sent to your email.",
+                    IsTwoFactorRequired = true,
+                    TempToken = tempToken,
+                    UserId = user.Id.ToString(),
+                    Role = user.Role.ToString()
+                };
+            }
+
+            // Normal login flow
+            var refreshToken = GenerateSecureToken();
+            await _refreshTokenRepository.AddAsync(new RefreshToken
+            {
+                UserId = user!.Id,
+                Token = refreshToken,
+                ExpiredAt = DateTime.UtcNow.AddDays(7),
+                IsRevoked = false,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            var jwtToken = _jwtTokenGenerator.GenerateToken(user);
+
+            return new AuthRequestDto
+            {
+                Success = true,
+                Message = "Login successful.",
+                Token = jwtToken,
+                RefreshToken = refreshToken,
+                Role = user.Role.ToString(),
+                UserId = user.Id.ToString(),
+                FullName = user.FullName,
+                Email = user.Email,
+                MobileNumber = user.MobileNumber,
+                IsTwoFactorEnabled = user.IsTwoFactorVerified
+            };
+        }
+        catch (Google.Apis.Auth.InvalidJwtException)
+        {
+            return new AuthRequestDto { Success = false, Message = "Invalid Google token." };
+        }
+        catch (Exception ex)
+        {
+            return new AuthRequestDto { Success = false, Message = "An error occurred during Google login." };
+        }
+    }
+
+    private string GenerateSecurePassword()
+    {
+        // Must contain upper, lower, digit, non-alphanumeric, and at least 8 chars
+        return Guid.NewGuid().ToString("N").Substring(0, 10) + "A1!a";
+    }
 
     public async Task<AuthRequestDto> LogoutAsync(RefreshTokenDto dto)
 {

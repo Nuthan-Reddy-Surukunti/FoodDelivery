@@ -17,7 +17,7 @@ function getKpiValue(kpis, cfg) {
   for (const k of keys) {
     if (kpis?.[k] !== undefined && kpis?.[k] !== null) {
       const val = Number(kpis[k])
-      return cfg.prefix ? `${cfg.prefix}${val.toLocaleString()}` : val.toLocaleString()
+      return val.toLocaleString()
     }
   }
   return '0'

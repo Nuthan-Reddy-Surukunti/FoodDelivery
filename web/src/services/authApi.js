@@ -59,6 +59,51 @@ export const authApi = {
   },
 
   /**
+   * Google Login
+   * @param {string} idToken - Google credential
+   */
+  googleLogin: async (idToken) => {
+    try {
+      const response = await api.post('/gateway/auth/google-login', {
+        idToken,
+      })
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Google Login failed')
+      }
+
+      if (response.data.isTwoFactorRequired) {
+        return {
+          success: true,
+          isTwoFactorRequired: true,
+          tempToken: response.data.tempToken || null,
+          userId: response.data.userId,
+          role: response.data.role || 'Customer',
+        }
+      } else if (response.data.token) {
+        return {
+          success: true,
+          token: response.data.token,
+          user: {
+            id: response.data.userId,
+            email: response.data.email,
+            name: response.data.fullName || response.data.name,
+            phone: response.data.mobileNumber || '',
+            role: response.data.role || 'Customer',
+            isTwoFactorEnabled: response.data.isTwoFactorEnabled || false,
+            ...response.data
+          },
+        }
+      } else {
+        throw new Error('Unexpected login response')
+      }
+    } catch (error) {
+      const message = error.response?.data?.message || error.message || 'Google Login failed'
+      throw new Error(message)
+    }
+  },
+
+  /**
    * Register new user
    * @param {string} fullName - User full name
    * @param {string} email - User email

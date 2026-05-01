@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { GoogleLogin } from '@react-oauth/google'
 import { Icon } from '../components/atoms/Icon'
 import { useAuth } from '../context/AuthContext'
 import { useFormValidation } from '../hooks/useFormValidation'
+import { getRoleHomePath } from '../utils/authRoutes'
 
 /* Shared auth hero panel — reused across auth pages */
 export const AuthHeroPanel = ({ title, subtitle, badge }) => (
@@ -40,11 +42,25 @@ export const AuthHeroPanel = ({ title, subtitle, badge }) => (
 
 export const RegisterPage = () => {
   const navigate = useNavigate()
-  const { register, isLoading: authLoading, error: authError } = useAuth()
+  const { register, googleLogin, isLoading: authLoading, error: authError } = useAuth()
   const [submitError, setSubmitError] = useState(null)
   const [showPassword, setShowPassword] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [successMessage, setSuccessMessage] = useState(null)
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setSubmitError(null)
+    try {
+      const result = await googleLogin(credentialResponse.credential)
+      if (result.status === 'SUCCESS') {
+        navigate(getRoleHomePath(result.user?.role), { replace: true })
+      } else if (result.status === 'VERIFY_2FA') {
+        navigate('/verify-2fa', { state: { tempToken: result.tempToken, userId: result.userId, role: result.role } })
+      }
+    } catch (error) {
+      setSubmitError(error.message || 'Google Login failed. Please try again.')
+    }
+  }
 
   const form = useFormValidation(
     { fullName: '', email: '', mobileNumber: '', password: '', role: 'Customer', terms: false },
@@ -236,6 +252,26 @@ export const RegisterPage = () => {
                 )}
               </button>
             </form>
+
+            {/* OR Divider */}
+            <div className="flex items-center gap-3 my-6">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Or sign up with</span>
+              <div className="flex-1 h-px bg-slate-100" />
+            </div>
+
+            {/* Google Login */}
+            <div className="flex justify-center mt-2">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setSubmitError('Google Login Failed')}
+                theme="outline"
+                shape="pill"
+                size="large"
+                width="340"
+                text="signup_with"
+              />
+            </div>
           </div>
 
           <p className="text-center text-sm text-slate-500 mt-6">

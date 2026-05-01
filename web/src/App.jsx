@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ThemeProvider } from './context/ThemeContext'
@@ -39,66 +40,71 @@ const AgentEarningsPage = lazy(() => import('./pages/AgentEarningsPage').then((m
 const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage').then((m) => ({ default: m.SearchResultsPage })))
 const HelpSupportPage = lazy(() => import('./pages/HelpSupportPage').then((m) => ({ default: m.HelpSupportPage })))
 
+// Replace YOUR_GOOGLE_CLIENT_ID with actual id from google cloud console
+const GOOGLE_CLIENT_ID = "1064773616530-crvpfpa593s5ipecen5fk738nnqmjhop.apps.googleusercontent.com"
+
 export default function App() {
   return (
     <Router>
       <ThemeProvider>
-        <AuthProvider>
-          <CartProvider>
-            <NotificationProvider>
-              <LogoutConfirmationProvider>
-                <Layout>
-                  <LogoutConfirmationDialog />
-                  <Suspense fallback={<PageLoader />}>
-                  <Routes>
-                {/* Auth Routes - Public (redirect to home if already logged in) */}
-                <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
-                <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
-                <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
-                <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
-                <Route path="/verify-email" element={<VerifyEmailPage />} />
-                <Route path="/verify-2fa" element={<VerifyTwoFactorPage />} />
-                <Route path="/help" element={<HelpSupportPage />} />
-                
-                {/* Customer Routes - Protected */}
-                <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-                <Route path="/search" element={<ProtectedRoute><SearchResultsPage /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-                <Route path="/explore" element={<ProtectedRoute><ExploreRestaurantsPage /></ProtectedRoute>} />
-                <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
-                <Route path="/delete-account" element={<ProtectedRoute><DeleteAccountPage /></ProtectedRoute>} />
-                <Route path="/restaurant/:id" element={<ProtectedRoute><RestaurantDetailsPage /></ProtectedRoute>} />
-                <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
-                <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
-                <Route path="/addresses" element={<ProtectedRoute><AddressManagementPage /></ProtectedRoute>} />
-                <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
-                <Route path="/track/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+          <AuthProvider>
+            <CartProvider>
+              <NotificationProvider>
+                <LogoutConfirmationProvider>
+                  <Layout>
+                    <LogoutConfirmationDialog />
+                    <Suspense fallback={<PageLoader />}>
+                    <Routes>
+                  {/* Auth Routes - Public (redirect to home if already logged in) */}
+                  <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
+                  <Route path="/register" element={<PublicRoute><RegisterPage /></PublicRoute>} />
+                  <Route path="/forgot-password" element={<PublicRoute><ForgotPasswordPage /></PublicRoute>} />
+                  <Route path="/reset-password" element={<PublicRoute><ResetPasswordPage /></PublicRoute>} />
+                  <Route path="/verify-email" element={<VerifyEmailPage />} />
+                  <Route path="/verify-2fa" element={<VerifyTwoFactorPage />} />
+                  <Route path="/help" element={<HelpSupportPage />} />
+                  
+                  {/* Customer Routes - Protected */}
+                  <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+                  <Route path="/search" element={<ProtectedRoute><SearchResultsPage /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                  <Route path="/explore" element={<ProtectedRoute><ExploreRestaurantsPage /></ProtectedRoute>} />
+                  <Route path="/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
+                  <Route path="/delete-account" element={<ProtectedRoute><DeleteAccountPage /></ProtectedRoute>} />
+                  <Route path="/restaurant/:id" element={<ProtectedRoute><RestaurantDetailsPage /></ProtectedRoute>} />
+                  <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
+                  <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+                  <Route path="/addresses" element={<ProtectedRoute><AddressManagementPage /></ProtectedRoute>} />
+                  <Route path="/orders" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
+                  <Route path="/track/:orderId" element={<ProtectedRoute><OrderTrackingPage /></ProtectedRoute>} />
 
-                {/* Partner Routes - Protected (RestaurantPartner only) */}
-                <Route path="/partner/dashboard" element={<ProtectedRoute requiredRole="RestaurantPartner"><PartnerDashboardPage /></ProtectedRoute>} />
-                <Route path="/partner/menu" element={<ProtectedRoute requiredRole="RestaurantPartner"><MenuManagementPage /></ProtectedRoute>} />
-                <Route path="/partner/queue" element={<ProtectedRoute requiredRole="RestaurantPartner"><OrderQueuePage /></ProtectedRoute>} />
-                <Route path="/partner/analytics" element={<ProtectedRoute requiredRole="RestaurantPartner"><PartnerAnalyticsPage /></ProtectedRoute>} />
+                  {/* Partner Routes - Protected (RestaurantPartner only) */}
+                  <Route path="/partner/dashboard" element={<ProtectedRoute requiredRole="RestaurantPartner"><PartnerDashboardPage /></ProtectedRoute>} />
+                  <Route path="/partner/menu" element={<ProtectedRoute requiredRole="RestaurantPartner"><MenuManagementPage /></ProtectedRoute>} />
+                  <Route path="/partner/queue" element={<ProtectedRoute requiredRole="RestaurantPartner"><OrderQueuePage /></ProtectedRoute>} />
+                  <Route path="/partner/analytics" element={<ProtectedRoute requiredRole="RestaurantPartner"><PartnerAnalyticsPage /></ProtectedRoute>} />
 
-                {/* Admin Routes - Protected (Admin only) */}
-                <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminOverviewPage /></ProtectedRoute>} />
-                <Route path="/admin/orders" element={<ProtectedRoute requiredRole="Admin"><AdminOrdersPage /></ProtectedRoute>} />
-                <Route path="/admin/restaurants" element={<ProtectedRoute requiredRole="Admin"><AdminRestaurantsPage /></ProtectedRoute>} />
-                <Route path="/admin/users" element={<ProtectedRoute requiredRole="Admin"><AdminUsersPage /></ProtectedRoute>} />
+                  {/* Admin Routes - Protected (Admin only) */}
+                  <Route path="/admin" element={<ProtectedRoute requiredRole="Admin"><AdminOverviewPage /></ProtectedRoute>} />
+                  <Route path="/admin/orders" element={<ProtectedRoute requiredRole="Admin"><AdminOrdersPage /></ProtectedRoute>} />
+                  <Route path="/admin/restaurants" element={<ProtectedRoute requiredRole="Admin"><AdminRestaurantsPage /></ProtectedRoute>} />
+                  <Route path="/admin/users" element={<ProtectedRoute requiredRole="Admin"><AdminUsersPage /></ProtectedRoute>} />
 
-                {/* Agent Routes - Protected (DeliveryAgent only) */}
-                <Route path="/agent/active" element={<ProtectedRoute requiredRole="DeliveryAgent"><AgentActivePage /></ProtectedRoute>} />
-                <Route path="/agent/earnings" element={<ProtectedRoute requiredRole="DeliveryAgent"><AgentEarningsPage /></ProtectedRoute>} />
+                  {/* Agent Routes - Protected (DeliveryAgent only) */}
+                  <Route path="/agent/active" element={<ProtectedRoute requiredRole="DeliveryAgent"><AgentActivePage /></ProtectedRoute>} />
+                  <Route path="/agent/earnings" element={<ProtectedRoute requiredRole="DeliveryAgent"><AgentEarningsPage /></ProtectedRoute>} />
 
-                {/* 404 */}
-                <Route path="*" element={<NotFoundPage />} />
-                  </Routes>
-                </Suspense>
-              </Layout>
-              </LogoutConfirmationProvider>
-            </NotificationProvider>
-          </CartProvider>
-        </AuthProvider>
+                  {/* 404 */}
+                  <Route path="*" element={<NotFoundPage />} />
+                    </Routes>
+                  </Suspense>
+                </Layout>
+                </LogoutConfirmationProvider>
+              </NotificationProvider>
+            </CartProvider>
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </ThemeProvider>
     </Router>
   )

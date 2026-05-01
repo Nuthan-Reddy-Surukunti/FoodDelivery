@@ -153,7 +153,7 @@ export const Layout = ({ children }) => {
                   className="p-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50/80 transition-all"
                   aria-label="Logout"
                 >
-                  <span className="material-symbols-outlined text-xl">power_settings_new</span>
+                  <span className="material-symbols-outlined text-xl">logout</span>
                 </button>
               </>
             ) : (

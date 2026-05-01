@@ -62,6 +62,39 @@ export const AuthProvider = ({ children }) => {
     }
   }, [])
 
+  const googleLogin = useCallback(async (idToken) => {
+    setIsLoading(true)
+    setError(null)
+    try {
+      const response = await authApi.googleLogin(idToken)
+
+      if (response.isTwoFactorRequired && response.tempToken) {
+        return {
+          status: 'VERIFY_2FA',
+          tempToken: response.tempToken,
+          userId: response.userId,
+          role: response.role
+        }
+      } else if (response.token) {
+        setUser(response.user)
+        localStorage.setItem('user', JSON.stringify(response.user))
+        
+        return {
+          status: 'SUCCESS',
+          user: response.user
+        }
+      }
+      
+      throw new Error('Unexpected login response')
+    } catch (err) {
+      const errorMessage = err.message || 'Google Login failed'
+      setError(errorMessage)
+      throw new Error(errorMessage)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
   const register = useCallback(async (fullName, email, mobileNumber, password, role = 'Customer') => {
     setIsLoading(true)
     setError(null)
@@ -104,6 +137,7 @@ export const AuthProvider = ({ children }) => {
     isLoading,
     error,
     login,
+    googleLogin,
     register,
     logout,
     setAuthUser,

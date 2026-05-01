@@ -371,3 +371,12 @@ input, textarea, select { font-family: inherit; }
   filter: drop-shadow(0 0 10px rgba(225, 29, 72, 0.4));
 }
 
+
+/* ── BiteBot Specific Animations ── */
+@keyframes pulseSlow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.9; }
+}
+.animate-pulse-slow {
+  animation: pulseSlow 4s ease-in-out infinite;
+}

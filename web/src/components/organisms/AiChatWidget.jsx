@@ -5,6 +5,7 @@ import { RestaurantCard } from '../molecules/RestaurantCard'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
 import { useNotification } from '../../hooks/useNotification'
+import biteBotAvatar from '../../assets/bitebot-avatar.png'
 
 // ─── Status Badge ─────────────────────────────────────────────────────────────
 const StatusBadge = ({ status }) => {
@@ -83,7 +84,7 @@ export const AiChatWidget = () => {
   const [aiStatus, setAiStatus]   = useState('unknown') // 'unknown' | 'checking' | 'online' | 'offline'
   const [messages, setMessages]   = useState([{
     role: 'model',
-    text: "Hi! I'm QuickBite's AI Assistant\nWhat kind of food are you looking for today?",
+    text: "Hi! I'm BiteBot, your personal food guide!\nWhat kind of delicious food are you looking for today?",
     recommendedRestaurants: [],
     recommendedMenuItems:   [],
     orderStatus: null,
@@ -263,10 +264,17 @@ export const AiChatWidget = () => {
         >
           {/* Header */}
           <div className="bg-gradient-to-r from-primary to-primary/80 px-4 py-3 text-white flex justify-between items-center flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-lg">✨</div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div className="w-10 h-10 rounded-full border-2 border-white/30 overflow-hidden bg-white/10 shadow-inner group transition-transform hover:scale-110">
+                  <img src={biteBotAvatar} alt="BiteBot" className="w-full h-full object-cover animate-pulse-slow" />
+                </div>
+                {aiStatus === 'online' && (
+                  <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 border-2 border-primary rounded-full" />
+                )}
+              </div>
               <div>
-                <h3 className="font-bold text-sm">QuickBite Assistant</h3>
+                <h3 className="font-bold text-sm tracking-tight">BiteBot</h3>
                 <p className="text-[10px] opacity-75 flex items-center gap-1">
                   {aiStatus === 'checking' && (
                     <><span className="w-1.5 h-1.5 rounded-full bg-yellow-300 inline-block animate-pulse" />Connecting...</>
@@ -472,7 +480,7 @@ export const AiChatWidget = () => {
             ? 'bg-slate-800 text-white hover:bg-slate-700'
             : 'bg-gradient-to-r from-primary to-indigo-600 text-white hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-0.5'
         }`}
-        aria-label="AI Assistant"
+        aria-label="Chat with BiteBot"
       >
         {isOpen ? (
           <>
@@ -481,8 +489,10 @@ export const AiChatWidget = () => {
           </>
         ) : (
           <>
-            <span className="text-base">✦</span>
-            <span>AI Assistant</span>
+            <div className="w-8 h-8 rounded-full border border-white/30 overflow-hidden bg-white/10 shadow-sm">
+              <img src={biteBotAvatar} alt="BiteBot" className="w-full h-full object-cover" />
+            </div>
+            <span>BiteBot</span>
             {/* Status dot */}
             <span className={`w-2 h-2 rounded-full ml-0.5 ${
               aiStatus === 'online'   ? 'bg-emerald-400' :
