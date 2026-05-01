@@ -1,7 +1,10 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import PropTypes from 'prop-types'
 import { useAuth } from '../../context/AuthContext'
+import { useLogoutConfirmation } from '../../hooks/useLogoutConfirmation'
 import { getHybridGreeting } from '../../utils/greetingUtils'
+import { useNotification } from '../../hooks/useNotification'
+import { NotificationCenter } from './NotificationCenter'
 
 const NAV_ITEMS = [
   { to: '/partner/dashboard', icon: 'dashboard',       label: 'Dashboard',  color: 'text-emerald-400' },
@@ -15,11 +18,24 @@ export const PartnerLayout = ({ children, title = '' }) => {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, logout } = useAuth()
+  const { confirmLogout } = useLogoutConfirmation()
   const greeting = getHybridGreeting(user?.role, user?.name || user?.email)
+  const {
+    inboxItems,
+    unreadCount,
+    isCenterOpen,
+    toggleCenter,
+    closeCenter,
+    markAllRead,
+    markRead,
+    refreshInbox,
+  } = useNotification()
 
   const handleLogout = () => {
-    logout()
-    navigate('/login')
+    confirmLogout(async () => {
+      await logout()
+      navigate('/login')
+    })
   }
 
   return (
@@ -105,9 +121,30 @@ export const PartnerLayout = ({ children, title = '' }) => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-xl text-slate-500 hover:text-primary hover:bg-slate-50 transition-all" aria-label="Notifications">
-              <span className="material-symbols-outlined text-xl">notifications</span>
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => toggleCenter(user?.role)}
+                className="relative p-2 rounded-xl text-slate-500 hover:text-primary hover:bg-slate-50 transition-all"
+                aria-label="Notifications"
+              >
+                <span className="material-symbols-outlined text-xl">notifications</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+              <NotificationCenter
+                isOpen={isCenterOpen}
+                items={inboxItems}
+                unreadCount={unreadCount}
+                onClose={closeCenter}
+                onMarkAllRead={markAllRead}
+                onRefresh={() => refreshInbox(user?.role)}
+                onMarkRead={markRead}
+              />
+            </div>
             <button className="p-2 rounded-xl text-slate-500 hover:text-primary hover:bg-slate-50 transition-all" aria-label="Help">
               <span className="material-symbols-outlined text-xl">help_outline</span>
             </button>

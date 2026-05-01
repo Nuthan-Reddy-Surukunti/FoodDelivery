@@ -2,13 +2,34 @@ import PropTypes from 'prop-types'
 import { useLocation, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useCart } from '../../context/CartContext'
+import { useLogoutConfirmation } from '../../hooks/useLogoutConfirmation'
+import { useNotification } from '../../hooks/useNotification'
 import { AiChatWidget } from './AiChatWidget'
+import { NotificationCenter } from './NotificationCenter'
 
 export const Layout = ({ children }) => {
   const { isAuthenticated, user, logout } = useAuth()
   const { totalItems } = useCart()
+  const { confirmLogout } = useLogoutConfirmation()
+  const {
+    inboxItems,
+    unreadCount,
+    isCenterOpen,
+    toggleCenter,
+    closeCenter,
+    markAllRead,
+    markRead,
+    refreshInbox,
+  } = useNotification()
   const location = useLocation()
   const navigate = useNavigate()
+
+  const handleLogout = () => {
+    confirmLogout(async () => {
+      await logout()
+      navigate('/login')
+    })
+  }
 
   const isAuthPage =
     ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/verify-2fa']
@@ -96,9 +117,30 @@ export const Layout = ({ children }) => {
 
             {isAuthenticated ? (
               <>
-                <button className="p-2.5 rounded-xl hover:bg-slate-100/80 text-slate-700 hover:text-primary transition-all" aria-label="Notifications">
-                  <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
-                </button>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => toggleCenter(user?.role)}
+                    className="relative p-2.5 rounded-xl hover:bg-slate-100/80 text-slate-700 hover:text-primary transition-all"
+                    aria-label="Notifications"
+                  >
+                    <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 0" }}>notifications</span>
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+                  <NotificationCenter
+                    isOpen={isCenterOpen}
+                    items={inboxItems}
+                    unreadCount={unreadCount}
+                    onClose={closeCenter}
+                    onMarkAllRead={markAllRead}
+                    onRefresh={() => refreshInbox(user?.role)}
+                    onMarkRead={markRead}
+                  />
+                </div>
                 <Link
                   to="/profile"
                   className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-indigo-600 text-white text-sm font-bold flex items-center justify-center shadow-sm hover:shadow-md hover:scale-105 transition-all"
@@ -107,7 +149,7 @@ export const Layout = ({ children }) => {
                   {(user?.name?.[0] || user?.email?.[0] || 'U').toUpperCase()}
                 </Link>
                 <button
-                  onClick={() => { logout(); navigate('/login') }}
+                  onClick={handleLogout}
                   className="p-2.5 rounded-xl text-slate-500 hover:text-rose-600 hover:bg-rose-50/80 transition-all"
                   aria-label="Logout"
                 >

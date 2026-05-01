@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLogoutConfirmation } from '../hooks/useLogoutConfirmation'
 import { authApi } from '../services/authApi'
 import { PartnerLayout } from '../components/organisms/PartnerLayout'
 import { AdminLayout } from '../components/organisms/AdminLayout'
@@ -9,6 +10,7 @@ import { AgentLayout } from '../components/organisms/AgentLayout'
 export const ProfilePage = () => {
   const navigate = useNavigate()
   const { user, logout, token, setAuthUser } = useAuth()
+  const { confirmLogout } = useLogoutConfirmation()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.isTwoFactorEnabled || false)
@@ -18,6 +20,13 @@ export const ProfilePage = () => {
     phone: user?.phone || '',
   })
   const [message, setMessage] = useState(null)
+
+  const handleLogout = () => {
+    confirmLogout(async () => {
+      await logout()
+      navigate('/login')
+    })
+  }
 
   const handleEditChange = (e) => {
     const { name, value } = e.target
@@ -294,7 +303,7 @@ export const ProfilePage = () => {
             </button>
 
             <button
-              onClick={() => logout()}
+              onClick={handleLogout}
               className="p-4 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 flex items-center gap-3 hover:bg-rose-100 transition-all group"
             >
               <span className="material-symbols-outlined group-hover:rotate-12 transition-transform">logout</span>

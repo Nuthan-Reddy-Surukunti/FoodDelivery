@@ -4,7 +4,9 @@ import { AuthProvider } from './context/AuthContext'
 import { CartProvider } from './context/CartContext'
 import { ThemeProvider } from './context/ThemeContext'
 import { NotificationProvider } from './context/NotificationContext'
+import { LogoutConfirmationProvider } from './context/LogoutConfirmationContext'
 import { Layout } from './components/organisms/Layout'
+import { LogoutConfirmationDialog } from './components/organisms/LogoutConfirmationDialog'
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute'
 
 const HomePage = lazy(() => import('./pages/HomePage').then((m) => ({ default: m.HomePage })))
@@ -44,8 +46,10 @@ export default function App() {
         <AuthProvider>
           <CartProvider>
             <NotificationProvider>
-              <Layout>
-                <Suspense fallback={<PageLoader />}>
+              <LogoutConfirmationProvider>
+                <Layout>
+                  <LogoutConfirmationDialog />
+                  <Suspense fallback={<PageLoader />}>
                   <Routes>
                 {/* Auth Routes - Public (redirect to home if already logged in) */}
                 <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
@@ -91,6 +95,7 @@ export default function App() {
                   </Routes>
                 </Suspense>
               </Layout>
+              </LogoutConfirmationProvider>
             </NotificationProvider>
           </CartProvider>
         </AuthProvider>

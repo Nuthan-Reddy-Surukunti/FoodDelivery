@@ -6,6 +6,8 @@ let nextNotificationId = 1
 
 export const NotificationProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([])
+  const [inboxItems, setInboxItems] = useState([])
+  const [isCenterOpen, setIsCenterOpen] = useState(false)
 
   const dismiss = useCallback((id) => {
     setNotifications((prev) => prev.filter((item) => item.id !== id))
@@ -31,15 +33,70 @@ export const NotificationProvider = ({ children }) => {
   const showInfo = useCallback((message, duration) => show('info', message, duration), [show])
   const showWarning = useCallback((message, duration) => show('warning', message, duration), [show])
 
+  const refreshInbox = useCallback(() => {
+    setInboxItems([])
+  }, [])
+
+  const markAllRead = useCallback(() => {
+    setInboxItems((prev) => prev.map((item) => ({ ...item, isRead: true })))
+  }, [])
+
+  const markRead = useCallback((id) => {
+    setInboxItems((prev) => prev.map((item) => (item.id === id ? { ...item, isRead: true } : item)))
+  }, [])
+
+  const openCenter = useCallback(() => {
+    setIsCenterOpen(true)
+  }, [])
+
+  const closeCenter = useCallback(() => {
+    setIsCenterOpen(false)
+  }, [])
+
+  const toggleCenter = useCallback(() => {
+    setIsCenterOpen((prev) => !prev)
+  }, [])
+
+  const unreadCount = useMemo(
+    () => inboxItems.filter((item) => !item.isRead).length,
+    [inboxItems]
+  )
+
   const value = useMemo(() => ({
     notifications,
+    inboxItems,
+    isCenterOpen,
+    unreadCount,
     show,
     showSuccess,
     showError,
     showInfo,
     showWarning,
     dismiss,
-  }), [notifications, show, showSuccess, showError, showInfo, showWarning, dismiss])
+    refreshInbox,
+    markAllRead,
+    markRead,
+    openCenter,
+    closeCenter,
+    toggleCenter,
+  }), [
+    notifications,
+    inboxItems,
+    isCenterOpen,
+    unreadCount,
+    show,
+    showSuccess,
+    showError,
+    showInfo,
+    showWarning,
+    dismiss,
+    refreshInbox,
+    markAllRead,
+    markRead,
+    openCenter,
+    closeCenter,
+    toggleCenter,
+  ])
 
   return (
     <NotificationContext.Provider value={value}>
