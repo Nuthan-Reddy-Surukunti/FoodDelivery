@@ -15,7 +15,9 @@ using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
 using MassTransit;
+using QuickBite.Shared.Utilities;
 using QuickBite.Shared.Events.Order;
+
 
 public class DeliveryService : IDeliveryService
 {
@@ -28,6 +30,7 @@ public class DeliveryService : IDeliveryService
     private readonly DeliveryEmailOptions _emailOptions;
     private readonly ILogger<DeliveryService> _logger;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly IEmailService _emailService;
 
     public DeliveryService(
         IOrderRepository orderRepository,
@@ -36,7 +39,8 @@ public class DeliveryService : IDeliveryService
         IDeliveryAgentRepository deliveryAgentRepository,
         IOptions<DeliveryEmailOptions> emailOptions,
         ILogger<DeliveryService> logger,
-        IPublishEndpoint publishEndpoint)
+        IPublishEndpoint publishEndpoint,
+        IEmailService emailService)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _deliveryAssignmentRepository = deliveryAssignmentRepository ?? throw new ArgumentNullException(nameof(deliveryAssignmentRepository));
@@ -45,6 +49,7 @@ public class DeliveryService : IDeliveryService
         _emailOptions = emailOptions?.Value ?? throw new ArgumentNullException(nameof(emailOptions));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
     }
 
     public async Task<IReadOnlyList<DeliveryAssignmentDto>> GetAssignedDeliveriesAsync(string authUserId, CancellationToken cancellationToken = default)
@@ -363,49 +368,23 @@ public class DeliveryService : IDeliveryService
             return;
         }
 
-        if (!_emailOptions.Enabled)
-        {
-            _logger.LogInformation(
-                "Delivery assignment email disabled. Agent: {AgentEmail}, Order: {OrderId}, Customer: {UserId}, Address: {Address}",
-                agent.Email,
-                order.Id,
-                order.UserId,
-                order.DeliveryAddressLine1 ?? string.Empty);
-            return;
-        }
-
         try
         {
-            using var smtpClient = new SmtpClient(_emailOptions.Host, _emailOptions.Port)
-            {
-                EnableSsl = _emailOptions.EnableSsl,
-                Credentials = new NetworkCredential(_emailOptions.SenderEmail, _emailOptions.SenderPassword),
-                Timeout = 10000  // 10 second timeout
-            };
+            var address = string.Join(", ",
+                new[] { order.DeliveryAddressLine1, order.DeliveryAddressLine2, order.DeliveryCity, order.DeliveryPostalCode }
+                    .Where(value => !string.IsNullOrWhiteSpace(value)));
 
-            using var message = new MailMessage
-            {
-                From = new MailAddress(_emailOptions.SenderEmail),
-                Subject = $"New Delivery Assignment - Order {order.Id}",
-                Body = BuildDeliveryEmailBody(agent, order, assignment),
-                IsBodyHtml = false
-            };
+            var body = EmailTemplateBuilder.GetDeliveryAgentAssignedTemplate(
+                agent.FullName ?? "Agent",
+                order.Id.ToString(),
+                "Restaurant Address", // In a real app, we'd fetch restaurant address
+                address);
 
-            message.To.Add(agent.Email);
-            
-            // Send email asynchronously without cancellation token (SmtpClient.SendMailAsync doesn't support CancellationToken)
-            await smtpClient.SendMailAsync(message);
+            await _emailService.SendEmailAsync(agent.Email, "New Delivery Assignment 🛵", body);
             
             _logger.LogInformation(
-                "Delivery assignment email sent successfully to agent {AgentEmail} for order {OrderId}",
+                "Delivery assignment HTML email sent successfully to agent {AgentEmail} for order {OrderId}",
                 agent.Email, order.Id);
-        }
-        catch (SmtpException smtpEx)
-        {
-            _logger.LogError(
-                smtpEx,
-                "SMTP Error sending delivery assignment email to agent {AgentEmail} for order {OrderId}. Status: {StatusCode}",
-                agent.Email, order.Id, smtpEx.StatusCode);
         }
         catch (Exception ex)
         {
@@ -414,20 +393,5 @@ public class DeliveryService : IDeliveryService
                 "Failed to send delivery assignment email to agent {AgentEmail} for order {OrderId}. Error: {ErrorMessage}",
                 agent.Email, order.Id, ex.Message);
         }
-    }
-
-    private static string BuildDeliveryEmailBody(DeliveryAgent agent, Order order, DeliveryAssignment assignment)
-    {
-        var address = string.Join(", ",
-            new[] { order.DeliveryAddressLine1, order.DeliveryAddressLine2, order.DeliveryCity, order.DeliveryPostalCode }
-                .Where(value => !string.IsNullOrWhiteSpace(value)));
-
-        return $"Hello {agent.FullName},\n\n" +
-               $"You have been assigned Order {order.Id}.\n" +
-               $"Customer: {order.UserId}\n" +
-               $"Assigned At: {assignment.AssignedAt:O}\n" +
-               $"Deliver To: {address}\n\n" +
-               "Please start pickup and update order status in the app.\n\n" +
-               "- QuickBite Order Service";
     }
 }

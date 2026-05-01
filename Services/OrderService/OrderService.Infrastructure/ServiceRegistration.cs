@@ -40,6 +40,8 @@ public static class ServiceRegistration
             client.Timeout = TimeSpan.FromSeconds(5);
         });
 
+        services.AddScoped<IEmailService, SmtpEmailService>();
+
         return services;
     }
 }

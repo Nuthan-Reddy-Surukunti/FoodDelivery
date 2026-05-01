@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Linq;
+using QuickBite.Shared.Utilities;
+
 using AuthService.Application.DTOs;
 using AuthService.Application.Interfaces;
 using AuthService.Domain.Entities;
@@ -69,13 +71,13 @@ public class AuthService : IAuthService
         await _otpTokenRepository.AddAsync(otpToken);
 
         // Print OTP to console for development/testing
-        Console.WriteLine($"🔐 [PASSWORD RESET OTP] Email: {user.Email} | OTP: {otp} | Expires: 10 minutes");
+        // Console.WriteLine($"[PASSWORD RESET OTP] Email: {user.Email} | OTP: {otp} | Expires: 10 minutes");
 
         // Send OTP via email
         await _emailService.SendEmailAsync(
             dto.Email,
             "Reset Your Password",
-            $"Your password reset OTP is: {otp}. It will expire in 10 minutes. Do not share this OTP with anyone.");
+            EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
         return new AuthRequestDto { Success = true, Message = "If that email exists, a reset link has been sent." };
     }
@@ -130,7 +132,7 @@ public class AuthService : IAuthService
                     // Print OTP to console for development
                     Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
                     
-                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
                     return new AuthRequestDto()
                     {
@@ -178,7 +180,7 @@ public class AuthService : IAuthService
                     };
 
                     await _twoFactorTokenRepository.AddAsync(twoFactorToken);
-                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
                     return new AuthRequestDto()
                     {
@@ -251,7 +253,7 @@ public class AuthService : IAuthService
                     // Print OTP to console for development
                     Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
                     
-                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
                     return new AuthRequestDto()
                     {
@@ -298,7 +300,7 @@ public class AuthService : IAuthService
                     };
 
                     await _twoFactorTokenRepository.AddAsync(twoFactorToken);
-                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", $"Your OTP is {otp}");
+                    await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
                     return new AuthRequestDto()
                     {
@@ -363,7 +365,7 @@ public class AuthService : IAuthService
             // Print OTP to console for development
             Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
             
-            await _emailService.SendEmailAsync(dto.Email,"Two Factor Email",$"Your Otp is {otp}");
+            await _emailService.SendEmailAsync(dto.Email,"Two Factor Email",EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
             return new AuthRequestDto()
             {
@@ -456,7 +458,7 @@ public class AuthService : IAuthService
                 };
 
                 await _twoFactorTokenRepository.AddAsync(twoFactorToken);
-                await _emailService.SendEmailAsync(user.Email, "Two Factor Email", $"Your OTP is {otp}");
+                await _emailService.SendEmailAsync(user.Email, "Two Factor Email", EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
                 return new AuthRequestDto()
                 {
@@ -633,11 +635,15 @@ public class AuthService : IAuthService
             await _emailService.SendEmailAsync(
                 "surkuntinuthanreddy@gmail.com", // Send to admin email for approval
                 $"New {parsedRole} Registration Pending Approval",
-                $"A new {parsedRole} account has been created and is awaiting your approval.\n\n" +
-                $"User: {user.FullName}\n" +
-                $"Email: {user.Email}\n" +
-                $"Role: {parsedRole}\n\n" +
-                $"Please review and approve or reject this account.");
+                EmailTemplateBuilder.GetGenericNotificationTemplate(
+                    $"New {parsedRole} Registration",
+                    $"A new {parsedRole} account has been created and is awaiting your approval.\n\n" +
+                    $"User: {user.FullName}\n" +
+                    $"Email: {user.Email}\n" +
+                    $"Role: {parsedRole}\n\n" +
+                    $"Please review and approve or reject this account.",
+                    "Review Application",
+                    "http://localhost:3000/admin/approvals"));
             
             return new AuthRequestDto()
             {
@@ -663,7 +669,7 @@ public class AuthService : IAuthService
             Console.WriteLine($"🔐 [REGISTRATION OTP] Email: {newUser.Email} | OTP: {otp} | Expires: 10 minutes");
             Console.Out.Flush();
             
-            await _emailService.SendEmailAsync(newUser.Email, "Verify Your Email", $"Your OTP is: {otp}");
+            await _emailService.SendEmailAsync(newUser.Email, "Verify Your Email", EmailTemplateBuilder.GetOtpEmailTemplate(newUser.FullName ?? newUser.Email, otp));
 
             return new AuthRequestDto(){Success=true,Message="Registration successful. Please verify your email"};
         }
@@ -1057,9 +1063,13 @@ public class AuthService : IAuthService
         await _emailService.SendEmailAsync(
             dto.Email,
             "Admin Account Created",
-            $"Your admin account has been successfully created.\n\n" +
-            $"Email: {dto.Email}\n\n" +
-            $"You can now log in and approve pending RestaurantPartner accounts.");
+            EmailTemplateBuilder.GetGenericNotificationTemplate(
+                "Admin Account Created",
+                $"Your admin account has been successfully created.\n\n" +
+                $"Email: {dto.Email}\n\n" +
+                $"You can now log in and approve pending RestaurantPartner accounts.",
+                "Log In Now",
+                "http://localhost:3000/login"));
 
         return new AuthRequestDto
         {

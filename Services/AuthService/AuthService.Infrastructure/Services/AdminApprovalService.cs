@@ -7,6 +7,7 @@ using QuickBite.Shared.Events.Auth;
 using MassTransit;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using QuickBite.Shared.Utilities;
 
 namespace AuthService.Infrastructure.Services;
 
@@ -70,7 +71,7 @@ public class AdminApprovalService : IAdminApprovalService
                     await _emailService.SendEmailAsync(
                         user.Email,
                         "Your Account Has Been Approved",
-                        $"Congratulations! Your {user.Role} account has been approved. On your first login, a verification OTP will be sent to your email. Verify that OTP to complete activation and log in.");
+                        EmailTemplateBuilder.GetAccountApprovedTemplate(user.FullName ?? user.Email ?? "User", user.Role.ToString()));
                 }
 
                 return true;
@@ -110,7 +111,7 @@ public class AdminApprovalService : IAdminApprovalService
                     await _emailService.SendEmailAsync(
                         user.Email,
                         "Your Account Application Status",
-                        $"Your {user.Role} account application has been rejected. Reason: {reason}");
+                        EmailTemplateBuilder.GetAccountRejectedTemplate(user.FullName ?? user.Email ?? "User", user.Role.ToString(), reason));
                 }
 
                 return true;

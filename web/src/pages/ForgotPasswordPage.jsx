@@ -19,7 +19,7 @@ export const ForgotPasswordPage = () => {
       setIsLoading(true)
       try {
         await authApi.forgotPassword(values.email)
-        setSuccessMessage('OTP sent! Check your email (or AuthService console) for your one-time password.')
+        setSuccessMessage('Check your email for a one-time password to reset your account.')
         form.resetForm?.()
         setTimeout(() => navigate(`/reset-password?email=${encodeURIComponent(values.email)}`), 3500)
       } catch (error) {

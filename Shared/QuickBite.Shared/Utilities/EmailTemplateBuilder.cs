@@ -95,6 +95,28 @@ public static class EmailTemplateBuilder
         return GetBaseTemplate("New Order Assigned", body);
     }
 
+    public static string GetGenericNotificationTemplate(string title, string message, string? ctaText = null, string? ctaUrl = null)
+    {
+        string body = $@"
+            <div style='padding: 20px 0;'>
+                <h1 style='color: {PrimaryColor}; margin: 0; font-size: 24px;'>{title}</h1>
+                <p style='color: {TextColor}; font-size: 16px; margin-top: 20px; line-height: 1.6;'>
+                    {message.Replace("\n", "<br/>")}
+                </p>";
+
+        if (!string.IsNullOrEmpty(ctaText) && !string.IsNullOrEmpty(ctaUrl))
+        {
+            body += $@"
+                <div style='text-align: center; margin-top: 30px;'>
+                    <a href='{ctaUrl}' style='background: {PrimaryColor}; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: bold; display: inline-block;'>{ctaText}</a>
+                </div>";
+        }
+
+        body += "</div>";
+
+        return GetBaseTemplate(title, body);
+    }
+
     private static string GetBaseTemplate(string title, string bodyContent)
     {
         return $@"
