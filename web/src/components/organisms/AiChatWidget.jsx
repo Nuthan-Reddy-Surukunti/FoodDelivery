@@ -478,7 +478,7 @@ export const AiChatWidget = () => {
         className={`flex items-center gap-2 px-5 py-3 rounded-2xl shadow-xl transition-all duration-300 font-semibold text-sm ${
           isOpen
             ? 'bg-slate-800 text-white hover:bg-slate-700'
-            : 'bg-gradient-to-r from-primary to-amber-400 text-white hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-0.5'
+            : 'bg-gradient-to-r from-primary to-rose-400 text-white hover:shadow-2xl hover:shadow-primary/30 hover:-translate-y-0.5'
         }`}
         aria-label="Chat with BiteBot"
       >

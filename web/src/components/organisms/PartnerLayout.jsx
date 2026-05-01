@@ -91,7 +91,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
         {/* Bottom Profile */}
         <div className="px-3 py-4 border-t border-slate-100 relative z-10">
           <div className="flex items-center gap-3 px-3 py-2.5 bg-slate-50 rounded-2xl">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-indigo-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-md">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-rose-400 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-md">
               {(user?.email?.[0] || 'P').toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
@@ -150,7 +150,7 @@ export const PartnerLayout = ({ children, title = '' }) => {
             </button>
             <Link
               to="/profile"
-              className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-indigo-400 text-white text-xs font-bold flex items-center justify-center ml-1 hover:shadow-lg transition-all"
+              className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-rose-400 text-white text-xs font-bold flex items-center justify-center ml-1 hover:shadow-lg transition-all"
               aria-label="Profile"
             >
               {(user?.email?.[0] || 'P').toUpperCase()}

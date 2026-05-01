@@ -78,7 +78,7 @@ export const ProfilePage = () => {
       {/* ── Profile Hero Header ── */}
       <div className="mb-10 flex flex-col sm:flex-row items-center sm:items-end gap-5 p-6 bg-white/70 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm relative z-10">
         {/* Avatar */}
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-amber-400 flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-primary/25 flex-shrink-0">
+        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-rose-400 flex items-center justify-center text-4xl font-black text-white shadow-lg shadow-primary/25 flex-shrink-0">
           {user?.name?.charAt(0)?.toUpperCase() || 'U'}
         </div>
         <div className="flex-1 text-center sm:text-left">

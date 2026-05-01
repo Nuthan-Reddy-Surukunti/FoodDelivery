@@ -95,7 +95,7 @@ export const ResetPasswordPage = () => {
           </div>
 
           <div className="mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-primary to-amber-400 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-primary/20 animate-bounce-in">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-rose-400 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-primary/20 animate-bounce-in">
               <Icon name="lock_reset" size={28} className="text-white" />
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 mb-1.5">Reset Password 🔑</h1>

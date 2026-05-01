@@ -100,8 +100,8 @@ export const LoginPage = () => {
       {/* ── Right Panel: Login Form ── */}
       <div className="w-full md:w-1/2 lg:w-[42%] h-screen overflow-hidden flex items-center justify-center bg-white relative">
         {/* Subtle animated background orbs */}
-        <div className="absolute top-0 right-0 w-72 h-72 bg-blue-100 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/2 animate-blob pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-100 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2 animate-blob-delay1 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-72 h-72 bg-rose-50 rounded-full blur-3xl opacity-60 -translate-y-1/2 translate-x-1/2 animate-blob pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-amber-50 rounded-full blur-3xl opacity-50 translate-y-1/2 -translate-x-1/2 animate-blob-delay1 pointer-events-none" />
 
         <div className="w-full max-w-md px-8 py-12 relative z-10">
           {/* Mobile Brand */}
