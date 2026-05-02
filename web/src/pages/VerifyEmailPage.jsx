@@ -73,7 +73,7 @@ export const VerifyEmailPage = () => {
       />
 
       <div className="w-full lg:w-[48%] h-screen overflow-hidden flex items-center justify-center bg-slate-50 relative">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-100 rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/2 animate-blob pointer-events-none" />
+        <div className="absolute top-0 right-0 w-64 h-64 bg-rose-100 rounded-full blur-3xl opacity-40 -translate-y-1/2 translate-x-1/2 animate-blob pointer-events-none" />
 
         <div className="w-full max-w-md px-8 py-12 relative z-10">
           <div className="lg:hidden text-center mb-8">
@@ -85,7 +85,7 @@ export const VerifyEmailPage = () => {
 
           {/* Icon + Header */}
           <div className="mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-primary rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-emerald-200 animate-bounce-in">
+            <div className="w-16 h-16 bg-gradient-to-br from-primary to-rose-600 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-rose-200 animate-bounce-in">
               <Icon name="mark_email_read" size={28} className="text-white" />
             </div>
             <h1 className="text-3xl font-extrabold text-slate-900 mb-1.5">Check your email ✉️</h1>

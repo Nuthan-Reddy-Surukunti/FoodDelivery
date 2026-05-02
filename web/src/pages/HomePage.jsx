@@ -339,10 +339,11 @@ export const HomePage = () => {
                 : 'Discovering restaurants near you...'}
             </span>
           </div>
-          <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight max-w-xl mb-3">
+          <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight max-w-xl mb-3 tracking-tight">
             {user ? (
               <>
-                {greeting.main} <span className="text-yellow-400">{greeting.sub}</span>
+                <span className="block mb-1">{greeting.main}</span>
+                <span className="text-yellow-400">{greeting.sub}</span>
               </>
             ) : (
               <>

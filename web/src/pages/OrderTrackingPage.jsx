@@ -86,7 +86,7 @@ const StatusToast = ({ toast, onDismiss }) => {
   }, [onDismiss])
 
   return (
-    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 animate-[slideDown_0.4s_ease-out]"
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-[slideDown_0.4s_ease-out]"
          style={{ animation: 'slideDown 0.4s ease-out' }}>
       <div className="flex items-center gap-3 bg-white border border-slate-200 shadow-xl rounded-2xl px-5 py-3.5 min-w-[280px]">
         <span className="text-2xl">{toast.emoji}</span>
@@ -319,9 +319,9 @@ export const OrderTrackingPage = () => {
                 <h2 className="text-headline-md font-semibold text-on-surface mb-6 relative z-10">Delivery Status</h2>
 
                 <div className="relative z-10 pl-4">
-                  <div className="absolute left-[11px] top-[12px] bottom-[12px] w-[2px] bg-surface-variant" />
+                  <div className="absolute left-[28px] top-[12px] bottom-[12px] w-[2px] bg-surface-variant" />
                   <div
-                    className={`absolute left-[11px] top-[12px] w-[2px] tracking-progress-line ${!isCancelled && currentStep < STEPS.length - 1 ? 'tracking-progress-animated' : ''}`}
+                    className={`absolute left-[28px] top-[12px] w-[2px] tracking-progress-line ${!isCancelled && currentStep < STEPS.length - 1 ? 'tracking-progress-animated' : ''}`}
                     style={{ height: `${clampedLinePct}%`, maxHeight: 'calc(100% - 24px)' }}
                   />
 
