@@ -92,6 +92,19 @@
       "SwaggerKey": "OrderService"
     },
     {
+      "UpstreamPathTemplate": "/gateway/profile/{everything}",
+      "DownstreamPathTemplate": "/gateway/profile/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "localhost",
+          "Port": 5003
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
       "UpstreamPathTemplate": "/gateway/admin/{everything}",
       "DownstreamPathTemplate": "/api/{everything}",
       "DownstreamScheme": "http",

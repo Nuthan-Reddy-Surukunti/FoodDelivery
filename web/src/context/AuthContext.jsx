@@ -4,18 +4,17 @@ import authApi from '../services/authApi'
 export const AuthContext = createContext()
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState(() => {
+    try {
+      const savedUser = localStorage.getItem('user')
+      return savedUser ? JSON.parse(savedUser) : null
+    } catch (e) {
+      console.error('Failed to parse user from localStorage', e)
+      return null
+    }
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-
-  // Load user from localStorage on mount
-  useEffect(() => {
-    const savedUser = localStorage.getItem('user')
-    
-    if (savedUser) {
-      setUser(JSON.parse(savedUser))
-    }
-  }, [])
 
   const login = useCallback(async (email, password) => {
     setIsLoading(true)
