@@ -132,7 +132,7 @@ export const AdminOverviewPage = () => {
   }, [kpis])
 
   return (
-    <AdminLayout title="Dashboard" searchPlaceholder="Search...">
+    <AdminLayout title="Dashboard">
       {error && (
         <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm mb-6">{error}</div>
       )}

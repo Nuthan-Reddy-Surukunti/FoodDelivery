@@ -55,6 +55,7 @@ export const AdminOrdersPage = () => {
   const [error, setError] = useState('')
   const [activeFilter, setActiveFilter] = useState('All')
   const [actioning, setActioning] = useState(null)
+  const [searchTerm, setSearchTerm] = useState('')
   const [selectedOrderId, setSelectedOrderId] = useState(null)
   const [orderDetails, setOrderDetails] = useState(null)
   const [loadingDetails, setLoadingDetails] = useState(false)
@@ -105,8 +106,19 @@ export const AdminOrdersPage = () => {
     }
   }
 
+  const filteredOrders = orders.filter(o => 
+    String(o.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.restaurant.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    o.customerEmail.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
   return (
-    <AdminLayout title="Orders Management" searchPlaceholder="Search orders...">
+    <AdminLayout 
+      title="Orders Management" 
+      searchPlaceholder="Search orders by ID, restaurant, or customer..."
+      searchQuery={searchTerm}
+      onSearchChange={setSearchTerm}
+    >
       {error && <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm">{error}</div>}
 
       {/* Filter tabs */}
@@ -134,7 +146,7 @@ export const AdminOrdersPage = () => {
           </div>
         ) : (
           <div className="divide-y divide-slate-50">
-            {orders.map(order => {
+            {filteredOrders.map(order => {
               const badgeClass = STATUS_BADGE[order.status] || 'bg-slate-100 text-slate-700'
               const isActioning = actioning === order.id
               const canForce = !['Delivered', 'Cancelled', 'RestaurantRejected'].includes(order.status)
