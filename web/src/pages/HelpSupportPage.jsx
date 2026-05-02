@@ -81,11 +81,11 @@ export const HelpSupportPage = () => {
           <div className="mt-5 space-y-3 text-sm text-slate-700">
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-base text-primary">mail</span>
-              <span>support@quickbite.com</span>
+              <span>surkuntinuthanreddy@gmail.com</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-base text-primary">call</span>
-              <span>+1 (555) 017-4300</span>
+              <span>+91 9010256545</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-base text-primary">schedule</span>
