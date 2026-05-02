@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using OrderService.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -134,6 +135,7 @@ using (var scope = app.Services.CreateScope())
     var syncService = scope.ServiceProvider.GetRequiredService<IDeliveryAgentSyncService>();
     try
     {
+        app.Logger.LogInformation("Starting delivery agent sync from AuthService.");
         var syncedCount = await syncService.SyncDeliveryAgentsFromAuthServiceAsync();
         app.Logger.LogInformation("Synced {SyncedCount} delivery agents from AuthService.", syncedCount);
     }
@@ -142,6 +144,21 @@ using (var scope = app.Services.CreateScope())
         app.Logger.LogWarning(ex, "Delivery agent sync failed during startup.");
     }
 }
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    app.Logger.LogInformation("OrderService started. Environment: {Environment}", app.Environment.EnvironmentName);
+});
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    app.Logger.LogInformation("OrderService stopping.");
+});
+
+app.Lifetime.ApplicationStopped.Register(() =>
+{
+    app.Logger.LogInformation("OrderService stopped.");
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -154,6 +171,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();

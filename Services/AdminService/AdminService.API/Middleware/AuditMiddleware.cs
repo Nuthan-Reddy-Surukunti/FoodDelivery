@@ -11,10 +11,12 @@ namespace AdminService.API.Middleware
     public class AuditMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<AuditMiddleware> _logger;
 
-        public AuditMiddleware(RequestDelegate next)
+        public AuditMiddleware(RequestDelegate next, ILogger<AuditMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
 
         public async Task InvokeAsync(HttpContext context, IAuditService auditService)
@@ -90,10 +92,13 @@ namespace AdminService.API.Middleware
                     userAgent
                 );
             }
-            catch
+            catch (Exception ex)
             {
                 // Don't fail the request if audit logging fails
-                // Consider adding structured logging here
+                _logger.LogWarning(ex,
+                    "Audit logging failed for {Method} {Path}. Request will continue.",
+                    context.Request.Method,
+                    context.Request.Path.Value);
             }
         }
 

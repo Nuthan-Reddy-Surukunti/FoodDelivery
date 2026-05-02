@@ -24,7 +24,11 @@ public class ErrorHandlingMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred");
+            _logger.LogError(ex,
+                "Unhandled exception in AdminService API for {Method} {Path}. TraceId={TraceId}",
+                context.Request.Method,
+                context.Request.Path.Value,
+                context.TraceIdentifier);
             await HandleExceptionAsync(context, ex);
         }
     }

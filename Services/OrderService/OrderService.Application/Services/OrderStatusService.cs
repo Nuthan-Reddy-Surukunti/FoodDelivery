@@ -10,6 +10,7 @@ using OrderService.Application.Mappings;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 public class OrderStatusService : IOrderStatusService
 {
@@ -18,6 +19,7 @@ public class OrderStatusService : IOrderStatusService
     private readonly IPaymentRepository _paymentRepository;
     private readonly IDeliveryAssignmentRepository _deliveryAssignmentRepository;
     private readonly IDeliveryService _deliveryService;
+    private readonly ILogger<OrderStatusService> _logger;
 
     // Define allowed order status transitions
     private static readonly Dictionary<OrderStatus, HashSet<OrderStatus>> AllowedTransitions = new()
@@ -81,17 +83,26 @@ public class OrderStatusService : IOrderStatusService
         { OrderStatus.Refunded, new HashSet<OrderStatus>() }
     };
 
-    public OrderStatusService(IOrderRepository orderRepository, IPaymentRepository paymentRepository, IDeliveryAssignmentRepository deliveryAssignmentRepository, IPublishEndpoint publishEndpoint, IDeliveryService deliveryService)
+    public OrderStatusService(
+        IOrderRepository orderRepository,
+        IPaymentRepository paymentRepository,
+        IDeliveryAssignmentRepository deliveryAssignmentRepository,
+        IPublishEndpoint publishEndpoint,
+        IDeliveryService deliveryService,
+        ILogger<OrderStatusService> logger)
     {
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
         _paymentRepository = paymentRepository ?? throw new ArgumentNullException(nameof(paymentRepository));
         _deliveryAssignmentRepository = deliveryAssignmentRepository ?? throw new ArgumentNullException(nameof(deliveryAssignmentRepository));
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _deliveryService = deliveryService ?? throw new ArgumentNullException(nameof(deliveryService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<OrderDetailDto> UpdateOrderStatusAsync(UpdateOrderStatusRequestDto request, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Order status update requested for {OrderId} to {TargetStatus}.", request.OrderId, request.TargetStatus);
+
         var order = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", request.OrderId);
         
@@ -101,6 +112,11 @@ public class OrderStatusService : IOrderStatusService
         // CRITICAL FIX #2: Validate order status transition
         if (!IsValidTransition(order.OrderStatus, request.TargetStatus))
         {
+            _logger.LogWarning(
+                "Invalid order status transition requested for {OrderId}. CurrentStatus={CurrentStatus}, TargetStatus={TargetStatus}.",
+                request.OrderId,
+                order.OrderStatus,
+                request.TargetStatus);
             throw new InvalidOperationException(
                 $"Invalid order status transition from '{order.OrderStatus}' to '{request.TargetStatus}'. " +
                 $"This transition is not allowed.");
@@ -171,6 +187,12 @@ public class OrderStatusService : IOrderStatusService
             NewStatus = request.TargetStatus.ToString()
         }, cancellationToken);
 
+        _logger.LogInformation(
+            "Order status updated successfully for {OrderId}. PreviousStatus={PreviousStatus}, NewStatus={NewStatus}.",
+            request.OrderId,
+            oldStatus,
+            request.TargetStatus);
+
         // CRITICAL FIX #3: Re-fetch fresh order from database to ensure response has latest data
         var updatedOrder = await _orderRepository.GetByIdAsync(request.OrderId, cancellationToken);
         if (updatedOrder is null) throw new ResourceNotFoundException("Order", request.OrderId);
@@ -199,6 +221,8 @@ public class OrderStatusService : IOrderStatusService
 
     public async Task<OrderDetailDto> CancelOrderAsync(Guid orderId, bool forceByAdmin = false, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Order cancellation requested for {OrderId}. ForceByAdmin={ForceByAdmin}.", orderId, forceByAdmin);
+
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order is null) throw new ResourceNotFoundException("Order", orderId);
         
@@ -233,6 +257,8 @@ public class OrderStatusService : IOrderStatusService
             CancellationReason = "Customer requested cancellation",
             RefundAmount = order.TotalAmount
         }, cancellationToken);
+
+        _logger.LogInformation("Order cancellation completed for {OrderId}.", orderId);
 
         return OrderMappings.MapToDto(order);
     }

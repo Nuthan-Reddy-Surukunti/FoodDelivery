@@ -7,6 +7,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using MassTransit;
 using QuickBite.Shared.Events.Order;
+using Microsoft.Extensions.Logging;
 
 namespace AdminService.Application.Services;
 
@@ -28,19 +29,22 @@ public class OrderService : IOrderService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IAuditService _auditService;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ILogger<OrderService> _logger;
 
     public OrderService(
         IOrderRepository orderRepository, 
         IMapper mapper, 
         IHttpContextAccessor httpContextAccessor, 
         IAuditService auditService,
-        IPublishEndpoint publishEndpoint)
+        IPublishEndpoint publishEndpoint,
+        ILogger<OrderService> logger)
     {
         _orderRepository = orderRepository;
         _mapper = mapper;
         _httpContextAccessor = httpContextAccessor;
         _auditService = auditService;
         _publishEndpoint = publishEndpoint;
+        _logger = logger;
     }
 
     public async Task<OrderDto> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -66,6 +70,8 @@ public class OrderService : IOrderService
 
     public async Task<OrderDto> UpdateOrderStatusAsync(Guid orderId, OrderStatus newStatus, string reason, decimal? refundAmount, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Admin order status update requested for {OrderId} to {NewStatus}.", orderId, newStatus);
+
         var order = await _orderRepository.GetByIdAsync(orderId, cancellationToken);
         if (order == null)
             throw new KeyNotFoundException($"Order with ID {orderId} not found");
@@ -91,7 +97,14 @@ public class OrderService : IOrderService
             throw new ArgumentException("Refund amount cannot exceed order total", nameof(refundAmount));
 
         if (!IsTransitionAllowed(order.Status, newStatus) && reason.Length < 10)
+        {
+            _logger.LogWarning(
+                "Admin order status update rejected for {OrderId}. CurrentStatus={CurrentStatus}, RequestedStatus={RequestedStatus}.",
+                orderId,
+                order.Status,
+                newStatus);
             throw new ArgumentException("Admin override requires detailed reason (min 10 characters)", nameof(reason));
+        }
 
         order.Status = newStatus;
         order.UpdatedAt = DateTime.UtcNow;
@@ -126,6 +139,12 @@ public class OrderService : IOrderService
             NewStatus = newStatus.ToString(),
             StatusReason = reason
         }, cancellationToken);
+
+        _logger.LogInformation(
+            "Admin order status update completed for {OrderId}. PreviousStatus={PreviousStatus}, NewStatus={NewStatus}.",
+            orderId,
+            oldStatus,
+            newStatus);
 
         return _mapper.Map<OrderDto>(order);
     }

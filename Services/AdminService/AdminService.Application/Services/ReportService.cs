@@ -5,6 +5,7 @@ using AdminService.Application.Interfaces;
 using AdminService.Domain.Entities;
 using AdminService.Domain.Enums;
 using AdminService.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 namespace AdminService.Application.Services;
 
@@ -13,12 +14,14 @@ public class ReportService : IReportService
     private readonly IReportRepository _reportRepository;
     private readonly IUserRepository _userRepository;
     private readonly IMapper _mapper;
+    private readonly ILogger<ReportService> _logger;
 
-    public ReportService(IReportRepository reportRepository, IUserRepository userRepository, IMapper mapper)
+    public ReportService(IReportRepository reportRepository, IUserRepository userRepository, IMapper mapper, ILogger<ReportService> logger)
     {
         _reportRepository = reportRepository;
         _userRepository = userRepository;
         _mapper = mapper;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<UserDto>> GetUsersListAsync(CancellationToken cancellationToken = default)
@@ -82,6 +85,8 @@ public class ReportService : IReportService
 
     public async Task<ReportDto> GetAllSalesAsync(CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Generating sales report.");
+
         var metrics = await _reportRepository.GetSalesMetricsAsync(DateTime.MinValue, DateTime.UtcNow, cancellationToken);
         var report = new Report
         {
@@ -101,11 +106,14 @@ public class ReportService : IReportService
         };
         
         var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
+        _logger.LogInformation("Sales report generated successfully. ReportId={ReportId}", savedReport.Id);
         return _mapper.Map<ReportDto>(savedReport);
     }
 
     public async Task<ReportDto> GetAllPartnersAsync(CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("Generating partner performance report.");
+
         var metrics = await _reportRepository.GetSalesMetricsAsync(DateTime.MinValue, DateTime.UtcNow, cancellationToken);
         var report = new Report
         {
@@ -125,6 +133,7 @@ public class ReportService : IReportService
         };
         
         var savedReport = await _reportRepository.AddAsync(report, cancellationToken);
+        _logger.LogInformation("Partner performance report generated successfully. ReportId={ReportId}", savedReport.Id);
         return _mapper.Map<ReportDto>(savedReport);
     }
 }

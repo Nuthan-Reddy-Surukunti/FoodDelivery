@@ -19,7 +19,11 @@ public sealed class GlobalExceptionHandlingMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred in AuthService API.");
+            _logger.LogError(ex,
+                "Unhandled exception in AuthService API for {Method} {Path}. TraceId={TraceId}",
+                context.Request.Method,
+                context.Request.Path.Value,
+                context.TraceIdentifier);
             await HandleExceptionAsync(context, ex);
         }
     }
