@@ -95,7 +95,7 @@ public class OrderDomainRulesTests
         {
             OrderId = Guid.NewGuid(),
             Amount = 499m,
-            PaymentMethod = PaymentMethod.Card,
+            PaymentMethod = PaymentMethod.Online,
             PaymentStatus = PaymentStatus.Success,
             TransactionId = "TXN-1001",
             ProcessedAt = processedAt
