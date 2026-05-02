@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using OrderService.API.Utilities;
 using OrderService.Application.DTOs.Requests;
 using OrderService.Application.Interfaces;
+using QuickBite.Shared.Contracts;
 
 namespace OrderService.API.Controllers;
 
@@ -50,7 +51,15 @@ public class CartsController : ControllerBase
         }
         catch (OrderService.Application.Exceptions.ValidationException ex)
         {
-            return BadRequest(new { statusCode = 400, message = ex.Message, timestamp = DateTime.UtcNow });
+            return BadRequest(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = ex.Message,
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "BAD_REQUEST"
+            });
         }
     }
 

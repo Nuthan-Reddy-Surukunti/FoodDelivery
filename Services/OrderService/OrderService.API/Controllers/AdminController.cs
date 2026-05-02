@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OrderService.Application.Interfaces;
+using QuickBite.Shared.Contracts;
 
 namespace OrderService.API.Controllers;
 
@@ -41,11 +42,14 @@ public class AdminController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during delivery agent sync");
-            return BadRequest(new
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
             {
-                success = false,
-                message = "Failed to sync delivery agents. Please check logs for details.",
-                error = ex.Message
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "Failed to sync delivery agents.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
             });
         }
     }

@@ -3,6 +3,7 @@ using MassTransit;
 using AuthService.Application;
 using AuthService.Infrastructure;
 using AuthService.Infrastructure.Data;
+using AuthService.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,6 +18,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: true));
     });
+builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -116,6 +118,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

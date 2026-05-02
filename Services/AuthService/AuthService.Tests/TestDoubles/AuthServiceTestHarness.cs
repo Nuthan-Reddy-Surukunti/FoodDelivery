@@ -4,6 +4,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
 using MassTransit;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AuthService.Tests.TestDoubles;
 
@@ -32,7 +33,8 @@ internal sealed class AuthServiceTestHarness
             Email,
             Jwt,
             Otp,
-            Publisher.Endpoint);
+            Publisher.Endpoint,
+            NullLogger<Application.Services.AuthService>.Instance);
     }
 }
 

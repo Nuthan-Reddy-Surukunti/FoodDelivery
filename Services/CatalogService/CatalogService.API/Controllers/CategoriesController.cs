@@ -3,8 +3,10 @@ using CatalogService.API.Utilities;
 using CatalogService.Application.DTOs.Category;
 using CatalogService.Application.Interfaces;
 using CatalogService.Application.Exceptions;
+using QuickBite.Shared.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace CatalogService.API.Controllers;
 
@@ -15,11 +17,13 @@ public class CategoriesController : ControllerBase
 {
     private readonly ICategoryService _categoryService;
     private readonly IMapper _mapper;
+    private readonly ILogger<CategoriesController> _logger;
 
-    public CategoriesController(ICategoryService categoryService, IMapper mapper)
+    public CategoriesController(ICategoryService categoryService, IMapper mapper, ILogger<CategoriesController> logger)
     {
         _categoryService = categoryService;
         _mapper = mapper;
+        _logger = logger;
     }
 
     /// <summary>
@@ -41,7 +45,16 @@ public class CategoriesController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            _logger.LogError(ex, "Failed to retrieve categories for restaurant {RestaurantId}.", restaurantId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
+            });
         }
     }
 
@@ -82,15 +95,39 @@ public class CategoriesController : ControllerBase
         }
         catch (DuplicateCategoryException ex)
         {
-            return Conflict(ex.Message);
+            return Conflict(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = ex.Message,
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "CONFLICT"
+            });
         }
         catch (RestaurantNotFoundException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = ex.Message,
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "BAD_REQUEST"
+            });
         }
         catch (UnauthorizedAccessException ex)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Forbidden",
+                Detail = "You do not have permission to perform this action.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "FORBIDDEN"
+            });
         }
     }
 
@@ -122,11 +159,27 @@ public class CategoriesController : ControllerBase
         }
         catch (DuplicateCategoryException ex)
         {
-            return Conflict(ex.Message);
+            return Conflict(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status409Conflict,
+                Title = "Conflict",
+                Detail = ex.Message,
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "CONFLICT"
+            });
         }
         catch (UnauthorizedAccessException ex)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Forbidden",
+                Detail = "You do not have permission to perform this action.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "FORBIDDEN"
+            });
         }
     }
 
@@ -150,11 +203,27 @@ public class CategoriesController : ControllerBase
         }
         catch (InvalidRestaurantDataException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = ex.Message,
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "BAD_REQUEST"
+            });
         }
         catch (UnauthorizedAccessException ex)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Forbidden",
+                Detail = "You do not have permission to perform this action.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "FORBIDDEN"
+            });
         }
     }
 }

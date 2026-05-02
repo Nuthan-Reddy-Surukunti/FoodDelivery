@@ -1,10 +1,8 @@
-using OrderService.Application.Exceptions;
-using OrderService.Domain.Exceptions;
 using QuickBite.Shared.Contracts;
 
-namespace OrderService.API.Middleware;
+namespace AuthService.API.Middleware;
 
-public class GlobalExceptionHandlingMiddleware : IMiddleware
+public sealed class GlobalExceptionHandlingMiddleware : IMiddleware
 {
     private readonly ILogger<GlobalExceptionHandlingMiddleware> _logger;
 
@@ -21,7 +19,7 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred in OrderService API.");
+            _logger.LogError(ex, "An unhandled exception occurred in AuthService API.");
             await HandleExceptionAsync(context, ex);
         }
     }
@@ -30,11 +28,10 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
     {
         var (status, title, detail, errorCode) = exception switch
         {
-            ResourceNotFoundException => (StatusCodes.Status404NotFound, "Not Found", exception.Message, "NOT_FOUND"),
-            ValidationException or CartException or OrderException or PaymentException or ArgumentException or InvalidOperationException
-                => (StatusCodes.Status400BadRequest, "Bad Request", exception.Message, "BAD_REQUEST"),
-            UnauthorizedAccessException
-                => (StatusCodes.Status403Forbidden, "Forbidden", "You do not have permission to perform this action.", "FORBIDDEN"),
+            ArgumentException => (StatusCodes.Status400BadRequest, "Bad Request", "The request could not be processed.", "BAD_REQUEST"),
+            UnauthorizedAccessException => (StatusCodes.Status403Forbidden, "Forbidden", "You do not have permission to perform this action.", "FORBIDDEN"),
+            KeyNotFoundException => (StatusCodes.Status404NotFound, "Not Found", "The requested resource was not found.", "NOT_FOUND"),
+            InvalidOperationException => (StatusCodes.Status400BadRequest, "Bad Request", "The operation could not be completed.", "BAD_REQUEST"),
             _ => (StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.", "INTERNAL_ERROR")
         };
 

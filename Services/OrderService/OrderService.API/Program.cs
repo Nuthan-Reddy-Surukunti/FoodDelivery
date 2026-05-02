@@ -135,11 +135,11 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var syncedCount = await syncService.SyncDeliveryAgentsFromAuthServiceAsync();
-        Console.WriteLine($"[Startup] Synced {syncedCount} delivery agents from AuthService.");
+        app.Logger.LogInformation("Synced {SyncedCount} delivery agents from AuthService.", syncedCount);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[Startup] Warning: Delivery agent sync failed: {ex.Message}");
+        app.Logger.LogWarning(ex, "Delivery agent sync failed during startup.");
     }
 }
 

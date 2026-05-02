@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using AdminService.Application.Interfaces;
 using AdminService.Application.DTOs.Requests;
+using QuickBite.Shared.Contracts;
 
 namespace AdminService.API.Controllers;
 
@@ -35,7 +36,15 @@ public class RestaurantsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return NotFound(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "The requested restaurant was not found.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "NOT_FOUND"
+            });
         }
     }
 
@@ -63,7 +72,15 @@ public class RestaurantsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return NotFound(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "The requested restaurant was not found.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "NOT_FOUND"
+            });
         }
     }
 
@@ -77,7 +94,15 @@ public class RestaurantsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return NotFound(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "The requested restaurant was not found.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "NOT_FOUND"
+            });
         }
     }
 
@@ -91,11 +116,27 @@ public class RestaurantsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return NotFound(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "The requested restaurant was not found.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "NOT_FOUND"
+            });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = "The request could not be processed.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "BAD_REQUEST"
+            });
         }
     }
 
@@ -109,11 +150,27 @@ public class RestaurantsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return NotFound(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "The requested restaurant was not found.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "NOT_FOUND"
+            });
         }
         catch (InvalidOperationException ex)
         {
-            return BadRequest(new { message = ex.Message });
+            return BadRequest(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = "The request could not be processed.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "BAD_REQUEST"
+            });
         }
     }
 
@@ -127,7 +184,15 @@ public class RestaurantsController : ControllerBase
         }
         catch (KeyNotFoundException ex)
         {
-            return NotFound(new { message = ex.Message });
+            return NotFound(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status404NotFound,
+                Title = "Not Found",
+                Detail = "The requested restaurant was not found.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "NOT_FOUND"
+            });
         }
     }
 }

@@ -4,8 +4,10 @@ using CatalogService.Application.DTOs.Restaurant;
 using CatalogService.Application.DTOs.MenuItem;
 using CatalogService.Application.Interfaces;
 using CatalogService.Domain.Enums;
+using QuickBite.Shared.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace CatalogService.API.Controllers;
 
@@ -16,11 +18,13 @@ public class SearchController : ControllerBase
 {
     private readonly ISearchService _searchService;
     private readonly IMapper _mapper;
+    private readonly ILogger<SearchController> _logger;
 
-    public SearchController(ISearchService searchService, IMapper mapper)
+    public SearchController(ISearchService searchService, IMapper mapper, ILogger<SearchController> logger)
     {
         _searchService = searchService;
         _mapper = mapper;
+        _logger = logger;
     }
 
     /// <summary>
@@ -58,7 +62,16 @@ public class SearchController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            _logger.LogError(ex, "Advanced restaurant search failed.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
+            });
         }
     }
 
@@ -79,7 +92,16 @@ public class SearchController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            _logger.LogError(ex, "Restaurant name search failed.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
+            });
         }
     }
 
@@ -97,7 +119,16 @@ public class SearchController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            _logger.LogError(ex, "Homepage data retrieval failed.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
+            });
         }
     }
 
@@ -117,7 +148,16 @@ public class SearchController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            _logger.LogError(ex, "Menu item search failed.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
+            });
         }
     }
 }
