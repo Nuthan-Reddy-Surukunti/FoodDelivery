@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react'
 import { AgentLayout } from '../components/organisms/AgentLayout'
 import { useNotification } from '../hooks/useNotification'
 import agentApi from '../services/agentApi'
+import { formatTimeAgo, isVeryRecent, parseIsoToUtc } from '../utils/timeUtils'
 
-const fmtDate = (iso) =>
-  iso
-    ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+const fmtDate = (iso) => {
+  const date = parseIsoToUtc(iso)
+  return date
+    ? date.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
     : '—'
+}
 
 const fmtCurrency = (amount) =>
   `₹${Number(amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
@@ -170,7 +173,7 @@ export const AgentEarningsPage = () => {
                   <th className="text-left font-medium px-5 py-3">Payment</th>
                   <th className="text-right font-medium px-5 py-3">Items</th>
                   <th className="text-right font-medium px-5 py-3">Breakdown</th>
-                  <th className="text-right font-medium px-5 py-3">Delivered At</th>
+                  <th className="text-right font-medium px-5 py-3">Time</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -220,8 +223,21 @@ export const AgentEarningsPage = () => {
                       </td>
 
                       {/* Delivered at */}
-                      <td className="px-5 py-3.5 text-right text-on-surface-variant">
-                        {fmtDate(record.deliveredAt)}
+                      <td className="px-5 py-3.5 text-right">
+                        <div className="flex flex-col items-end gap-1">
+                          {isVeryRecent(record.deliveredAt) && (
+                            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 uppercase tracking-wider animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                              Just now
+                            </span>
+                          )}
+                          <span className="text-sm font-medium text-on-surface">
+                            {formatTimeAgo(record.deliveredAt)}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {fmtDate(record.deliveredAt)}
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   )
