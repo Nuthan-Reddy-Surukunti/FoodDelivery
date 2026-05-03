@@ -1,10 +1,8 @@
 using System;
 using AuthService.Domain.Entities;
 using AuthService.Infrastructure.Identity;
-using Azure.Core;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace AuthService.Infrastructure.Data;
 
@@ -52,14 +50,8 @@ public class AuthDbContext : IdentityDbContext<ApplicationUser>
             entity.Property(t => t.ExpiresAt).IsRequired();
         });
 
-        // Seed initial admin user
-        // SeedAdminUser(builder);
+       
     }
 
-    // private static void SeedAdminUser(ModelBuilder builder)
-    // {
-    //     // This is a placeholder for seeding
-    //     // In production, use a more secure approach or create an admin setup endpoint
-    //     // Admin will be created via migrations or database initialization
-    // }
+    
 }
