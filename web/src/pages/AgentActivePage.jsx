@@ -73,12 +73,23 @@ const DEFAULT_FLOW = {
   next: null,
 }
 
+const IST_TIME_ZONE = 'Asia/Kolkata'
+
 const fmt = (iso) => iso
-  ? new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })
+  ? new Date(iso).toLocaleTimeString('en-IN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: IST_TIME_ZONE,
+    })
   : ''
 
 const fmtDateTime = (iso) => iso
-  ? new Date(iso).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })
+  ? new Date(iso).toLocaleString('en-IN', {
+      dateStyle: 'short',
+      timeStyle: 'short',
+      timeZone: IST_TIME_ZONE,
+    })
   : ''
 
 export const AgentActivePage = () => {

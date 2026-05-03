@@ -129,6 +129,15 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Apply migrations automatically for container startup consistency.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    app.Logger.LogInformation("Applying OrderService database migrations.");
+    dbContext.Database.Migrate();
+    app.Logger.LogInformation("OrderService database migrations applied successfully.");
+}
+
 // Run delivery agent sync on startup
 using (var scope = app.Services.CreateScope())
 {

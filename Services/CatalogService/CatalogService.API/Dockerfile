@@ -5,6 +5,7 @@ COPY ["Services/CatalogService/CatalogService.API/CatalogService.API.csproj", "S
 COPY ["Services/CatalogService/CatalogService.Application/CatalogService.Application.csproj", "Services/CatalogService/CatalogService.Application/"]
 COPY ["Services/CatalogService/CatalogService.Domain/CatalogService.Domain.csproj", "Services/CatalogService/CatalogService.Domain/"]
 COPY ["Services/CatalogService/CatalogService.Infrastructure/CatalogService.Infrastructure.csproj", "Services/CatalogService/CatalogService.Infrastructure/"]
+COPY ["Shared/QuickBite.Shared/QuickBite.Shared.csproj", "Shared/QuickBite.Shared/"]
 RUN dotnet restore "Services/CatalogService/CatalogService.API/CatalogService.API.csproj"
 
 COPY . .

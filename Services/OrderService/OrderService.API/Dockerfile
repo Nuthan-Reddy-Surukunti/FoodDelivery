@@ -5,6 +5,7 @@ COPY ["Services/OrderService/OrderService.API/OrderService.API.csproj", "Service
 COPY ["Services/OrderService/OrderService.Application/OrderService.Application.csproj", "Services/OrderService/OrderService.Application/"]
 COPY ["Services/OrderService/OrderService.Domain/OrderService.Domain.csproj", "Services/OrderService/OrderService.Domain/"]
 COPY ["Services/OrderService/OrderService.Infrastructure/OrderService.Infrastructure.csproj", "Services/OrderService/OrderService.Infrastructure/"]
+COPY ["Shared/QuickBite.Shared/QuickBite.Shared.csproj", "Shared/QuickBite.Shared/"]
 RUN dotnet restore "Services/OrderService/OrderService.API/OrderService.API.csproj"
 
 COPY . .

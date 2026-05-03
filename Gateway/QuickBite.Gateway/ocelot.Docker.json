@@ -6,8 +6,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "auth-api",
-          "Port": 80
+          "Host": "authservice",
+          "Port": 8080
         }
       ],
       "Priority": 100,
@@ -19,20 +19,20 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "catalog-api",
-          "Port": 80
+          "Host": "catalogservice",
+          "Port": 8080
         }
       ],
       "Priority": 100,
       "SwaggerKey": "CatalogService"
     },
     {
-      "UpstreamPathTemplate": "/gateway/user/addresses/{everything}",
-      "DownstreamPathTemplate": "/gateway/user/addresses/{everything}",
+      "UpstreamPathTemplate": "/gateway/carts/{everything}",
+      "DownstreamPathTemplate": "/gateway/carts/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "orderservice.api",
+          "Host": "orderservice",
           "Port": 8080
         }
       ],
@@ -40,12 +40,25 @@
       "SwaggerKey": "OrderService"
     },
     {
-      "UpstreamPathTemplate": "/gateway/profile/{everything}",
-      "DownstreamPathTemplate": "/gateway/profile/{everything}",
+      "UpstreamPathTemplate": "/gateway/checkout/{everything}",
+      "DownstreamPathTemplate": "/gateway/checkout/{everything}",
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "orderservice.api",
+          "Host": "orderservice",
+          "Port": 8080
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/payments/{everything}",
+      "DownstreamPathTemplate": "/gateway/payments/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "orderservice",
           "Port": 8080
         }
       ],
@@ -58,8 +71,34 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "order-api",
-          "Port": 80
+          "Host": "orderservice",
+          "Port": 8080
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/user/addresses/{everything}",
+      "DownstreamPathTemplate": "/gateway/user/addresses/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "orderservice",
+          "Port": 8080
+        }
+      ],
+      "Priority": 100,
+      "SwaggerKey": "OrderService"
+    },
+    {
+      "UpstreamPathTemplate": "/gateway/profile/{everything}",
+      "DownstreamPathTemplate": "/gateway/profile/{everything}",
+      "DownstreamScheme": "http",
+      "DownstreamHostAndPorts": [
+        {
+          "Host": "orderservice",
+          "Port": 8080
         }
       ],
       "Priority": 100,
@@ -71,8 +110,8 @@
       "DownstreamScheme": "http",
       "DownstreamHostAndPorts": [
         {
-          "Host": "admin-api",
-          "Port": 80
+          "Host": "adminservice",
+          "Port": 8080
         }
       ],
       "Priority": 100,
@@ -86,7 +125,7 @@
         {
           "Name": "Auth Service",
           "Version": "v1",
-          "Url": "http://auth-api/swagger/v1/swagger.json"
+          "Url": "http://authservice:8080/swagger/v1/swagger.json"
         }
       ]
     },
@@ -96,7 +135,7 @@
         {
           "Name": "Catalog Service",
           "Version": "v1",
-          "Url": "http://catalog-api/swagger/v1/swagger.json"
+          "Url": "http://catalogservice:8080/swagger/v1/swagger.json"
         }
       ]
     },
@@ -106,7 +145,7 @@
         {
           "Name": "Order Service",
           "Version": "v1",
-          "Url": "http://order-api/swagger/v1/swagger.json"
+          "Url": "http://orderservice:8080/swagger/v1/swagger.json"
         }
       ]
     },
@@ -116,7 +155,7 @@
         {
           "Name": "Admin Service",
           "Version": "v1",
-          "Url": "http://admin-api/swagger/v1/swagger.json"
+          "Url": "http://adminservice:8080/swagger/v1/swagger.json"
         }
       ]
     }

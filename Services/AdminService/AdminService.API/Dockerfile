@@ -5,6 +5,7 @@ COPY ["Services/AdminService/AdminService.API/AdminService.API.csproj", "Service
 COPY ["Services/AdminService/AdminService.Application/AdminService.Application.csproj", "Services/AdminService/AdminService.Application/"]
 COPY ["Services/AdminService/AdminService.Domain/AdminService.Domain.csproj", "Services/AdminService/AdminService.Domain/"]
 COPY ["Services/AdminService/AdminService.Infrastructure/AdminService.Infrastructure.csproj", "Services/AdminService/AdminService.Infrastructure/"]
+COPY ["Shared/QuickBite.Shared/QuickBite.Shared.csproj", "Shared/QuickBite.Shared/"]
 RUN dotnet restore "Services/AdminService/AdminService.API/AdminService.API.csproj"
 
 COPY . .

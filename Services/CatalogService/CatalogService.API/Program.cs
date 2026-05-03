@@ -11,6 +11,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
 using CatalogService.API.Middleware;
+using CatalogService.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +139,15 @@ builder.Services.AddAuthorization();
 
 // === 5. Build the app ===
 var app = builder.Build();
+
+// Apply migrations automatically for container startup consistency.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+    app.Logger.LogInformation("Applying CatalogService database migrations.");
+    dbContext.Database.Migrate();
+    app.Logger.LogInformation("CatalogService database migrations applied successfully.");
+}
 
 app.Lifetime.ApplicationStarted.Register(() =>
 {

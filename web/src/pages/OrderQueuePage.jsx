@@ -46,7 +46,9 @@ export const OrderQueuePage = () => {
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(false)
   const [actioning, setActioning] = useState(null)
+  const [menuNameMap, setMenuNameMap] = useState({})
   const intervalRef = useRef(null)
+  const lastMenuFetchRestaurantRef = useRef(null)
 
   // Load partner's restaurant
   useEffect(() => {
@@ -66,6 +68,35 @@ export const OrderQueuePage = () => {
     load()
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    const loadMenuNames = async () => {
+      if (!restaurant?.id) return
+      if (lastMenuFetchRestaurantRef.current === restaurant.id) return
+
+      try {
+        const menuRes = await catalogApi.getRestaurantMenu(restaurant.id)
+        const menu = Array.isArray(menuRes)
+          ? menuRes
+          : (menuRes?.items || menuRes?.data || [])
+
+        const map = {}
+        for (const menuItem of menu) {
+          const id = String(menuItem.id || menuItem.menuItemId || '')
+          if (id && menuItem.name) {
+            map[id.toLowerCase()] = menuItem.name
+          }
+        }
+
+        setMenuNameMap(map)
+        lastMenuFetchRestaurantRef.current = restaurant.id
+      } catch {
+        // Keep graceful fallback labels if menu lookup is unavailable.
+      }
+    }
+
+    loadMenuNames()
+  }, [restaurant?.id])
 
   // Fetch orders via the partner-specific queue endpoint
   const fetchOrders = useCallback(async () => {
@@ -119,6 +150,19 @@ export const OrderQueuePage = () => {
     } finally {
       setActioning(null)
     }
+  }
+
+  const resolveItemName = (item) => {
+    const directName = [item.menuItemName, item.name, item.itemName, item.title]
+      .find((value) => value && String(value).trim())
+    if (directName) return directName
+
+    const menuItemId = String(item.menuItemId || item.id || '').toLowerCase()
+    if (menuItemId && menuNameMap[menuItemId]) {
+      return menuNameMap[menuItemId]
+    }
+
+    return 'Menu Item'
   }
 
   // ── Guards ───────────────────────────────────────────────────────────────────
@@ -206,7 +250,7 @@ export const OrderQueuePage = () => {
                     <div className="mb-4 bg-slate-50 rounded-xl p-4 space-y-1.5">
                       {items.map((item, idx) => (
                         <div key={item.orderItemId || idx} className="flex justify-between text-sm">
-                          <span className="text-on-surface">{item.quantity}× {item.menuItemName || item.name || item.menuItemId?.split('-')[0]}</span>
+                          <span className="text-on-surface">{item.quantity}× {resolveItemName(item)}</span>
                           <span className="font-medium text-on-surface">₹{item.subtotal || (item.unitPriceSnapshot * item.quantity) || 0}</span>
                         </div>
                       ))}

@@ -1,4 +1,4 @@
-version: "3.9"
+name: quickbite
 
 networks:
   quickbite-net:
@@ -9,16 +9,13 @@ volumes:
   rabbitmq-data:
 
 services:
-
-  # ─────────────────────────────────────────
-  # Infrastructure
-  # ─────────────────────────────────────────
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: fd-sqlserver
+    platform: linux/amd64
+    container_name: quickbite-sqlserver
     environment:
-      SA_PASSWORD: "YourStrong!Passw0rd"
       ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
     ports:
       - "1433:1433"
     volumes:
@@ -26,20 +23,22 @@ services:
     networks:
       - quickbite-net
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong!Passw0rd' -Q 'SELECT 1'"]
+      test: ["CMD-SHELL", "(/opt/mssql-tools18/bin/sqlcmd -C -S localhost -U sa -P \"${MSSQL_SA_PASSWORD}\" -Q 'SELECT 1') || (/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P \"${MSSQL_SA_PASSWORD}\" -Q 'SELECT 1')"]
       interval: 10s
-      retries: 10
-      start_period: 30s
+      timeout: 5s
+      retries: 20
+      start_period: 45s
+    restart: unless-stopped
 
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: fd-rabbitmq
+    container_name: quickbite-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_DEFAULT_USER}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_DEFAULT_PASS}"
     ports:
       - "5672:5672"
-      - "15672:15672"   # Management UI
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      - "15672:15672"
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
     networks:
@@ -47,116 +46,191 @@ services:
     healthcheck:
       test: ["CMD", "rabbitmq-diagnostics", "ping"]
       interval: 10s
-      retries: 10
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
 
-  # ─────────────────────────────────────────
-  # Gateway
-  # ─────────────────────────────────────────
+  authservice:
+    build:
+      context: .
+      dockerfile: Services/AuthService/AuthService.API/Dockerfile
+    container_name: quickbite-authservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=AuthServiceDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "${RABBITMQ_DEFAULT_USER}"
+      RabbitMq__Password: "${RABBITMQ_DEFAULT_PASS}"
+      JwtSettings__Issuer: "${JWT_ISSUER}"
+      JwtSettings__Audience: "${JWT_AUDIENCE}"
+      JwtSettings__SecretKey: "${JWT_SECRET}"
+    ports:
+      - "5001:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - quickbite-net
+    restart: unless-stopped
+
+  catalogservice:
+    build:
+      context: .
+      dockerfile: Services/CatalogService/CatalogService.API/Dockerfile
+    container_name: quickbite-catalogservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__CatalogDb: "Server=sqlserver,1433;Database=CatalogDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "${RABBITMQ_DEFAULT_USER}"
+      RabbitMq__Password: "${RABBITMQ_DEFAULT_PASS}"
+      JwtSettings__Issuer: "${JWT_ISSUER}"
+      JwtSettings__Audience: "${JWT_AUDIENCE}"
+      JwtSettings__SecretKey: "${JWT_SECRET}"
+      OrderService__BaseUrl: http://orderservice:8080
+    ports:
+      - "5002:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - quickbite-net
+    restart: unless-stopped
+
+  orderservice:
+    build:
+      context: .
+      dockerfile: Services/OrderService/OrderService.API/Dockerfile
+    container_name: quickbite-orderservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__OrderDb: "Server=sqlserver,1433;Database=OrderDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "${RABBITMQ_DEFAULT_USER}"
+      RabbitMq__Password: "${RABBITMQ_DEFAULT_PASS}"
+      JwtSettings__Issuer: "${JWT_ISSUER}"
+      JwtSettings__Audience: "${JWT_AUDIENCE}"
+      JwtSettings__SecretKey: "${JWT_SECRET}"
+      Services__AuthService__Url: http://authservice:8080
+      Services__CatalogService__Url: http://catalogservice:8080
+    ports:
+      - "5003:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      authservice:
+        condition: service_started
+      catalogservice:
+        condition: service_started
+    networks:
+      - quickbite-net
+    restart: unless-stopped
+
+  adminservice:
+    build:
+      context: .
+      dockerfile: Services/AdminService/AdminService.API/Dockerfile
+    container_name: quickbite-adminservice
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=AdminServiceDb;User Id=sa;Password=${MSSQL_SA_PASSWORD};TrustServerCertificate=True;"
+      RabbitMq__Host: rabbitmq
+      RabbitMq__Port: "5672"
+      RabbitMq__UserName: "${RABBITMQ_DEFAULT_USER}"
+      RabbitMq__Password: "${RABBITMQ_DEFAULT_PASS}"
+      JwtSettings__Issuer: "${JWT_ISSUER}"
+      JwtSettings__Audience: "${JWT_AUDIENCE}"
+      JwtSettings__SecretKey: "${JWT_SECRET}"
+    ports:
+      - "5004:8080"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - quickbite-net
+    restart: unless-stopped
+
   gateway:
     build:
       context: .
       dockerfile: Gateway/QuickBite.Gateway/Dockerfile
-    container_name: fd-gateway
-    ports:
-      - "5000:8080"
+    container_name: quickbite-gateway
     environment:
       ASPNETCORE_ENVIRONMENT: Docker
+      ASPNETCORE_URLS: http://+:8080
+      JwtSettings__Issuer: "${JWT_ISSUER}"
+      JwtSettings__Audience: "${JWT_AUDIENCE}"
+      JwtSettings__SecretKey: "${JWT_SECRET}"
+    ports:
+      - "5000:8080"
     depends_on:
-      - auth-api
-      - catalog-api
-      - order-api
-      - admin-api
+      authservice:
+        condition: service_started
+      catalogservice:
+        condition: service_started
+      orderservice:
+        condition: service_started
+      adminservice:
+        condition: service_started
     networks:
       - quickbite-net
+    restart: unless-stopped
 
-  # ─────────────────────────────────────────
-  # Auth Service
-  # ─────────────────────────────────────────
-  auth-api:
+  frontend:
     build:
-      context: .
-      dockerfile: Services/AuthService/AuthService.API/Dockerfile
-    container_name: fd-auth-api
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:5000
+    container_name: quickbite-frontend
     ports:
-      - "5001:8080"
-    environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=AuthDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
+      - "3000:80"
+    depends_on:
+      gateway:
+        condition: service_started
+    networks:
+      - quickbite-net
+    restart: unless-stopped
+
+  # One-time local seed runner (disabled by default).
+  # Usage: docker compose --profile seed up --build db-seed
+  db-seed:
+    profiles: ["seed"]
+    image: mcr.microsoft.com/mssql-tools
+    container_name: quickbite-db-seed
     depends_on:
       sqlserver:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - quickbite-net
-
-  # ─────────────────────────────────────────
-  # Catalog Service
-  # ─────────────────────────────────────────
-  catalog-api:
-    build:
-      context: .
-      dockerfile: Services/CatalogService/CatalogService.API/Dockerfile
-    container_name: fd-catalog-api
-    ports:
-      - "5002:8080"
     environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=CatalogDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    volumes:
+      # This path is intentionally inside docs/ because your repo ignores docs/ from git.
+      - ./docs/local-seed/sql:/seed:ro
     networks:
       - quickbite-net
-
-  # ─────────────────────────────────────────
-  # Order Service
-  # ─────────────────────────────────────────
-  order-api:
-    build:
-      context: .
-      dockerfile: Services/OrderService/OrderService.API/Dockerfile
-    container_name: fd-order-api
-    ports:
-      - "5003:8080"
-    environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=OrderDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - quickbite-net
-
-  # ─────────────────────────────────────────
-  # Admin Service
-  # ─────────────────────────────────────────
-  admin-api:
-    build:
-      context: .
-      dockerfile: Services/AdminService/AdminService.API/Dockerfile
-    container_name: fd-admin-api
-    ports:
-      - "5004:8080"
-    environment:
-      ConnectionStrings__DefaultConnection: "Server=sqlserver;Database=AdminDb;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True"
-      RabbitMQ__Host: rabbitmq
-      RabbitMQ__Username: guest
-      RabbitMQ__Password: guest
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    networks:
-      - quickbite-net
+    entrypoint: ["/bin/bash", "-lc"]
+    command: >
+      "
+      set -euo pipefail;
+      for f in /seed/*.sql; do
+        echo Running $$f;
+        /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P \"$$MSSQL_SA_PASSWORD\" -b -i \"$$f\";
+      done;
+      echo Seed complete.
+      "
