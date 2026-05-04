@@ -4,7 +4,8 @@ namespace AuthService.API.Middleware;
 
 public sealed class RequestLoggingMiddleware
 {
-    private static readonly HashSet<string> SkippedPrefixes = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> SkippedPrefixes =
+    new HashSet<string>(StringComparer.OrdinalIgnoreCase)
     {
         "/health",
         "/favicon.ico",

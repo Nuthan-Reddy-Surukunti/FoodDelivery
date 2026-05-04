@@ -58,8 +58,8 @@ public class OtpService : IOtpService
                 await _otpTokenRepository.UpdateAsync(existingOtp);
             }
 
-            // Generate 6-digit OTP
-            var otp = new Random().Next(100000, 999999).ToString();
+            // Generate cryptographically secure 6-digit OTP
+            var otp = SecurityUtilities.GenerateSecureOtp();
 
             // Store new OTP with 10-minute expiration to reduce false-expired reports.
             var otpToken = new OtpToken

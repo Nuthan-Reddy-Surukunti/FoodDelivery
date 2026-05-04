@@ -5,7 +5,7 @@ namespace CatalogService.Application.Interfaces;
 public interface IAiService
 {
     /// <summary>
-    /// Process a chat request through Gemini with full function-calling loop.
+    /// Process a chat request through llm with full function-calling loop.
     /// </summary>
     /// <param name="request">The chat messages from the frontend.</param>
     /// <param name="userId">Authenticated user's ID (null for guests).</param>
@@ -15,6 +15,6 @@ public interface IAiService
         Guid? userId = null,
         string? authToken = null);
 
-    /// <summary>Quick Gemini connectivity check for the status indicator.</summary>
+    /// <summary>Quick llm connectivity check for the status indicator.</summary>
     Task<bool> CheckConnectivityAsync();
 }
