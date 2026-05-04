@@ -9,6 +9,7 @@ using AuthService.Domain.Enums;
 using AuthService.Domain.Interfaces;
 using MassTransit;
 using QuickBite.Shared.Events.Auth;
+using Microsoft.Extensions.Logging;
 
 namespace AuthService.Application.Services;
 
@@ -24,6 +25,7 @@ public class AuthService : IAuthService
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly IOtpService _otpService;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ILogger<AuthService> _logger;
 
     public AuthService(
         IUserRepository userRepository,
@@ -35,7 +37,8 @@ public class AuthService : IAuthService
         IEmailService emailService,
         IJwtTokenGenerator jwtTokenGenerator,
         IOtpService otpService,
-        IPublishEndpoint publishEndpoint)
+        IPublishEndpoint publishEndpoint,
+        ILogger<AuthService> logger)
     {
         _userRepository = userRepository;
         _passwordResetTokenRepository = passwordResetTokenRepository;
@@ -47,6 +50,7 @@ public class AuthService : IAuthService
         _jwtTokenGenerator = jwtTokenGenerator;
         _otpService = otpService;
         _publishEndpoint = publishEndpoint;
+        _logger = logger;
     }
     public async Task<AuthRequestDto> ForgotPasswordAsync(ForgotPasswordDto dto)
     {
@@ -70,8 +74,7 @@ public class AuthService : IAuthService
 
         await _otpTokenRepository.AddAsync(otpToken);
 
-        // Print OTP to console for development/testing
-        // Console.WriteLine($"[PASSWORD RESET OTP] Email: {user.Email} | OTP: {otp} | Expires: 10 minutes");
+        _logger.LogInformation("Password reset OTP generated for {Email}.", user.Email);
 
         // Send OTP via email
         await _emailService.SendEmailAsync(
@@ -129,8 +132,7 @@ public class AuthService : IAuthService
 
                     await _twoFactorTokenRepository.AddAsync(twoFactorToken);
                     
-                    // Print OTP to console for development
-                    Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
+                    _logger.LogInformation("Two-factor OTP generated for {Email}.", dto.Email);
                     
                     await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
@@ -250,8 +252,7 @@ public class AuthService : IAuthService
 
                     await _twoFactorTokenRepository.AddAsync(twoFactorToken);
                     
-                    // Print OTP to console for development
-                    Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
+                    _logger.LogInformation("Two-factor OTP generated for {Email}.", dto.Email);
                     
                     await _emailService.SendEmailAsync(dto.Email, "Two Factor Email", EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
@@ -362,8 +363,7 @@ public class AuthService : IAuthService
 
             await _twoFactorTokenRepository.AddAsync(twoFactorToken);
             
-            // Print OTP to console for development
-            Console.WriteLine($"🔐 [2FA OTP] Email: {dto.Email} | OTP: {otp} | Expires: 5 minutes");
+            _logger.LogInformation("Two-factor OTP generated for {Email}.", dto.Email);
             
             await _emailService.SendEmailAsync(dto.Email,"Two Factor Email",EmailTemplateBuilder.GetOtpEmailTemplate(user.FullName ?? user.Email, otp));
 
@@ -665,9 +665,7 @@ public class AuthService : IAuthService
             };
             await _emailVerificationTokenRepository.AddAsync(verificationToken);
             
-            // Print OTP to console for development
-            Console.WriteLine($"🔐 [REGISTRATION OTP] Email: {newUser.Email} | OTP: {otp} | Expires: 10 minutes");
-            Console.Out.Flush();
+            _logger.LogInformation("Registration OTP generated for {Email}.", newUser.Email);
             
             await _emailService.SendEmailAsync(newUser.Email, "Verify Your Email", EmailTemplateBuilder.GetOtpEmailTemplate(newUser.FullName ?? newUser.Email, otp));
 
@@ -1080,8 +1078,7 @@ public class AuthService : IAuthService
 
     private static string GenerateOtp()
     {
-        var random = new Random();
-        return random.Next(100000, 999999).ToString();
+        return SecurityUtilities.GenerateSecureOtp();
     }
 
     private static string GenerateSecureToken()

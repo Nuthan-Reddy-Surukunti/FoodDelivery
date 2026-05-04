@@ -251,6 +251,8 @@ export const AdminUsersPage = () => {
   const [showCreateAdmin, setShowCreateAdmin] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const pageSize = 10
 
   const loadData = async () => {
     let active = true
@@ -278,10 +280,26 @@ export const AdminUsersPage = () => {
   const filteredUsers = userList.filter(u => {
     const term = searchTerm.toLowerCase()
     return (u.fullName?.toLowerCase() || '').includes(term) || 
-           (u.email?.toLowerCase() || '').includes(term) ||
-           (u.role?.toLowerCase() || '').includes(term) ||
+           (u.email?.toLowerCase() || '').includes(term) || 
+           (u.role?.toLowerCase() || '').includes(term) || 
            (u.phone?.toLowerCase() || '').includes(term)
   })
+
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm])
+
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages)
+    }
+  }, [currentPage, filteredUsers.length])
+
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  )
 
   const handleToggleStatus = async (user) => {
     const action = user.status === 'Active' ? 'suspend' : 'activate'
@@ -402,7 +420,7 @@ export const AdminUsersPage = () => {
               </div>
             ) : (
               <UserTable
-                users={filteredUsers.map(u => ({
+                users={paginatedUsers.map(u => ({
                   id: u.id,
                   name: u.fullName,
                   email: u.email,
@@ -412,9 +430,9 @@ export const AdminUsersPage = () => {
                 }))}
                 loading={loading}
                 totalItems={filteredUsers.length}
-                currentPage={1}
-                pageSize={10}
-                onPageChange={() => {}}
+                currentPage={currentPage}
+                pageSize={pageSize}
+                onPageChange={setCurrentPage}
                 onView={(user) => setSelectedUser(user)}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeleteUser}

@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using OrderService.API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -128,20 +129,45 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+// Apply migrations automatically for container startup consistency.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<OrderDbContext>();
+    app.Logger.LogInformation("Applying OrderService database migrations.");
+    dbContext.Database.Migrate();
+    app.Logger.LogInformation("OrderService database migrations applied successfully.");
+}
+
 // Run delivery agent sync on startup
 using (var scope = app.Services.CreateScope())
 {
     var syncService = scope.ServiceProvider.GetRequiredService<IDeliveryAgentSyncService>();
     try
     {
+        app.Logger.LogInformation("Starting delivery agent sync from AuthService.");
         var syncedCount = await syncService.SyncDeliveryAgentsFromAuthServiceAsync();
-        Console.WriteLine($"[Startup] Synced {syncedCount} delivery agents from AuthService.");
+        app.Logger.LogInformation("Synced {SyncedCount} delivery agents from AuthService.", syncedCount);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[Startup] Warning: Delivery agent sync failed: {ex.Message}");
+        app.Logger.LogWarning(ex, "Delivery agent sync failed during startup.");
     }
 }
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    app.Logger.LogInformation("OrderService started. Environment: {Environment}", app.Environment.EnvironmentName);
+});
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    app.Logger.LogInformation("OrderService stopping.");
+});
+
+app.Lifetime.ApplicationStopped.Register(() =>
+{
+    app.Logger.LogInformation("OrderService stopped.");
+});
 
 if (app.Environment.IsDevelopment())
 {
@@ -154,6 +180,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -7,8 +7,10 @@ using OrderService.Domain.Interfaces;
 using OrderService.Domain.Enums;
 using Razorpay.Api;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MassTransit;
 using QuickBite.Shared.Events.Order;
+using QuickBite.Shared.Contracts;
 
 namespace OrderService.API.Controllers;
 
@@ -23,6 +25,7 @@ public class PaymentsController : ControllerBase
     private readonly IOrderRepository _orderRepository;
     private readonly ICartRepository _cartRepository;
     private readonly IPublishEndpoint _publishEndpoint;
+    private readonly ILogger<PaymentsController> _logger;
 
     public PaymentsController(
         IOrderPlacementService orderPlacementService,
@@ -30,7 +33,8 @@ public class PaymentsController : ControllerBase
         IConfiguration configuration,
         IOrderRepository orderRepository,
         ICartRepository cartRepository,
-        IPublishEndpoint publishEndpoint)
+        IPublishEndpoint publishEndpoint,
+        ILogger<PaymentsController> logger)
     {
         _orderPlacementService = orderPlacementService;
         _deliveryService = deliveryService;
@@ -38,6 +42,7 @@ public class PaymentsController : ControllerBase
         _orderRepository = orderRepository;
         _cartRepository = cartRepository;
         _publishEndpoint = publishEndpoint;
+        _logger = logger;
     }
 
     [HttpPost("{orderId:guid}/process")]
@@ -126,7 +131,16 @@ public class PaymentsController : ControllerBase
         }
         catch (Exception ex)
         {
-            return BadRequest(new { Message = "Payment verification failed", Error = ex.Message });
+            _logger.LogError(ex, "Payment verification failed for order {OrderId}.", orderId);
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "Payment verification failed.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "PAYMENT_VERIFICATION_FAILED"
+            });
         }
 
         // Signature is valid. Update order status to Paid.

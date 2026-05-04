@@ -3,12 +3,12 @@ using MassTransit;
 using AuthService.Application;
 using AuthService.Infrastructure;
 using AuthService.Infrastructure.Data;
+using AuthService.API.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Controllers
@@ -17,6 +17,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: true));
     });
+builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 
 // Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -101,8 +102,25 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
+    app.Logger.LogInformation("Applying AuthService database migrations.");
     dbContext.Database.Migrate();
+    app.Logger.LogInformation("AuthService database migrations applied successfully.");
 }
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    app.Logger.LogInformation("AuthService started. Environment: {Environment}", app.Environment.EnvironmentName);
+});
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    app.Logger.LogInformation("AuthService stopping.");
+});
+
+app.Lifetime.ApplicationStopped.Register(() =>
+{
+    app.Logger.LogInformation("AuthService stopped.");
+});
 
 // Middleware pipeline
 if (app.Environment.IsDevelopment())
@@ -116,6 +134,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<RequestLoggingMiddleware>();
+app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -12,6 +12,51 @@ const FloatingCard = ({ iconSrc, title, positionClasses, delay }) => (
   </div>
 );
 
+const featureCards = [
+  {
+    iconSrc: '/images/features/icon_veg_filter_new.png',
+    title: 'Veg Filter',
+    label: 'Vegetarian-only browsing',
+    positionClasses: 'left-0 top-6',
+    delay: 0,
+  },
+  {
+    iconSrc: '/images/features/icon_search_new.png',
+    title: 'Search',
+    label: 'Find restaurants and dishes',
+    positionClasses: '-left-16 top-1/2 -translate-y-1/2',
+    delay: 1.5,
+  },
+  {
+    iconSrc: '/images/features/icon_coupons_new.png',
+    title: 'Coupons',
+    label: 'Apply promo codes in cart',
+    positionClasses: 'left-0 bottom-6',
+    delay: 0.8,
+  },
+  {
+    iconSrc: '/images/features/icon_cart_new.png',
+    title: 'Cart',
+    label: 'Review items before checkout',
+    positionClasses: 'right-0 top-6',
+    delay: 1,
+  },
+  {
+    iconSrc: '/images/features/icon_tracking_new.png',
+    title: 'Tracking',
+    label: 'Follow live order status',
+    positionClasses: '-right-16 top-1/2 -translate-y-1/2',
+    delay: 0.5,
+  },
+  {
+    iconSrc: '/images/features/icon_browse_new.png',
+    title: 'Browse',
+    label: 'Explore cuisines and restaurants',
+    positionClasses: 'right-0 bottom-6',
+    delay: 2,
+  },
+];
+
 export const AppFeaturesSection = () => {
   return (
     <section className="relative w-full overflow-hidden bg-white py-20 pb-32">
@@ -22,10 +67,10 @@ export const AppFeaturesSection = () => {
         {/* Header */}
         <div className="text-center mb-16 md:mb-24">
           <h2 className="text-4xl md:text-5xl font-extrabold text-rose-500 mb-4 tracking-tight">
-            What's waiting for you on QuickBite?
+            Everything you need to order on QuickBite
           </h2>
           <p className="text-lg md:text-xl text-slate-500 font-medium max-w-2xl mx-auto">
-            Our app is packed with features that enable you to experience food delivery like never before
+            Search, browse, customize, checkout, and track your food with the features already live in the app.
           </p>
         </div>
 
@@ -34,45 +79,15 @@ export const AppFeaturesSection = () => {
           
           {/* Floating Cards (Desktop Absolute Layout) */}
           <div className="hidden md:block absolute inset-0">
-            {/* Left Side */}
-            <FloatingCard 
-              iconSrc="/images/features/icon_healthy.png" 
-              title="Healthy" 
-              positionClasses="left-0 top-6" 
-              delay={0}
-            />
-            <FloatingCard 
-              iconSrc="/images/features/icon_veg.png" 
-              title="Veg Mode" 
-              positionClasses="-left-16 top-1/2 -translate-y-1/2" 
-              delay={1.5}
-            />
-            <FloatingCard 
-              iconSrc="/images/features/icon_party.png" 
-              title="Plan a Party" 
-              positionClasses="left-0 bottom-6" 
-              delay={0.8}
-            />
-
-            {/* Right Side */}
-            <FloatingCard 
-              iconSrc="/images/features/icon_offers.png" 
-              title="Offers" 
-              positionClasses="right-0 top-6" 
-              delay={1}
-            />
-            <FloatingCard 
-              iconSrc="/images/features/icon_gourmet.png" 
-              title="Gourmet" 
-              positionClasses="-right-16 top-1/2 -translate-y-1/2" 
-              delay={0.5}
-            />
-            <FloatingCard 
-              iconSrc="/images/features/icon_schedule.png" 
-              title="Schedule" 
-              positionClasses="right-0 bottom-6" 
-              delay={2}
-            />
+            {featureCards.map((card) => (
+              <FloatingCard
+                key={card.title}
+                iconSrc={card.iconSrc}
+                title={card.title}
+                positionClasses={card.positionClasses}
+                delay={card.delay}
+              />
+            ))}
           </div>
 
           {/* Center Food Asset */}
@@ -80,7 +95,7 @@ export const AppFeaturesSection = () => {
             <div className="absolute inset-0 bg-rose-500/10 blur-[100px] rounded-full pointer-events-none" />
             <img 
               src="/images/features/center_food.png" 
-              alt="Gourmet Burger" 
+              alt="QuickBite food spotlight" 
               className="w-80 h-80 md:w-[500px] md:h-[500px] object-contain drop-shadow-2xl relative z-10"
             />
           </div>
@@ -89,16 +104,9 @@ export const AppFeaturesSection = () => {
 
         {/* Mobile Fallback Grid (Visible only on small screens) */}
         <div className="md:hidden mt-12 grid grid-cols-2 sm:grid-cols-3 gap-4">
-           {[
-             {src: '/images/features/icon_healthy.png', title: 'Healthy'},
-             {src: '/images/features/icon_veg.png', title: 'Veg Mode'},
-             {src: '/images/features/icon_party.png', title: 'Plan a Party'},
-             {src: '/images/features/icon_offers.png', title: 'Offers'},
-             {src: '/images/features/icon_gourmet.png', title: 'Gourmet'},
-             {src: '/images/features/icon_schedule.png', title: 'Schedule'}
-           ].map(item => (
-             <div key={item.title} className="bg-white rounded-2xl shadow-md border border-slate-100 p-5 flex flex-col items-center justify-center gap-3">
-                <img src={item.src} alt={item.title} className="w-16 h-16 object-contain" />
+           {featureCards.map(item => (
+             <div key={item.title} className="bg-white rounded-2xl shadow-md border border-slate-100 p-5 flex flex-col items-center justify-center gap-3 text-center">
+                <img src={item.iconSrc} alt={item.title} className="w-16 h-16 object-contain" />
                 <span className="text-xs font-bold text-slate-700 text-center">{item.title}</span>
              </div>
            ))}

@@ -10,6 +10,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Text;
+using CatalogService.API.Middleware;
+using CatalogService.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -137,6 +140,30 @@ builder.Services.AddAuthorization();
 // === 5. Build the app ===
 var app = builder.Build();
 
+// Apply migrations automatically for container startup consistency.
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+    app.Logger.LogInformation("Applying CatalogService database migrations.");
+    dbContext.Database.Migrate();
+    app.Logger.LogInformation("CatalogService database migrations applied successfully.");
+}
+
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    app.Logger.LogInformation("CatalogService started. Environment: {Environment}", app.Environment.EnvironmentName);
+});
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    app.Logger.LogInformation("CatalogService stopping.");
+});
+
+app.Lifetime.ApplicationStopped.Register(() =>
+{
+    app.Logger.LogInformation("CatalogService stopped.");
+});
+
 // === 6. Configure Middleware Pipeline ===
 if (app.Environment.IsDevelopment())
 {
@@ -149,6 +176,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseMiddleware<RequestLoggingMiddleware>();
 // Register global exception handling middleware
 app.UseMiddleware<GlobalExceptionHandlingMiddleware>();
 
@@ -163,4 +191,3 @@ app.MapControllers();
 
 // === 7. Run app ===
 app.Run();
-

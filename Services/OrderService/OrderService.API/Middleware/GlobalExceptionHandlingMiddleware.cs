@@ -1,5 +1,6 @@
 using OrderService.Application.Exceptions;
 using OrderService.Domain.Exceptions;
+using QuickBite.Shared.Contracts;
 
 namespace OrderService.API.Middleware;
 
@@ -20,51 +21,39 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred in OrderService API.");
+            _logger.LogError(ex,
+                "Unhandled exception in OrderService API for {Method} {Path}. TraceId={TraceId}",
+                context.Request.Method,
+                context.Request.Path.Value,
+                context.TraceIdentifier);
             await HandleExceptionAsync(context, ex);
         }
     }
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
+        var (status, title, detail, errorCode) = exception switch
+        {
+            ResourceNotFoundException => (StatusCodes.Status404NotFound, "Not Found", exception.Message, "NOT_FOUND"),
+            ValidationException or CartException or OrderException or PaymentException or ArgumentException or InvalidOperationException
+                => (StatusCodes.Status400BadRequest, "Bad Request", exception.Message, "BAD_REQUEST"),
+            UnauthorizedAccessException
+                => (StatusCodes.Status403Forbidden, "Forbidden", "You do not have permission to perform this action.", "FORBIDDEN"),
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.", "INTERNAL_ERROR")
+        };
+
+        var response = new ApiErrorResponse
+        {
+            Status = status,
+            Title = title,
+            Detail = detail,
+            TraceId = context.TraceIdentifier,
+            Timestamp = DateTime.UtcNow,
+            ErrorCode = errorCode
+        };
+
+        context.Response.StatusCode = status;
         context.Response.ContentType = "application/json";
-
-        var statusCode = StatusCodes.Status500InternalServerError;
-        var message = "An unexpected error occurred. Please try again later.";
-
-        switch (exception)
-        {
-            case ResourceNotFoundException:
-                statusCode = StatusCodes.Status404NotFound;
-                message = exception.Message;
-                break;
-            case ValidationException:
-            case CartException:
-            case OrderException:
-            case PaymentException:
-            case ArgumentException:
-            case InvalidOperationException:
-                statusCode = StatusCodes.Status400BadRequest;
-                message = exception.Message;
-                break;
-        }
-
-        context.Response.StatusCode = statusCode;
-
-        return context.Response.WriteAsJsonAsync(new
-        {
-            statusCode = statusCode,
-            message = message,
-            timestamp = DateTime.UtcNow
-        });
+        return context.Response.WriteAsJsonAsync(response);
     }
-}
-
-public sealed class ErrorResponse
-{
-    public int StatusCode { get; set; }
-
-    public string Message { get; set; } = string.Empty;
-
-    public DateTime Timestamp { get; set; }
 }

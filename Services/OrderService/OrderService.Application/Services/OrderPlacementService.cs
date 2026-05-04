@@ -10,6 +10,7 @@ using OrderService.Application.Mappings;
 using OrderService.Domain.Entities;
 using OrderService.Domain.Enums;
 using OrderService.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
 
 public class OrderPlacementService : IOrderPlacementService
 {
@@ -20,6 +21,7 @@ public class OrderPlacementService : IOrderPlacementService
     private readonly IPublishEndpoint _publishEndpoint;
     private readonly IRestaurantValidationService _restaurantValidationService;
     private readonly IMenuItemValidationService _menuItemValidationService;
+    private readonly ILogger<OrderPlacementService> _logger;
 
     public OrderPlacementService(
         ICartRepository cartRepository,
@@ -28,7 +30,8 @@ public class OrderPlacementService : IOrderPlacementService
         IDeliveryService deliveryService,
         IPublishEndpoint publishEndpoint,
         IRestaurantValidationService restaurantValidationService,
-        IMenuItemValidationService menuItemValidationService)
+        IMenuItemValidationService menuItemValidationService,
+        ILogger<OrderPlacementService> logger)
     {
         _cartRepository = cartRepository ?? throw new ArgumentNullException(nameof(cartRepository));
         _orderRepository = orderRepository ?? throw new ArgumentNullException(nameof(orderRepository));
@@ -37,6 +40,7 @@ public class OrderPlacementService : IOrderPlacementService
         _publishEndpoint = publishEndpoint ?? throw new ArgumentNullException(nameof(publishEndpoint));
         _restaurantValidationService = restaurantValidationService ?? throw new ArgumentNullException(nameof(restaurantValidationService));
         _menuItemValidationService = menuItemValidationService ?? throw new ArgumentNullException(nameof(menuItemValidationService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<OrderDetailDto> PlaceOrderAsync(PlaceOrderRequestDto request, CancellationToken cancellationToken = default)
@@ -109,7 +113,7 @@ public class OrderPlacementService : IOrderPlacementService
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Payment processing failed for order {order.Id}: {ex.Message}");
+                _logger.LogWarning(ex, "Payment processing failed for order {OrderId}.", order.Id);
             }
 
             cart.Status = CartStatus.Abandoned;

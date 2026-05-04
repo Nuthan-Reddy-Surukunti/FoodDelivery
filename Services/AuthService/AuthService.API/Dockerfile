@@ -6,6 +6,7 @@ COPY ["Services/AuthService/AuthService.API/AuthService.API.csproj", "Services/A
 COPY ["Services/AuthService/AuthService.Application/AuthService.Application.csproj", "Services/AuthService/AuthService.Application/"]
 COPY ["Services/AuthService/AuthService.Domain/AuthService.Domain.csproj", "Services/AuthService/AuthService.Domain/"]
 COPY ["Services/AuthService/AuthService.Infrastructure/AuthService.Infrastructure.csproj", "Services/AuthService/AuthService.Infrastructure/"]
+COPY ["Shared/QuickBite.Shared/QuickBite.Shared.csproj", "Shared/QuickBite.Shared/"]
 RUN dotnet restore "Services/AuthService/AuthService.API/AuthService.API.csproj"
 
 COPY . .

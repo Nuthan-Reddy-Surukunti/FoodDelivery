@@ -1,4 +1,5 @@
 using CatalogService.Application.Exceptions;
+using QuickBite.Shared.Contracts;
 using System.Text.Json;
 
 namespace CatalogService.API.Middleware;
@@ -20,72 +21,42 @@ public class GlobalExceptionHandlingMiddleware : IMiddleware
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unhandled exception occurred");
+            _logger.LogError(ex,
+                "Unhandled exception in CatalogService API for {Method} {Path}. TraceId={TraceId}",
+                context.Request.Method,
+                context.Request.Path.Value,
+                context.TraceIdentifier);
             await HandleExceptionAsync(context, ex);
         }
     }
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        context.Response.ContentType = "application/json";
-
-        var response = new ErrorResponse
+        var (status, title, detail, errorCode) = exception switch
         {
-            Timestamp = DateTime.UtcNow
+            RestaurantNotFoundException or MenuItemNotFoundException or CategoryNotFoundException
+                => (StatusCodes.Status404NotFound, "Not Found", exception.Message, "NOT_FOUND"),
+            DuplicateCategoryException
+                => (StatusCodes.Status409Conflict, "Conflict", exception.Message, "CONFLICT"),
+            InvalidMenuItemPriceException or InvalidRestaurantDataException or ArgumentException
+                => (StatusCodes.Status400BadRequest, "Bad Request", exception.Message, "BAD_REQUEST"),
+            UnauthorizedAccessException
+                => (StatusCodes.Status403Forbidden, "Forbidden", "You do not have permission to perform this action.", "FORBIDDEN"),
+            _ => (StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred.", "INTERNAL_ERROR")
         };
 
-        switch (exception)
+        var response = new ApiErrorResponse
         {
-            case RestaurantNotFoundException ex:
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                response.StatusCode = 404;
-                response.Message = ex.Message;
-                break;
+            Status = status,
+            Title = title,
+            Detail = detail,
+            TraceId = context.TraceIdentifier,
+            Timestamp = DateTime.UtcNow,
+            ErrorCode = errorCode
+        };
 
-            case MenuItemNotFoundException ex:
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                response.StatusCode = 404;
-                response.Message = ex.Message;
-                break;
-
-            case CategoryNotFoundException ex:
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                response.StatusCode = 404;
-                response.Message = ex.Message;
-                break;
-
-            case DuplicateCategoryException ex:
-                context.Response.StatusCode = StatusCodes.Status409Conflict;
-                response.StatusCode = 409;
-                response.Message = ex.Message;
-                break;
-
-            case InvalidMenuItemPriceException ex:
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                response.StatusCode = 400;
-                response.Message = ex.Message;
-                break;
-
-            case InvalidRestaurantDataException ex:
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                response.StatusCode = 400;
-                response.Message = ex.Message;
-                break;
-
-            default:
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                response.StatusCode = 500;
-                response.Message = "An unexpected error occurred. Please try again later.";
-                break;
-        }
-
+        context.Response.StatusCode = status;
+        context.Response.ContentType = "application/json";
         return context.Response.WriteAsJsonAsync(response);
     }
-}
-
-public class ErrorResponse
-{
-    public int StatusCode { get; set; }
-    public string Message { get; set; } = string.Empty;
-    public DateTime Timestamp { get; set; }
 }

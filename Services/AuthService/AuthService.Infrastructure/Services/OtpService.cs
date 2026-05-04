@@ -4,6 +4,7 @@ using AuthService.Domain.Entities;
 using AuthService.Domain.Interfaces;
 using System.Linq;
 using QuickBite.Shared.Utilities;
+using Microsoft.Extensions.Logging;
 
 
 namespace AuthService.Infrastructure.Services;
@@ -13,12 +14,14 @@ public class OtpService : IOtpService
     private readonly IOtpTokenRepository _otpTokenRepository;
     private readonly IUserRepository _userRepository;
     private readonly IEmailService _emailService;
+    private readonly ILogger<OtpService> _logger;
 
-    public OtpService(IOtpTokenRepository otpTokenRepository, IUserRepository userRepository, IEmailService emailService)
+    public OtpService(IOtpTokenRepository otpTokenRepository, IUserRepository userRepository, IEmailService emailService, ILogger<OtpService> logger)
     {
         _otpTokenRepository = otpTokenRepository;
         _userRepository = userRepository;
         _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<bool> GenerateAndStoreOtpAsync(Guid userId)
@@ -40,8 +43,7 @@ public class OtpService : IOtpService
                 {
                     var remainingMinutes = Math.Max(1, (int)Math.Ceiling(remaining.TotalMinutes));
 
-                    // Print reused OTP to console for development
-                    Console.WriteLine($"🔐 [REUSED OTP] User: {user.Email} | OTP: {existingOtp.OTP} | Expires in: {remainingMinutes} minutes");
+                    _logger.LogInformation("Reused login OTP for {Email}.", user.Email);
 
                     await _emailService.SendEmailAsync(
                         user.Email,
@@ -56,8 +58,8 @@ public class OtpService : IOtpService
                 await _otpTokenRepository.UpdateAsync(existingOtp);
             }
 
-            // Generate 6-digit OTP
-            var otp = new Random().Next(100000, 999999).ToString();
+            // Generate cryptographically secure 6-digit OTP
+            var otp = SecurityUtilities.GenerateSecureOtp();
 
             // Store new OTP with 10-minute expiration to reduce false-expired reports.
             var otpToken = new OtpToken
@@ -71,8 +73,7 @@ public class OtpService : IOtpService
 
             await _otpTokenRepository.AddAsync(otpToken);
 
-            // Print OTP to console for development
-            Console.WriteLine($"🔐 [OTP] User: {user.Email} | OTP: {otp} | Expires: 10 minutes");
+            _logger.LogInformation("Generated login OTP for {Email}.", user.Email);
 
             // Send OTP via email
             await _emailService.SendEmailAsync(

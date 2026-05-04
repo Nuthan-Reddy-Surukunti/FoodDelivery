@@ -6,6 +6,7 @@ using AuthService.Infrastructure.Data;
 using AuthService.Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace AuthService.Infrastructure.Repositories;
 
@@ -13,11 +14,13 @@ public class AuthRepository : IAuthRepository
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly AuthDbContext _context;
+    private readonly ILogger<AuthRepository> _logger;
 
-    public AuthRepository(UserManager<ApplicationUser> userManager, AuthDbContext context)
+    public AuthRepository(UserManager<ApplicationUser> userManager, AuthDbContext context, ILogger<AuthRepository> logger)
     {
         _userManager = userManager;
         _context = context;
+        _logger = logger;
     }
 
     public async Task<IEnumerable<User>> GetPendingApprovalRestaurantsAsync()
@@ -35,12 +38,12 @@ public class AuthRepository : IAuthRepository
         var restaurant = await _userManager.FindByIdAsync(restaurantId.ToString());
         if (restaurant == null)
         {
-            Console.WriteLine($"ApproveRestaurantAsync: Restaurant not found for ID {restaurantId}");
+            _logger.LogWarning("ApproveRestaurantAsync: Restaurant not found for ID {RestaurantId}", restaurantId);
             return false;
         }
         if (restaurant.Role != UserRole.RestaurantPartner.ToString())
         {
-            Console.WriteLine($"ApproveRestaurantAsync: Role mismatch for ID {restaurantId}. Expected RestaurantPartner, got {restaurant.Role}");
+            _logger.LogWarning("ApproveRestaurantAsync: Role mismatch for ID {RestaurantId}. Expected RestaurantPartner, got {Role}", restaurantId, restaurant.Role);
             return false;
         }
 
@@ -56,7 +59,7 @@ public class AuthRepository : IAuthRepository
             return true;
         }
 
-        Console.WriteLine($"UpdateAsync failed: {string.Join(", ", result.Errors.Select(e => e.Description))}");
+        _logger.LogWarning("ApproveRestaurantAsync update failed for ID {RestaurantId}: {Errors}", restaurantId, string.Join(", ", result.Errors.Select(e => e.Description)));
         return false;
     }
 

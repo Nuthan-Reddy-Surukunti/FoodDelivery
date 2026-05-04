@@ -3,8 +3,10 @@ using CatalogService.API.Utilities;
 using CatalogService.Application.DTOs.Restaurant;
 using CatalogService.Application.Interfaces;
 using CatalogService.Application.Exceptions;
+using QuickBite.Shared.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace CatalogService.API.Controllers;
 
@@ -15,11 +17,13 @@ public class RestaurantsController : ControllerBase
 {
     private readonly IRestaurantService _restaurantService;
     private readonly IMapper _mapper;
+    private readonly ILogger<RestaurantsController> _logger;
 
-    public RestaurantsController(IRestaurantService restaurantService, IMapper mapper)
+    public RestaurantsController(IRestaurantService restaurantService, IMapper mapper, ILogger<RestaurantsController> logger)
     {
         _restaurantService = restaurantService;
         _mapper = mapper;
+        _logger = logger;
     }
 
     /// <summary>
@@ -43,7 +47,16 @@ public class RestaurantsController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(StatusCodes.Status500InternalServerError, ex.Message);
+            _logger.LogError(ex, "Failed to retrieve restaurants.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
+            });
         }
     }
 
@@ -85,7 +98,15 @@ public class RestaurantsController : ControllerBase
         }
         catch (UnauthorizedAccessException ex)
         {
-            return StatusCode(StatusCodes.Status403Forbidden, ex.Message);
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status403Forbidden,
+                Title = "Forbidden",
+                Detail = "You do not have permission to perform this action.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "FORBIDDEN"
+            });
         }
     }
 
@@ -108,7 +129,15 @@ public class RestaurantsController : ControllerBase
         }
         catch (InvalidRestaurantDataException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = ex.Message,
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "BAD_REQUEST"
+            });
         }
     }
 
@@ -145,8 +174,15 @@ public class RestaurantsController : ControllerBase
         }
         catch (InvalidRestaurantDataException ex)
         {
-            return BadRequest(ex.Message);
+            return BadRequest(new ApiErrorResponse
+            {
+                Status = StatusCodes.Status400BadRequest,
+                Title = "Bad Request",
+                Detail = ex.Message,
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "BAD_REQUEST"
+            });
         }
     }
 }
-

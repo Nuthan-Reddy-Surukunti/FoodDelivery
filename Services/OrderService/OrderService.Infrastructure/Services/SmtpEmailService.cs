@@ -1,5 +1,6 @@
 using OrderService.Application.Interfaces;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Mail;
 
@@ -8,10 +9,12 @@ namespace OrderService.Infrastructure.Services;
 public class SmtpEmailService : IEmailService
 {
     private readonly IConfiguration _configuration;
+    private readonly ILogger<SmtpEmailService> _logger;
 
-    public SmtpEmailService(IConfiguration configuration)
+    public SmtpEmailService(IConfiguration configuration, ILogger<SmtpEmailService> logger)
     {
         _configuration = configuration;
+        _logger = logger;
     }
 
     public async Task SendEmailAsync(string toEmail, string subject, string body)
@@ -48,7 +51,7 @@ public class SmtpEmailService : IEmailService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to send email to {toEmail}: {ex.Message}");
+            _logger.LogWarning(ex, "Failed to send email to {ToEmail}.", toEmail);
             // Don't throw here to avoid crashing the order flow if email fails
         }
     }

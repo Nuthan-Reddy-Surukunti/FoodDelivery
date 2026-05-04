@@ -28,11 +28,10 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting Admin Service");
-
     var builder = WebApplication.CreateBuilder(args);
 
     builder.Host.UseSerilog();
+    Log.Information("Starting Admin Service. Environment: {Environment}", builder.Environment.EnvironmentName);
 
 // Add DbContext
 builder.Services.AddDbContext<AdminServiceDbContext>(options =>
@@ -180,6 +179,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<AdminServiceDbContext>();
     try
     {
+        Log.Information("Applying AdminService database migrations.");
         db.Database.Migrate();
         Log.Information("Database migrations applied successfully");
     }
@@ -196,6 +196,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
+        Log.Information("Seeding AdminService database.");
         var context = services.GetRequiredService<AdminServiceDbContext>();
         await AdminServiceDbContextSeed.SeedAsync(context);
         Log.Information("Database seeded successfully");
@@ -221,10 +222,25 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    Log.Information("Admin Service started.");
+});
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    Log.Information("Admin Service stopping.");
+});
+
+app.Lifetime.ApplicationStopped.Register(() =>
+{
+    Log.Information("Admin Service stopped.");
+});
+
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Add audit middleware after authentication/authorization
 app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();

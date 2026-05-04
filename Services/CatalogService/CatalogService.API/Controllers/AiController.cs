@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using CatalogService.Application.DTOs.Ai;
 using CatalogService.Application.Interfaces;
+using QuickBite.Shared.Contracts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace CatalogService.API.Controllers;
 
@@ -12,10 +14,12 @@ namespace CatalogService.API.Controllers;
 public class AiController : ControllerBase
 {
     private readonly IAiService _aiService;
+    private readonly ILogger<AiController> _logger;
 
-    public AiController(IAiService aiService)
+    public AiController(IAiService aiService, ILogger<AiController> logger)
     {
         _aiService = aiService;
+        _logger = logger;
     }
 
     /// <summary>
@@ -45,9 +49,16 @@ public class AiController : ControllerBase
         }
         catch (Exception ex)
         {
-            // Log the real exception so we can see what's going wrong
-            Console.Error.WriteLine($"[AiController] Chat error: {ex.GetType().Name} — {ex.Message}");
-            return StatusCode(StatusCodes.Status500InternalServerError, "Error processing AI request.");
+            _logger.LogError(ex, "AI chat request failed.");
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorResponse
+            {
+                Status = StatusCodes.Status500InternalServerError,
+                Title = "Internal Server Error",
+                Detail = "An unexpected error occurred.",
+                TraceId = HttpContext.TraceIdentifier,
+                Timestamp = DateTime.UtcNow,
+                ErrorCode = "INTERNAL_ERROR"
+            });
         }
     }
 

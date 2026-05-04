@@ -47,7 +47,7 @@ coverage.json
 coverage.opencover.xml
 
 ## ─── Docker ────────────────────────────────────────────────────────
-.dockerignore
+!.dockerignore
 
 ## ─── Environment / secrets ─────────────────────────────────────────
 .env

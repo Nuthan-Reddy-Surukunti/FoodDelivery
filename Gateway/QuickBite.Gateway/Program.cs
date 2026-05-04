@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Ocelot.DependencyInjection;
 using Ocelot.Middleware;
+using QuickBite.Gateway.Middleware;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -60,6 +61,21 @@ builder.Services.AddSwaggerForOcelot(builder.Configuration);
 
 var app = builder.Build();
 
+app.Lifetime.ApplicationStarted.Register(() =>
+{
+    app.Logger.LogInformation("QuickBite Gateway started. Environment: {Environment}", app.Environment.EnvironmentName);
+});
+
+app.Lifetime.ApplicationStopping.Register(() =>
+{
+    app.Logger.LogInformation("QuickBite Gateway stopping.");
+});
+
+app.Lifetime.ApplicationStopped.Register(() =>
+{
+    app.Logger.LogInformation("QuickBite Gateway stopped.");
+});
+
 // Cookie to Bearer Token Middleware
 app.Use(async (context, next) =>
 {
@@ -71,6 +87,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseCors("AllowLocalhost");
@@ -116,6 +133,5 @@ if (app.Environment.IsDevelopment())
 }
 
 await app.UseOcelot();
-
 
 app.Run();

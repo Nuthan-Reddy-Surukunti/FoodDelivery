@@ -54,15 +54,15 @@ public class EnumSerializationContractTests
     [Test]
     public void PaymentMethod_SerializesAsText()
     {
-        var json = JsonSerializer.Serialize(PaymentMethod.Card, _jsonOptions);
-        Assert.That(json, Is.EqualTo(@"""Card"""));
+        var json = JsonSerializer.Serialize(PaymentMethod.Online, _jsonOptions);
+        Assert.That(json, Is.EqualTo(@"""Online"""));
     }
 
     [Test]
     public void PaymentMethod_DeserializesFromNumericForBackwardCompatibility()
     {
         var result = JsonSerializer.Deserialize<PaymentMethod>(@"2", _jsonOptions);
-        Assert.That(result, Is.EqualTo(PaymentMethod.Card));
+        Assert.That(result, Is.EqualTo(PaymentMethod.CashOnDelivery));
     }
 
     [Test]
