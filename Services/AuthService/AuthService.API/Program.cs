@@ -17,6 +17,7 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: true));
     });
+    
 builder.Services.AddTransient<GlobalExceptionHandlingMiddleware>();
 
 // Swagger
@@ -117,10 +118,6 @@ app.Lifetime.ApplicationStopping.Register(() =>
     app.Logger.LogInformation("AuthService stopping.");
 });
 
-app.Lifetime.ApplicationStopped.Register(() =>
-{
-    app.Logger.LogInformation("AuthService stopped.");
-});
 
 // Middleware pipeline
 if (app.Environment.IsDevelopment())
