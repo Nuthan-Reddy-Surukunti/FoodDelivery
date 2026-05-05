@@ -40,7 +40,6 @@ const AgentEarningsPage = lazy(() => import('./pages/AgentEarningsPage').then((m
 const SearchResultsPage = lazy(() => import('./pages/SearchResultsPage').then((m) => ({ default: m.SearchResultsPage })))
 const HelpSupportPage = lazy(() => import('./pages/HelpSupportPage').then((m) => ({ default: m.HelpSupportPage })))
 
-// Replace YOUR_GOOGLE_CLIENT_ID with actual id from google cloud console
 const GOOGLE_CLIENT_ID = "1064773616530-crvpfpa593s5ipecen5fk738nnqmjhop.apps.googleusercontent.com"
 
 export default function App() {

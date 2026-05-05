@@ -51,6 +51,7 @@ export const ProfilePage = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.isTwoFactorEnabled || false)
   const [isTogglingTwoFactor, setIsTogglingTwoFactor] = useState(false)
   const [stats, setStats] = useState(null)
+  const [count,setCount] = useState(0)
   const [loadingStats, setLoadingStats] = useState(true)
   const [editForm, setEditForm] = useState({
     fullName: user?.name || '',

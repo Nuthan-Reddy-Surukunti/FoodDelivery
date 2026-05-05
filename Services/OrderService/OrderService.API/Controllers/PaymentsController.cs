@@ -85,7 +85,7 @@ public class PaymentsController : ControllerBase
         RazorpayClient client = new RazorpayClient(keyId, keySecret);
         
         Dictionary<string, object> options = new Dictionary<string, object>();
-        options.Add("amount", (int)(order.Total * 100)); // amount in paise
+        options.Add("amount", (int)(order.Total * 100)); 
         options.Add("currency", "INR");
         options.Add("receipt", orderId.ToString());
 
